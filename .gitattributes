@@ -1,0 +1,2 @@
+# Satir sonlarini repoda LF olarak normalize et (Windows/Unix tutarliligi)
+* text=auto eol=lf

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Veritabani (yerel, yedek disinda repoya girmez)
+*.db
+*.sqlite3
+
+# Test / arac onbellekleri
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Ortam degiskenleri
+.env
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Frontend (ileride)
+node_modules/
+dist/
