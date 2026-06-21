@@ -1,0 +1,102 @@
+{
+  "app": {
+    "title": "Lingua",
+    "tagline": "Dil öğrenme takip sistemin"
+  },
+  "nav": {
+    "languages": "Diller",
+    "topics": "Konular",
+    "words": "Kelimeler",
+    "labels": "Etiketler",
+    "settings": "Ayarlar"
+  },
+  "languages": {
+    "title": "Diller",
+    "subtitle": "Çalışmak için bir dil seç ya da yeni bir dil ekle.",
+    "empty": "Henüz dil yok — aşağıdan ilkini ekle.",
+    "addTitle": "Dil ekle",
+    "code": "Kod",
+    "codeHint": "örn. it, es, de",
+    "name": "Ad",
+    "nameHint": "örn. İtalyanca",
+    "nativeName": "Yerel adı",
+    "nativeNameHint": "örn. Italiano",
+    "create": "Dil ekle",
+    "open": "Aç",
+    "deleteConfirm": "Bu dil ve tüm verisi silinsin mi?"
+  },
+  "workspace": {
+    "switchLanguage": "Dil değiştir"
+  },
+  "topics": {
+    "addTitle": "Konu ekle",
+    "titlePlaceholder": "Konu başlığı",
+    "descPlaceholder": "Açıklama (opsiyonel)",
+    "add": "Konu ekle",
+    "empty": "Henüz konu yok — aşağıdan ilkini ekle.",
+    "progress": "{{done}} / {{total}} tamamlandı",
+    "moveUp": "Yukarı taşı",
+    "moveDown": "Aşağı taşı",
+    "deleteConfirm": "Bu konu silinsin mi?"
+  },
+  "status": {
+    "not_started": "Başlanmadı",
+    "in_progress": "Devam ediyor",
+    "done": "Tamamlandı"
+  },
+  "words": {
+    "searchPlaceholder": "Kelime ara…",
+    "add": "Kelime ekle",
+    "addTitle": "Kelime ekle",
+    "editTitle": "Kelimeyi düzenle",
+    "empty": "Henüz kelime yok — aşağıdan ilkini ekle.",
+    "noResults": "Aramana uyan kelime yok.",
+    "deleteConfirm": "Bu kelime silinsin mi?",
+    "fields": {
+      "term": "Kelime",
+      "part_of_speech": "Tür",
+      "phonetic": "Okunuş",
+      "phonetic_tr": "Türkçe okunuş",
+      "meaning_native": "Anlamı (TR)",
+      "meaning_english": "İngilizce",
+      "definition_target": "Tanım (hedef dil)",
+      "example_sentence": "Örnek cümle",
+      "example_translation": "Cümlenin çevirisi"
+    }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "uiLanguage": "Arayüz dili",
+    "english": "İngilizce",
+    "turkish": "Türkçe"
+  },
+  "labels": {
+    "addTitle": "Etiket ekle",
+    "namePlaceholder": "Etiket adı",
+    "color": "Renk",
+    "add": "Etiket ekle",
+    "empty": "Henüz etiket yok — aşağıdan ilkini ekle.",
+    "deleteConfirm": "Bu etiket silinsin mi? Tüm kelimelerden kaldırılır.",
+    "addToWord": "Etiket ekle",
+    "noneToAdd": "Başka etiket yok — Etiketler sekmesinden oluştur.",
+    "all": "Tümü",
+    "filterByLabel": "Etikete göre filtrele"
+  },
+  "backend": {
+    "checking": "Backend kontrol ediliyor…",
+    "online": "Backend çalışıyor",
+    "offline": "Backend kapalı — 8010 portunda çalışıyor mu?"
+  },
+  "common": {
+    "add": "Ekle",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "search": "Ara",
+    "loading": "Yükleniyor…",
+    "empty": "Burada henüz bir şey yok",
+    "error": "Bir şeyler ters gitti",
+    "comingSoon": "Yakında"
+  }
+}

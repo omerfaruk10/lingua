@@ -1,0 +1,102 @@
+{
+  "app": {
+    "title": "Lingua",
+    "tagline": "Your language learning tracker"
+  },
+  "nav": {
+    "languages": "Languages",
+    "topics": "Topics",
+    "words": "Words",
+    "labels": "Labels",
+    "settings": "Settings"
+  },
+  "languages": {
+    "title": "Languages",
+    "subtitle": "Pick a language to work on, or add a new one.",
+    "empty": "No languages yet — add your first one below.",
+    "addTitle": "Add a language",
+    "code": "Code",
+    "codeHint": "e.g. it, es, de",
+    "name": "Name",
+    "nameHint": "e.g. Italian",
+    "nativeName": "Native name",
+    "nativeNameHint": "e.g. Italiano",
+    "create": "Add language",
+    "open": "Open",
+    "deleteConfirm": "Delete this language and all its data?"
+  },
+  "workspace": {
+    "switchLanguage": "Switch language"
+  },
+  "topics": {
+    "addTitle": "Add a topic",
+    "titlePlaceholder": "Topic title",
+    "descPlaceholder": "Description (optional)",
+    "add": "Add topic",
+    "empty": "No topics yet — add your first one below.",
+    "progress": "{{done}} / {{total}} done",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "deleteConfirm": "Delete this topic?"
+  },
+  "status": {
+    "not_started": "Not started",
+    "in_progress": "In progress",
+    "done": "Done"
+  },
+  "words": {
+    "searchPlaceholder": "Search words…",
+    "add": "Add word",
+    "addTitle": "Add a word",
+    "editTitle": "Edit word",
+    "empty": "No words yet — add your first one below.",
+    "noResults": "No words match your search.",
+    "deleteConfirm": "Delete this word?",
+    "fields": {
+      "term": "Word",
+      "part_of_speech": "Type",
+      "phonetic": "Pronunciation",
+      "phonetic_tr": "Turkish reading",
+      "meaning_native": "Meaning (TR)",
+      "meaning_english": "English",
+      "definition_target": "Definition (target language)",
+      "example_sentence": "Example sentence",
+      "example_translation": "Example translation"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "uiLanguage": "Interface language",
+    "english": "English",
+    "turkish": "Turkish"
+  },
+  "labels": {
+    "addTitle": "Add a label",
+    "namePlaceholder": "Label name",
+    "color": "Color",
+    "add": "Add label",
+    "empty": "No labels yet — add your first one below.",
+    "deleteConfirm": "Delete this label? It will be removed from all words.",
+    "addToWord": "Add label",
+    "noneToAdd": "No more labels — create them in the Labels tab.",
+    "all": "All",
+    "filterByLabel": "Filter by label"
+  },
+  "backend": {
+    "checking": "Checking backend…",
+    "online": "Backend online",
+    "offline": "Backend offline — is it running on port 8010?"
+  },
+  "common": {
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "loading": "Loading…",
+    "empty": "Nothing here yet",
+    "error": "Something went wrong",
+    "comingSoon": "Coming soon"
+  }
+}

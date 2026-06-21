@@ -16,10 +16,13 @@ pip install -r requirements.txt
 
 ## Çalıştırma
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8010
 ```
-- API: http://127.0.0.1:8000
-- İnteraktif dokümanlar (Swagger): http://127.0.0.1:8000/docs
+> Port 8010 — 8000 başka bir uygulamada kullanıldığı için. Frontend de `frontend/.env`
+> içindeki `VITE_API_URL` ile buraya bakar.
+
+- API: http://127.0.0.1:8010
+- İnteraktif dokümanlar (Swagger): http://127.0.0.1:8010/docs
 
 İlk çalıştırmada `lingua.db` otomatik oluşur.
 
