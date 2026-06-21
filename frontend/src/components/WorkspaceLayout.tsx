@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { Link, Navigate, NavLink, Outlet, useParams } from 'react-router-dom'
 
 import { useLanguage } from '../hooks/useLanguages'
+import { clearSelectedLanguageId, getSelectedLanguageId } from '../lib/selectedLanguage'
 
 export function useLanguageId(): number {
   const { languageId } = useParams()
@@ -15,14 +16,9 @@ export function WorkspaceLayout() {
 
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (isError || !language) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
-        {t('common.error')} ·{' '}
-        <Link to="/languages" className="underline">
-          {t('nav.languages')}
-        </Link>
-      </div>
-    )
+    // Secili dil silinmis/gecersiz: hatirlanan id'yi temizle, secim sayfasina don.
+    if (getSelectedLanguageId() === languageId) clearSelectedLanguageId()
+    return <Navigate to="/languages" replace />
   }
 
   const tabs = [
