@@ -1,57 +1,36 @@
 # Lingua
 
-Çok dilli dil öğrenme **takip sistemi**. AI uygulamanın içinde çalışmaz —
-sadece ilerleme takibi (konular) + kişisel kelime bankası (kelimeler + Gmail
-tarzı etiketler). Öğretim ayrı, Claude sohbetinde yapılır.
-
-Her dil kendi çalışma alanına sahiptir; birden fazla dili paralel takip
-edebilirsin (örn. İngilizce ve İtalyanca aynı anda).
+Çok dilli dil öğrenme takip sistemi. İlerleme takibi (konular) ve kişisel kelime bankası (kelimeler + etiketler) sunar.
 
 ## Sayfalar
 
-- **Diller** (`/languages`) — Ana sayfa. Takip ettiğin dillerin listesi.
-  Yeni dil ekler, sıralar (sürükle-bırak) ve birine tıklayıp çalışma alanına
-  girersin. URL'de dil kodu görünür: `/languages/en/...`.
-- **Konular** (`Topics`) — O dilde çalıştığın konuların kanban panosu:
-  _Başlamadı · Devam ediyor · Tamamlandı_. Kartları sürükleyip durumunu ve
-  sırasını değiştirebilirsin.
-- **Kelimeler** (`Words`) — Kişisel kelime bankan. Her kelimede okunuş,
-  anlam, tanım, örnek cümle ve etiketler tutulur. Etikete göre filtrelersin.
-- **Etiketler** (`Labels`) — Kelimeleri gruplamak için Gmail tarzı renkli
-  etiketler. Buradaki sıra, kelime kartlarındaki etiket sırasını da belirler.
+| Sayfa | URL | Açıklama |
+|---|---|---|
+| Diller | `/languages` | Takip edilen dillerin listesi. Sürükle-bırak ile sıralama desteklenir. |
+| Konular | `/languages/:code/topics` | Kanban panosu: Başlamadı · Devam Ediyor · Tamamlandı |
+| Kelimeler | `/languages/:code/words` | Kelime bankası. Her kayıtta okunuş, anlam, tanım, örnek cümle ve etiketler bulunur. |
+| Etiketler | `/languages/:code/labels` | Renk kodlu etiketler. Buradaki sıra, kelime kartlarındaki etiket sırasını belirler. |
 
-Arayüz dili (TR/EN/IT/ES/DE/FR) sağ üstten değiştirilebilir; öğrenilen
-dilden bağımsızdır.
+Her dil bağımsız bir çalışma alanına sahiptir. Arayüz dili (TR/EN/IT/ES/DE/FR) öğrenilen dilden bağımsız olarak değiştirilebilir.
 
-## Çalıştırma (en kolay)
-
-`start-lingua.bat` dosyasına **çift tıkla**. Backend ve frontend ayrı
-pencerelerde açılır, birkaç saniye sonra tarayıcı **http://localhost:5173**
-adresine gider.
-
-**Kapatmak:** açılan iki pencereyi kapat, ya da `stop-lingua.bat`'a çift tıkla.
-
-## Elle çalıştırma (iki terminal)
+## Çalıştırma
 
 ```powershell
-# Terminal 1 — Backend (port 8010)
+# Backend (port 8010)
 cd backend
 .\.venv\Scripts\uvicorn.exe app.main:app --port 8010
 
-# Terminal 2 — Frontend
+# Frontend
 cd frontend
 npm run dev
 ```
 
-> Backend 8010 portunda (8000 başka bir uygulamada). Frontend `frontend/.env`
-> ile oraya bağlanır.
+`start-lingua.bat` her ikisini birden başlatır.
 
-## Veri ve yedek
+## Veri
 
-Tüm verin **`backend/lingua.db`** (SQLite) dosyasına diske yazılır ve kapatıp
-açınca kalıcıdır. Yedek almak için bu **tek dosyayı** kopyalaman yeterli;
-taşımak için de onu kopyalarsın.
+Tüm veriler `backend/lingua.db` (SQLite) dosyasında saklanır. Yedek almak için bu dosyayı kopyalamak yeterlidir.
 
 ## Daha fazla
 
-Mimari, API uçları ve testler: [backend/README.md](backend/README.md)
+[backend/README.md](backend/README.md) — mimari, API uçları, testler
