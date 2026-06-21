@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { labelsApi, type LabelInput } from '../api/labels'
+import { labelsApi, type LabelInput, type LabelUpdate } from '../api/labels'
 
 function key(languageId: number) {
   return ['languages', languageId, 'labels'] as const
@@ -25,7 +25,7 @@ export function useCreateLabel(languageId: number) {
 export function useUpdateLabel(languageId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ labelId, data }: { labelId: number; data: Partial<LabelInput> }) =>
+    mutationFn: ({ labelId, data }: { labelId: number; data: LabelUpdate }) =>
       labelsApi.update(languageId, labelId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: key(languageId) }),
   })

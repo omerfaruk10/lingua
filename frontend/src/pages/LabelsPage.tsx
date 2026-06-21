@@ -73,7 +73,12 @@ export function LabelsPage() {
     if (!editingLabel || !name.trim()) return
     updateLabel.mutate(
       { labelId: editingLabel.id, data: { name: name.trim(), color } },
-      { onSuccess: () => setEditingLabel(null) },
+      {
+        onSuccess: (updated) => {
+          setLocalList((prev) => prev.map((l) => (l.id === updated.id ? updated : l)))
+          setEditingLabel(null)
+        },
+      },
     )
   }
 

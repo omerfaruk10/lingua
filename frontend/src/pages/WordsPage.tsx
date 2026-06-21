@@ -272,6 +272,11 @@ function WordCard({
   const { t } = useTranslation()
   const [picking, setPicking] = useState(false)
   const available = allLabels.filter((l) => !word.labels.some((wl) => wl.id === l.id))
+  // Kelimenin etiketlerini, Etiketler tab'indaki global sirayla goster (ekleme sirasiyla degil)
+  const order = new Map(allLabels.map((l, i) => [l.id, i]))
+  const sortedLabels = [...word.labels].sort(
+    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+  )
 
   return (
     <li className="card group p-4 transition hover:border-slate-300">
@@ -316,7 +321,7 @@ function WordCard({
 
           {/* Etiketler */}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {word.labels.map((label) => (
+            {sortedLabels.map((label) => (
               <LabelBadge key={label.id} label={label} onRemove={() => onRemoveLabel(label.id)} />
             ))}
             <LabelPicker

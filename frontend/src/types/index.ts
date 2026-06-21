@@ -27,6 +27,7 @@ export interface Label {
   language_id: number
   name: string
   color: string | null
+  order_index: number
   created_at: string
 }
 

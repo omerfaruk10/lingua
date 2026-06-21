@@ -23,4 +23,5 @@ class Label(Base):
     )
     name: Mapped[str] = mapped_column(String(100))
     color: Mapped[str | None] = mapped_column(String(20), default=None)  # opsiyonel, Gmail gibi
+    order_index: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

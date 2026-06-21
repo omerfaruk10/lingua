@@ -15,6 +15,7 @@ class LabelCreate(LabelBase):
 class LabelUpdate(BaseModel):
     name: str | None = None
     color: str | None = None
+    order_index: int | None = None
 
 
 class LabelRead(LabelBase):
@@ -22,4 +23,5 @@ class LabelRead(LabelBase):
 
     id: int
     language_id: int
+    order_index: int
     created_at: datetime

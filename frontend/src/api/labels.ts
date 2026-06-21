@@ -6,11 +6,13 @@ export interface LabelInput {
   color?: string | null
 }
 
+export type LabelUpdate = Partial<LabelInput> & { order_index?: number }
+
 export const labelsApi = {
   list: (languageId: number) => api.get<Label[]>(`/languages/${languageId}/labels`),
   create: (languageId: number, data: LabelInput) =>
     api.post<Label>(`/languages/${languageId}/labels`, data),
-  update: (languageId: number, labelId: number, data: Partial<LabelInput>) =>
+  update: (languageId: number, labelId: number, data: LabelUpdate) =>
     api.patch<Label>(`/languages/${languageId}/labels/${labelId}`, data),
   remove: (languageId: number, labelId: number) =>
     api.delete<void>(`/languages/${languageId}/labels/${labelId}`),
