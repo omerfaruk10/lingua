@@ -5,6 +5,7 @@ import type { WordInput } from '../api/words'
 import { LabelBadge } from '../components/LabelBadge'
 import { labelColor } from '../components/labelColors'
 import { useConfirm } from '../components/ConfirmProvider'
+import { Modal } from '../components/Modal'
 import { WordForm } from '../components/WordForm'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useLabels } from '../hooks/useLabels'
@@ -41,18 +42,18 @@ export function WordsPage() {
   const addLabel = useAddWordLabel(languageId)
   const removeLabel = useRemoveWordLabel(languageId)
 
-  const [adding, setAdding] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [editingWord, setEditingWord] = useState<Word | null>(null)
 
   const list = words ?? []
   const allLabels = labels ?? []
 
   function create(data: WordInput) {
-    createWord.mutate(data, { onSuccess: () => setAdding(false) })
+    createWord.mutate(data, { onSuccess: () => setAddOpen(false) })
   }
   function update(data: WordInput) {
-    if (editingId == null) return
-    updateWord.mutate({ wordId: editingId, data }, { onSuccess: () => setEditingId(null) })
+    if (!editingWord) return
+    updateWord.mutate({ wordId: editingWord.id, data }, { onSuccess: () => setEditingWord(null) })
   }
   async function remove(wordId: number) {
     const ok = await confirm({
@@ -78,17 +79,9 @@ export function WordsPage() {
             className="input pl-9"
           />
         </div>
-        {!adding && (
-          <button
-            onClick={() => {
-              setAdding(true)
-              setEditingId(null)
-            }}
-            className="btn-primary shrink-0"
-          >
-            + {t('words.add')}
-          </button>
-        )}
+        <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0">
+          + {t('words.add')}
+        </button>
       </div>
 
       {/* Etikete gore filtre */}
@@ -110,16 +103,6 @@ export function WordsPage() {
         </div>
       )}
 
-      {adding && (
-        <WordForm
-          title={t('words.addTitle')}
-          submitLabel={t('words.add')}
-          submitting={createWord.isPending}
-          onSubmit={create}
-          onCancel={() => setAdding(false)}
-        />
-      )}
-
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
@@ -131,34 +114,44 @@ export function WordsPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {list.map((word) =>
-            editingId === word.id ? (
-              <li key={word.id}>
-                <WordForm
-                  initial={word}
-                  title={t('words.editTitle')}
-                  submitLabel={t('common.save')}
-                  submitting={updateWord.isPending}
-                  onSubmit={update}
-                  onCancel={() => setEditingId(null)}
-                />
-              </li>
-            ) : (
-              <WordCard
-                key={word.id}
-                word={word}
-                allLabels={allLabels}
-                onAddLabel={(labelId) => addLabel.mutate({ wordId: word.id, labelId })}
-                onRemoveLabel={(labelId) => removeLabel.mutate({ wordId: word.id, labelId })}
-                onEdit={() => {
-                  setEditingId(word.id)
-                  setAdding(false)
-                }}
-                onDelete={() => remove(word.id)}
-              />
-            ),
-          )}
+          {list.map((word, index) => (
+            <WordCard
+              key={word.id}
+              word={word}
+              index={index + 1}
+              allLabels={allLabels}
+              onAddLabel={(labelId) => addLabel.mutate({ wordId: word.id, labelId })}
+              onRemoveLabel={(labelId) => removeLabel.mutate({ wordId: word.id, labelId })}
+              onEdit={() => setEditingWord(word)}
+              onDelete={() => remove(word.id)}
+            />
+          ))}
         </ul>
+      )}
+
+      {addOpen && (
+        <Modal title={t('words.addTitle')} onClose={() => setAddOpen(false)}>
+          <WordForm
+            bare
+            submitLabel={t('words.add')}
+            submitting={createWord.isPending}
+            onSubmit={create}
+            onCancel={() => setAddOpen(false)}
+          />
+        </Modal>
+      )}
+
+      {editingWord && (
+        <Modal title={t('words.editTitle')} onClose={() => setEditingWord(null)}>
+          <WordForm
+            bare
+            initial={editingWord}
+            submitLabel={t('common.save')}
+            submitting={updateWord.isPending}
+            onSubmit={update}
+            onCancel={() => setEditingWord(null)}
+          />
+        </Modal>
       )}
     </div>
   )
@@ -192,6 +185,7 @@ function FilterChip({
 
 function WordCard({
   word,
+  index,
   allLabels,
   onAddLabel,
   onRemoveLabel,
@@ -199,6 +193,7 @@ function WordCard({
   onDelete,
 }: {
   word: Word
+  index: number
   allLabels: Label[]
   onAddLabel: (labelId: number) => void
   onRemoveLabel: (labelId: number) => void
@@ -214,6 +209,7 @@ function WordCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-xs font-medium text-slate-400 tabular-nums">#{index}</span>
             <span className="text-lg font-semibold text-slate-900">{word.term}</span>
             {word.part_of_speech && (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">

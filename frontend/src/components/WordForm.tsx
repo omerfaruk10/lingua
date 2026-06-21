@@ -30,13 +30,15 @@ export function WordForm({
   title,
   submitLabel,
   submitting,
+  bare,
   onSubmit,
   onCancel,
 }: {
   initial?: Partial<WordInput>
-  title: string
+  title?: string
   submitLabel: string
   submitting?: boolean
+  bare?: boolean
   onSubmit: (data: WordInput) => void
   onCancel?: () => void
 }) {
@@ -59,9 +61,9 @@ export function WordForm({
     onSubmit(payload)
   }
 
-  return (
-    <form onSubmit={submit} className="card p-5">
-      <h2 className="mb-4 font-semibold text-slate-800">{title}</h2>
+  const inner = (
+    <>
+      {title && <h2 className="mb-4 font-semibold text-slate-800">{title}</h2>}
       <div className="grid gap-3 sm:grid-cols-2">
         {FIELDS.map((f) => (
           <label key={f.name} className={`block ${f.wide ? 'sm:col-span-2' : ''}`}>
@@ -96,6 +98,12 @@ export function WordForm({
           </button>
         )}
       </div>
-    </form>
+    </>
+  )
+
+  return bare ? (
+    <form onSubmit={submit}>{inner}</form>
+  ) : (
+    <form onSubmit={submit} className="card p-5">{inner}</form>
   )
 }

@@ -24,7 +24,7 @@ def get_words(
         )
     if label_id is not None:
         stmt = stmt.where(Word.labels.any(Label.id == label_id))
-    stmt = stmt.order_by(Word.created_at.desc(), Word.id.desc())  # en yeni ustte
+    stmt = stmt.order_by(Word.created_at.asc(), Word.id.asc())  # en eski altta, yeni en alta eklenir
     return list(db.scalars(stmt))
 
 

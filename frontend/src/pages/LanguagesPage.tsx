@@ -1,3 +1,7 @@
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -31,19 +35,19 @@ export function LanguagesPage() {
 
   const list = languages ?? []
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
   function open(id: number) {
     setSelectedLanguageId(id)
     navigate(`/lang/${id}/topics`)
   }
 
-  function move(index: number, dir: -1 | 1) {
-    const j = index + dir
-    if (j < 0 || j >= list.length) return
-    // Yeni sirayi olustur, sonra herkesi pozisyonuna gore yeniden indeksle.
-    // (Goçten gelen esit order_index'lerde de dogru calisir.)
-    const reordered = [...list]
-    const [item] = reordered.splice(index, 1)
-    reordered.splice(j, 0, item)
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = list.findIndex((l) => l.id === active.id)
+    const newIndex = list.findIndex((l) => l.id === over.id)
+    const reordered = arrayMove(list, oldIndex, newIndex)
     reordered.forEach((lang, pos) => {
       if (lang.order_index !== pos) updateLang.mutate({ id: lang.id, data: { order_index: pos } })
     })
@@ -73,10 +77,7 @@ export function LanguagesPage() {
               {manage ? t('languages.done') : t('languages.manage')}
             </button>
           )}
-          <button
-            onClick={() => setAddOpen(true)}
-            className="btn-primary px-3 py-2"
-          >
+          <button onClick={() => setAddOpen(true)} className="btn-primary px-3 py-2">
             + {t('languages.create')}
           </button>
         </div>
@@ -90,44 +91,21 @@ export function LanguagesPage() {
           <p className="text-slate-400">{t('languages.empty')}</p>
         </div>
       ) : manage ? (
-        <ul className="space-y-2">
-          {list.map((lang, index) => (
-            <li
-              key={lang.id}
-              className="card flex items-center gap-3 p-3 transition hover:border-slate-300"
-            >
-              <div className="flex flex-col text-xs text-slate-300">
-                <button
-                  onClick={() => move(index, -1)}
-                  disabled={index === 0}
-                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
-                  title={t('languages.moveUp')}
-                >
-                  ▲
-                </button>
-                <button
-                  onClick={() => move(index, 1)}
-                  disabled={index === list.length - 1}
-                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
-                  title={t('languages.moveDown')}
-                >
-                  ▼
-                </button>
-              </div>
-              <Monogram code={lang.code} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold text-slate-800">{lang.name}</div>
-                <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
-              </div>
-              <button onClick={() => setEditing(lang)} className="btn-icon" title={t('common.edit')}>
-                ✎
-              </button>
-              <button onClick={() => remove(lang)} className="btn-icon-danger" title={t('common.delete')}>
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={list.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+            <ul className="space-y-2">
+              {list.map((lang) => (
+                <SortableLangRow
+                  key={lang.id}
+                  lang={lang}
+                  onEdit={() => setEditing(lang)}
+                  onDelete={() => remove(lang)}
+                  t={t}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {list.map((lang) => (
@@ -174,6 +152,55 @@ export function LanguagesPage() {
         </Modal>
       )}
     </div>
+  )
+}
+
+function SortableLangRow({
+  lang,
+  onEdit,
+  onDelete,
+  t,
+}: {
+  lang: Language
+  onEdit: () => void
+  onDelete: () => void
+  t: (key: string) => string
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: lang.id,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="card flex items-center gap-3 p-3 transition hover:border-slate-300"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab touch-none text-lg leading-none text-slate-300 hover:text-violet-500 active:cursor-grabbing"
+        title="Sürükle"
+      >
+        ⠿
+      </button>
+      <Monogram code={lang.code} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+        <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
+      </div>
+      <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
+        ✎
+      </button>
+      <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>
+        ✕
+      </button>
+    </li>
   )
 }
 

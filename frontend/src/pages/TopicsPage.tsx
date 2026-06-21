@@ -1,10 +1,15 @@
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useConfirm } from '../components/ConfirmProvider'
+import { Modal } from '../components/Modal'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useCreateTopic, useDeleteTopic, useTopics, useUpdateTopic } from '../hooks/useTopics'
-import type { TopicStatus } from '../types'
+import type { Topic, TopicStatus } from '../types'
 
 const NEXT_STATUS: Record<TopicStatus, TopicStatus> = {
   not_started: 'in_progress',
@@ -27,21 +32,25 @@ export function TopicsPage() {
   const updateTopic = useUpdateTopic(languageId)
   const deleteTopic = useDeleteTopic(languageId)
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [addOpen, setAddOpen] = useState(false)
+  const [addTitle, setAddTitle] = useState('')
+  const [addDesc, setAddDesc] = useState('')
 
   const list = topics ?? []
   const doneCount = list.filter((x) => x.status === 'done').length
 
-  function submit(e: React.FormEvent) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  function submitAdd(e: React.FormEvent) {
     e.preventDefault()
-    if (!title.trim()) return
+    if (!addTitle.trim()) return
     createTopic.mutate(
-      { title: title.trim(), description: description.trim() || null, order_index: list.length },
+      { title: addTitle.trim(), description: addDesc.trim() || null, order_index: list.length },
       {
         onSuccess: () => {
-          setTitle('')
-          setDescription('')
+          setAddTitle('')
+          setAddDesc('')
+          setAddOpen(false)
         },
       },
     )
@@ -51,13 +60,16 @@ export function TopicsPage() {
     updateTopic.mutate({ topicId, data: { status: NEXT_STATUS[current] } })
   }
 
-  function move(index: number, dir: -1 | 1) {
-    const j = index + dir
-    if (j < 0 || j >= list.length) return
-    const a = list[index]
-    const b = list[j]
-    updateTopic.mutate({ topicId: a.id, data: { order_index: b.order_index } })
-    updateTopic.mutate({ topicId: b.id, data: { order_index: a.order_index } })
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = list.findIndex((t) => t.id === active.id)
+    const newIndex = list.findIndex((t) => t.id === over.id)
+    const reordered = arrayMove(list, oldIndex, newIndex)
+    reordered.forEach((topic, pos) => {
+      if (topic.order_index !== pos)
+        updateTopic.mutate({ topicId: topic.id, data: { order_index: pos } })
+    })
   }
 
   async function remove(topicId: number) {
@@ -71,19 +83,24 @@ export function TopicsPage() {
 
   return (
     <div className="space-y-5">
-      {list.length > 0 && (
-        <div className="flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/70">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all duration-500"
-              style={{ width: `${(doneCount / list.length) * 100}%` }}
-            />
+      <div className="flex items-center justify-between gap-3">
+        {list.length > 0 && (
+          <div className="flex flex-1 items-center gap-3">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/70">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all duration-500"
+                style={{ width: `${(doneCount / list.length) * 100}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-sm font-medium text-slate-500">
+              {t('topics.progress', { done: doneCount, total: list.length })}
+            </span>
           </div>
-          <span className="text-sm font-medium text-slate-500">
-            {t('topics.progress', { done: doneCount, total: list.length })}
-          </span>
-        </div>
-      )}
+        )}
+        <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0 px-3 py-2">
+          + {t('topics.add')}
+        </button>
+      </div>
 
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
@@ -93,82 +110,119 @@ export function TopicsPage() {
           <p className="text-slate-400">{t('topics.empty')}</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {list.map((topic, index) => (
-            <li
-              key={topic.id}
-              className="card group flex items-center gap-3 p-3.5 transition hover:border-slate-300"
-            >
-              <div className="flex flex-col text-xs text-slate-300">
-                <button
-                  onClick={() => move(index, -1)}
-                  disabled={index === 0}
-                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
-                  title={t('topics.moveUp')}
-                >
-                  ▲
-                </button>
-                <button
-                  onClick={() => move(index, 1)}
-                  disabled={index === list.length - 1}
-                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
-                  title={t('topics.moveDown')}
-                >
-                  ▼
-                </button>
-              </div>
-
-              <button
-                onClick={() => cycleStatus(topic.id, topic.status)}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${STATUS_STYLE[topic.status]}`}
-              >
-                {t(`status.${topic.status}`)}
-              </button>
-
-              <div className="flex-1">
-                <div
-                  className={`font-medium transition ${topic.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}
-                >
-                  {topic.title}
-                </div>
-                {topic.description && (
-                  <div className="text-sm text-slate-500">{topic.description}</div>
-                )}
-              </div>
-
-              <button
-                onClick={() => remove(topic.id)}
-                className="btn-icon-danger opacity-0 transition group-hover:opacity-100"
-                title={t('common.delete')}
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={list.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            <ul className="space-y-2">
+              {list.map((topic) => (
+                <SortableTopicRow
+                  key={topic.id}
+                  topic={topic}
+                  onCycleStatus={() => cycleStatus(topic.id, topic.status)}
+                  onDelete={() => remove(topic.id)}
+                  t={t}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
       )}
 
-      {/* Konu ekleme */}
-      <form onSubmit={submit} className="card p-4">
-        <h2 className="mb-3 font-semibold text-slate-800">{t('topics.addTitle')}</h2>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={t('topics.titlePlaceholder')}
-            className="input flex-1"
-          />
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t('topics.descPlaceholder')}
-            className="input flex-1"
-          />
-          <button type="submit" disabled={createTopic.isPending} className="btn-primary">
-            {t('topics.add')}
-          </button>
-        </div>
-      </form>
+      {addOpen && (
+        <Modal title={t('topics.addTitle')} onClose={() => setAddOpen(false)}>
+          <form onSubmit={submitAdd} className="space-y-3">
+            <div>
+              <label className="block">
+                <span className="field-label">{t('topics.titlePlaceholder')}</span>
+                <input
+                  value={addTitle}
+                  onChange={(e) => setAddTitle(e.target.value)}
+                  placeholder={t('topics.titlePlaceholder')}
+                  className="input"
+                  autoFocus
+                />
+              </label>
+            </div>
+            <div>
+              <label className="block">
+                <span className="field-label">{t('topics.descPlaceholder')}</span>
+                <input
+                  value={addDesc}
+                  onChange={(e) => setAddDesc(e.target.value)}
+                  placeholder={t('topics.descPlaceholder')}
+                  className="input"
+                />
+              </label>
+            </div>
+            <button type="submit" disabled={createTopic.isPending} className="btn-primary w-full">
+              {t('topics.add')}
+            </button>
+          </form>
+        </Modal>
+      )}
     </div>
+  )
+}
+
+function SortableTopicRow({
+  topic,
+  onCycleStatus,
+  onDelete,
+  t,
+}: {
+  topic: Topic
+  onCycleStatus: () => void
+  onDelete: () => void
+  t: (key: string) => string
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: topic.id,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="card group flex items-center gap-3 p-3.5 transition hover:border-slate-300"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab touch-none text-lg leading-none text-slate-300 hover:text-violet-500 active:cursor-grabbing"
+        title="Sürükle"
+      >
+        ⠿
+      </button>
+
+      <button
+        onClick={onCycleStatus}
+        className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${STATUS_STYLE[topic.status]}`}
+      >
+        {t(`status.${topic.status}`)}
+      </button>
+
+      <div className="flex-1">
+        <div
+          className={`font-medium transition ${topic.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}
+        >
+          {topic.title}
+        </div>
+        {topic.description && (
+          <div className="text-sm text-slate-500">{topic.description}</div>
+        )}
+      </div>
+
+      <button
+        onClick={onDelete}
+        className="btn-icon-danger opacity-0 transition group-hover:opacity-100"
+        title={t('common.delete')}
+      >
+        ✕
+      </button>
+    </li>
   )
 }
