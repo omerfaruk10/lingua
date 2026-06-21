@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { WordInput } from '../api/words'
 import { LabelBadge } from '../components/LabelBadge'
 import { labelColor } from '../components/labelColors'
+import { useConfirm } from '../components/ConfirmProvider'
 import { WordForm } from '../components/WordForm'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useLabels } from '../hooks/useLabels'
@@ -19,6 +20,7 @@ import type { Label, Word } from '../types'
 
 export function WordsPage() {
   const { t } = useTranslation()
+  const confirm = useConfirm()
   const languageId = useLanguageId()
   const [search, setSearch] = useState('')
   const [labelFilter, setLabelFilter] = useState<number | null>(null)
@@ -52,8 +54,13 @@ export function WordsPage() {
     if (editingId == null) return
     updateWord.mutate({ wordId: editingId, data }, { onSuccess: () => setEditingId(null) })
   }
-  function remove(wordId: number) {
-    if (confirm(t('words.deleteConfirm'))) deleteWord.mutate(wordId)
+  async function remove(wordId: number) {
+    const ok = await confirm({
+      message: t('words.deleteConfirm'),
+      confirmLabel: t('common.delete'),
+      danger: true,
+    })
+    if (ok) deleteWord.mutate(wordId)
   }
 
   return (

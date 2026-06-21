@@ -1,7 +1,7 @@
 import os
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -37,3 +37,20 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def ensure_schema() -> None:
+    """Hafif otomatik gocum: var olan DB'de eksik kolonlari ekler (veri korunur).
+
+    create_all yeni tablolari kurar ama mevcut tablolara kolon eklemez; SRS/Alembic
+    gelene kadar bu kucuk yardimci tek tek eklemeleri ustlenir.
+    """
+    inspector = inspect(engine)
+    if "languages" not in inspector.get_table_names():
+        return
+    cols = {c["name"] for c in inspector.get_columns("languages")}
+    if "order_index" not in cols:
+        with engine.begin() as conn:
+            conn.execute(
+                text("ALTER TABLE languages ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0")
+            )

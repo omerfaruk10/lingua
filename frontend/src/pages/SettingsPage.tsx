@@ -2,7 +2,14 @@ import { useTranslation } from 'react-i18next'
 
 import { setUiLang, SUPPORTED_LANGS, type UiLang } from '../i18n'
 
-const LABEL_KEY: Record<UiLang, string> = { en: 'settings.english', tr: 'settings.turkish' }
+const LABEL_KEY: Record<UiLang, string> = {
+  en: 'settings.english',
+  tr: 'settings.turkish',
+  it: 'settings.italian',
+  es: 'settings.spanish',
+  de: 'settings.german',
+  fr: 'settings.french',
+}
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation()
@@ -14,7 +21,7 @@ export function SettingsPage() {
 
       <div className="card p-5">
         <h2 className="mb-3 font-semibold text-slate-800">{t('settings.uiLanguage')}</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {SUPPORTED_LANGS.map((lang) => (
             <button
               key={lang}

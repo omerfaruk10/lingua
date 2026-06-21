@@ -2,57 +2,141 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
-import { useCreateLanguage, useDeleteLanguage, useLanguages } from '../hooks/useLanguages'
+import type { LanguageInput } from '../api/languages'
+import { useConfirm } from '../components/ConfirmProvider'
+import { Modal } from '../components/Modal'
+import {
+  useCreateLanguage,
+  useDeleteLanguage,
+  useLanguages,
+  useUpdateLanguage,
+} from '../hooks/useLanguages'
 import { setSelectedLanguageId } from '../lib/selectedLanguage'
+import type { Language } from '../types'
 
-const EMPTY = { code: '', name: '', native_name: '' }
+const EMPTY: LanguageInput = { code: '', name: '', native_name: '' }
 
 export function LanguagesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const confirm = useConfirm()
   const { data: languages, isLoading } = useLanguages()
   const createLang = useCreateLanguage()
+  const updateLang = useUpdateLanguage()
   const deleteLang = useDeleteLanguage()
-  const [form, setForm] = useState(EMPTY)
+
+  const [manage, setManage] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [editing, setEditing] = useState<Language | null>(null)
+
+  const list = languages ?? []
 
   function open(id: number) {
     setSelectedLanguageId(id)
     navigate(`/lang/${id}/topics`)
   }
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.code.trim() || !form.name.trim() || !form.native_name.trim()) return
-    createLang.mutate(form, { onSuccess: () => setForm(EMPTY) })
+  function move(index: number, dir: -1 | 1) {
+    const j = index + dir
+    if (j < 0 || j >= list.length) return
+    // Yeni sirayi olustur, sonra herkesi pozisyonuna gore yeniden indeksle.
+    // (Goçten gelen esit order_index'lerde de dogru calisir.)
+    const reordered = [...list]
+    const [item] = reordered.splice(index, 1)
+    reordered.splice(j, 0, item)
+    reordered.forEach((lang, pos) => {
+      if (lang.order_index !== pos) updateLang.mutate({ id: lang.id, data: { order_index: pos } })
+    })
   }
 
-  function remove(e: React.MouseEvent, id: number) {
-    e.stopPropagation()
-    if (confirm(t('languages.deleteConfirm'))) deleteLang.mutate(id)
+  async function remove(lang: Language) {
+    const ok = await confirm({
+      message: t('languages.deleteConfirm', { name: lang.name }),
+      confirmLabel: t('common.delete'),
+      danger: true,
+    })
+    if (ok) deleteLang.mutate(lang.id)
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          {t('languages.title')}
-        </h1>
-        <p className="mt-1 text-slate-500">{t('languages.subtitle')}</p>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            {t('languages.title')}
+          </h1>
+          <p className="mt-1 text-slate-500">{t('languages.subtitle')}</p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {list.length > 0 && (
+            <button onClick={() => setManage((m) => !m)} className="btn-ghost px-3 py-2">
+              {manage ? t('languages.done') : t('languages.manage')}
+            </button>
+          )}
+          <button
+            onClick={() => setAddOpen(true)}
+            className="btn-primary px-3 py-2"
+          >
+            + {t('languages.create')}
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
-      ) : languages && languages.length > 0 ? (
+      ) : list.length === 0 ? (
+        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+          <span className="text-3xl">🌍</span>
+          <p className="text-slate-400">{t('languages.empty')}</p>
+        </div>
+      ) : manage ? (
+        <ul className="space-y-2">
+          {list.map((lang, index) => (
+            <li
+              key={lang.id}
+              className="card flex items-center gap-3 p-3 transition hover:border-slate-300"
+            >
+              <div className="flex flex-col text-xs text-slate-300">
+                <button
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
+                  title={t('languages.moveUp')}
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => move(index, 1)}
+                  disabled={index === list.length - 1}
+                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
+                  title={t('languages.moveDown')}
+                >
+                  ▼
+                </button>
+              </div>
+              <Monogram code={lang.code} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+                <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
+              </div>
+              <button onClick={() => setEditing(lang)} className="btn-icon" title={t('common.edit')}>
+                ✎
+              </button>
+              <button onClick={() => remove(lang)} className="btn-icon-danger" title={t('common.delete')}>
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {languages.map((lang) => (
+          {list.map((lang) => (
             <li
               key={lang.id}
               onClick={() => open(lang.id)}
               className="card group flex cursor-pointer items-center gap-3.5 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.05),0_16px_32px_-16px_rgba(124,108,240,0.30)]"
             >
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-100 to-indigo-100 text-sm font-semibold uppercase text-violet-600">
-                {lang.code.slice(0, 2)}
-              </span>
+              <Monogram code={lang.code} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold text-slate-800">{lang.name}</div>
                 <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
@@ -60,54 +144,103 @@ export function LanguagesPage() {
               <span className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-violet-500">
                 →
               </span>
-              <button
-                onClick={(e) => remove(e, lang.id)}
-                className="btn-icon-danger opacity-0 transition group-hover:opacity-100"
-                title={t('common.delete')}
-              >
-                ✕
-              </button>
             </li>
           ))}
         </ul>
-      ) : (
-        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
-          <span className="text-3xl">🌍</span>
-          <p className="text-slate-400">{t('languages.empty')}</p>
-        </div>
       )}
 
-      {/* Yeni dil ekleme */}
-      <form onSubmit={submit} className="card p-5">
-        <h2 className="mb-4 font-semibold text-slate-800">{t('languages.addTitle')}</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field
-            label={t('languages.code')}
-            hint={t('languages.codeHint')}
-            value={form.code}
-            onChange={(v) => setForm((f) => ({ ...f, code: v }))}
+      {addOpen && (
+        <Modal title={t('languages.addTitle')} onClose={() => setAddOpen(false)}>
+          <LanguageForm
+            submitLabel={t('languages.create')}
+            submitting={createLang.isPending}
+            error={createLang.error}
+            onSubmit={(data) => createLang.mutate(data, { onSuccess: () => setAddOpen(false) })}
           />
-          <Field
-            label={t('languages.name')}
-            hint={t('languages.nameHint')}
-            value={form.name}
-            onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+        </Modal>
+      )}
+
+      {editing && (
+        <Modal title={t('languages.editTitle')} onClose={() => setEditing(null)}>
+          <LanguageForm
+            initial={editing}
+            submitLabel={t('common.save')}
+            submitting={updateLang.isPending}
+            error={updateLang.error}
+            onSubmit={(data) =>
+              updateLang.mutate({ id: editing.id, data }, { onSuccess: () => setEditing(null) })
+            }
           />
-          <Field
-            label={t('languages.nativeName')}
-            hint={t('languages.nativeNameHint')}
-            value={form.native_name}
-            onChange={(v) => setForm((f) => ({ ...f, native_name: v }))}
-          />
-        </div>
-        {createLang.isError && (
-          <p className="mt-3 text-sm text-red-500">{(createLang.error as Error).message}</p>
-        )}
-        <button type="submit" disabled={createLang.isPending} className="btn-primary mt-4">
-          {t('languages.create')}
-        </button>
-      </form>
+        </Modal>
+      )}
     </div>
+  )
+}
+
+function Monogram({ code }: { code: string }) {
+  return (
+    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-100 to-indigo-100 text-sm font-semibold uppercase text-violet-600">
+      {code.slice(0, 2)}
+    </span>
+  )
+}
+
+function LanguageForm({
+  initial,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+}: {
+  initial?: Language
+  submitLabel: string
+  submitting: boolean
+  error: unknown
+  onSubmit: (data: LanguageInput) => void
+}) {
+  const { t } = useTranslation()
+  const [form, setForm] = useState<LanguageInput>(
+    initial
+      ? { code: initial.code, name: initial.name, native_name: initial.native_name }
+      : EMPTY,
+  )
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.code.trim() || !form.name.trim() || !form.native_name.trim()) return
+    onSubmit({
+      code: form.code.trim(),
+      name: form.name.trim(),
+      native_name: form.native_name.trim(),
+    })
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <Field
+        label={t('languages.code')}
+        hint={t('languages.codeHint')}
+        value={form.code}
+        onChange={(v) => setForm((f) => ({ ...f, code: v }))}
+        autoFocus
+      />
+      <Field
+        label={t('languages.name')}
+        hint={t('languages.nameHint')}
+        value={form.name}
+        onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+      />
+      <Field
+        label={t('languages.nativeName')}
+        hint={t('languages.nativeNameHint')}
+        value={form.native_name}
+        onChange={(v) => setForm((f) => ({ ...f, native_name: v }))}
+      />
+      {error != null && <p className="text-sm text-red-500">{(error as Error).message}</p>}
+      <button type="submit" disabled={submitting} className="btn-primary w-full">
+        {submitLabel}
+      </button>
+    </form>
   )
 }
 
@@ -116,16 +249,24 @@ function Field({
   hint,
   value,
   onChange,
+  autoFocus,
 }: {
   label: string
   hint: string
   value: string
   onChange: (v: string) => void
+  autoFocus?: boolean
 }) {
   return (
     <label className="block">
       <span className="field-label">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={hint} className="input" />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={hint}
+        autoFocus={autoFocus}
+        className="input"
+      />
     </label>
   )
 }

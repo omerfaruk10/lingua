@@ -23,7 +23,12 @@
     "nativeNameHint": "örn. Italiano",
     "create": "Dil ekle",
     "open": "Aç",
-    "deleteConfirm": "Bu dil ve tüm verisi silinsin mi?"
+    "manage": "Düzenle",
+    "done": "Bitti",
+    "editTitle": "Dili düzenle",
+    "moveUp": "Yukarı taşı",
+    "moveDown": "Aşağı taşı",
+    "deleteConfirm": "\"{{name}}\" ve tüm verisi (konular, kelimeler, etiketler) silinsin mi?"
   },
   "workspace": {
     "switchLanguage": "Dil değiştir"
@@ -68,7 +73,11 @@
     "title": "Ayarlar",
     "uiLanguage": "Arayüz dili",
     "english": "İngilizce",
-    "turkish": "Türkçe"
+    "turkish": "Türkçe",
+    "italian": "İtalyanca",
+    "spanish": "İspanyolca",
+    "german": "Almanca",
+    "french": "Fransızca"
   },
   "labels": {
     "addTitle": "Etiket ekle",
@@ -97,6 +106,9 @@
     "loading": "Yükleniyor…",
     "empty": "Burada henüz bir şey yok",
     "error": "Bir şeyler ters gitti",
-    "comingSoon": "Yakında"
+    "comingSoon": "Yakında",
+    "yes": "Evet",
+    "no": "Hayır",
+    "confirmTitle": "Emin misin?"
   }
 }

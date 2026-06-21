@@ -1,0 +1,114 @@
+{
+  "app": {
+    "title": "Lingua",
+    "tagline": "Dein Tracker zum Sprachenlernen"
+  },
+  "nav": {
+    "languages": "Sprachen",
+    "topics": "Themen",
+    "words": "Wörter",
+    "labels": "Labels",
+    "settings": "Einstellungen"
+  },
+  "languages": {
+    "title": "Sprachen",
+    "subtitle": "Wähle eine Sprache zum Arbeiten oder füge eine neue hinzu.",
+    "empty": "Noch keine Sprachen — füge unten die erste hinzu.",
+    "addTitle": "Sprache hinzufügen",
+    "code": "Code",
+    "codeHint": "z. B. it, es, de",
+    "name": "Name",
+    "nameHint": "z. B. Italienisch",
+    "nativeName": "Eigenname",
+    "nativeNameHint": "z. B. Italiano",
+    "create": "Sprache hinzufügen",
+    "open": "Öffnen",
+    "manage": "Verwalten",
+    "done": "Fertig",
+    "editTitle": "Sprache bearbeiten",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "deleteConfirm": "\"{{name}}\" und alle Daten (Themen, Wörter, Labels) löschen?"
+  },
+  "workspace": {
+    "switchLanguage": "Sprache wechseln"
+  },
+  "topics": {
+    "addTitle": "Thema hinzufügen",
+    "titlePlaceholder": "Thementitel",
+    "descPlaceholder": "Beschreibung (optional)",
+    "add": "Thema hinzufügen",
+    "empty": "Noch keine Themen — füge unten das erste hinzu.",
+    "progress": "{{done}} / {{total}} erledigt",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "deleteConfirm": "Dieses Thema löschen?"
+  },
+  "status": {
+    "not_started": "Nicht begonnen",
+    "in_progress": "In Bearbeitung",
+    "done": "Erledigt"
+  },
+  "words": {
+    "searchPlaceholder": "Wörter suchen…",
+    "add": "Wort hinzufügen",
+    "addTitle": "Ein Wort hinzufügen",
+    "editTitle": "Wort bearbeiten",
+    "empty": "Noch keine Wörter — füge unten das erste hinzu.",
+    "noResults": "Keine Wörter passen zur Suche.",
+    "deleteConfirm": "Dieses Wort löschen?",
+    "fields": {
+      "term": "Wort",
+      "part_of_speech": "Art",
+      "phonetic": "Aussprache",
+      "phonetic_tr": "Türkische Lesung",
+      "meaning_native": "Bedeutung (TR)",
+      "meaning_english": "Englisch",
+      "definition_target": "Definition (Zielsprache)",
+      "example_sentence": "Beispielsatz",
+      "example_translation": "Übersetzung des Beispiels"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "uiLanguage": "Sprache der Oberfläche",
+    "english": "Englisch",
+    "turkish": "Türkisch",
+    "italian": "Italienisch",
+    "spanish": "Spanisch",
+    "german": "Deutsch",
+    "french": "Französisch"
+  },
+  "labels": {
+    "addTitle": "Label hinzufügen",
+    "namePlaceholder": "Labelname",
+    "color": "Farbe",
+    "add": "Label hinzufügen",
+    "empty": "Noch keine Labels — füge unten das erste hinzu.",
+    "deleteConfirm": "Dieses Label löschen? Es wird von allen Wörtern entfernt.",
+    "addToWord": "Label hinzufügen",
+    "noneToAdd": "Keine weiteren Labels — erstelle sie im Tab Labels.",
+    "all": "Alle",
+    "filterByLabel": "Nach Label filtern"
+  },
+  "backend": {
+    "checking": "Backend wird geprüft…",
+    "online": "Backend online",
+    "offline": "Backend offline — läuft es auf Port 8010?"
+  },
+  "common": {
+    "add": "Hinzufügen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "search": "Suchen",
+    "loading": "Lädt…",
+    "empty": "Hier ist noch nichts",
+    "error": "Etwas ist schiefgelaufen",
+    "comingSoon": "Demnächst",
+    "yes": "Ja",
+    "no": "Nein",
+    "confirmTitle": "Bist du sicher?"
+  }
+}

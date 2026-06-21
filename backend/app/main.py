@@ -4,12 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401 -- modelleri Base.metadata'ya kaydeder
-from app.database import Base, engine
+from app.database import Base, engine, ensure_schema
 from app.routers import labels, languages, topics, words
 
 # Iskelet asamasi: tablolari dogrudan olustur.
 # SRS alanlari eklerken sema degisecegi icin ileride Alembic (migration) gelecek.
 Base.metadata.create_all(bind=engine)
+ensure_schema()  # var olan DB'ye eksik kolonlari ekle (veri korunur)
 
 app = FastAPI(title="Lingua API", version="0.1.0")
 

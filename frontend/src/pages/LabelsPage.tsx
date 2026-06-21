@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useConfirm } from '../components/ConfirmProvider'
 import { LabelBadge } from '../components/LabelBadge'
 import { LABEL_PALETTE } from '../components/labelColors'
 import { useLanguageId } from '../components/WorkspaceLayout'
@@ -28,6 +29,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 
 export function LabelsPage() {
   const { t } = useTranslation()
+  const confirm = useConfirm()
   const languageId = useLanguageId()
   const { data: labels, isLoading } = useLabels(languageId)
   const createLabel = useCreateLabel(languageId)
@@ -46,8 +48,13 @@ export function LabelsPage() {
     createLabel.mutate({ name: name.trim(), color }, { onSuccess: () => setName('') })
   }
 
-  function remove(id: number) {
-    if (confirm(t('labels.deleteConfirm'))) deleteLabel.mutate(id)
+  async function remove(id: number) {
+    const ok = await confirm({
+      message: t('labels.deleteConfirm'),
+      confirmLabel: t('common.delete'),
+      danger: true,
+    })
+    if (ok) deleteLabel.mutate(id)
   }
 
   return (

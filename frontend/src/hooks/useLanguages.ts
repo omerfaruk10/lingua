@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { languagesApi, type LanguageInput } from '../api/languages'
+import { languagesApi, type LanguageInput, type LanguageUpdate } from '../api/languages'
 
 const KEY = ['languages']
 
@@ -20,6 +20,15 @@ export function useCreateLanguage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: LanguageInput) => languagesApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+export function useUpdateLanguage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: LanguageUpdate }) =>
+      languagesApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
 }

@@ -23,7 +23,12 @@
     "nativeNameHint": "e.g. Italiano",
     "create": "Add language",
     "open": "Open",
-    "deleteConfirm": "Delete this language and all its data?"
+    "manage": "Manage",
+    "done": "Done",
+    "editTitle": "Edit language",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "deleteConfirm": "Delete \"{{name}}\" and all its data (topics, words, labels)?"
   },
   "workspace": {
     "switchLanguage": "Switch language"
@@ -68,7 +73,11 @@
     "title": "Settings",
     "uiLanguage": "Interface language",
     "english": "English",
-    "turkish": "Turkish"
+    "turkish": "Turkish",
+    "italian": "Italian",
+    "spanish": "Spanish",
+    "german": "German",
+    "french": "French"
   },
   "labels": {
     "addTitle": "Add a label",
@@ -97,6 +106,9 @@
     "loading": "Loading…",
     "empty": "Nothing here yet",
     "error": "Something went wrong",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "yes": "Yes",
+    "no": "No",
+    "confirmTitle": "Are you sure?"
   }
 }

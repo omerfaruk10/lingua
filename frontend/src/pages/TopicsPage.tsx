@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useConfirm } from '../components/ConfirmProvider'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useCreateTopic, useDeleteTopic, useTopics, useUpdateTopic } from '../hooks/useTopics'
 import type { TopicStatus } from '../types'
@@ -19,6 +20,7 @@ const STATUS_STYLE: Record<TopicStatus, string> = {
 
 export function TopicsPage() {
   const { t } = useTranslation()
+  const confirm = useConfirm()
   const languageId = useLanguageId()
   const { data: topics, isLoading } = useTopics(languageId)
   const createTopic = useCreateTopic(languageId)
@@ -58,8 +60,13 @@ export function TopicsPage() {
     updateTopic.mutate({ topicId: b.id, data: { order_index: a.order_index } })
   }
 
-  function remove(topicId: number) {
-    if (confirm(t('topics.deleteConfirm'))) deleteTopic.mutate(topicId)
+  async function remove(topicId: number) {
+    const ok = await confirm({
+      message: t('topics.deleteConfirm'),
+      confirmLabel: t('common.delete'),
+      danger: true,
+    })
+    if (ok) deleteTopic.mutate(topicId)
   }
 
   return (

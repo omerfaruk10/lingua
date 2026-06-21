@@ -5,6 +5,7 @@ export interface Language {
   code: string
   name: string
   native_name: string
+  order_index: number
   created_at: string
 }
 

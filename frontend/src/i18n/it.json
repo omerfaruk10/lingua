@@ -1,0 +1,114 @@
+{
+  "app": {
+    "title": "Lingua",
+    "tagline": "Il tuo tracker per imparare le lingue"
+  },
+  "nav": {
+    "languages": "Lingue",
+    "topics": "Argomenti",
+    "words": "Parole",
+    "labels": "Etichette",
+    "settings": "Impostazioni"
+  },
+  "languages": {
+    "title": "Lingue",
+    "subtitle": "Scegli una lingua su cui lavorare o aggiungine una nuova.",
+    "empty": "Ancora nessuna lingua — aggiungi la prima qui sotto.",
+    "addTitle": "Aggiungi una lingua",
+    "code": "Codice",
+    "codeHint": "es. it, es, de",
+    "name": "Nome",
+    "nameHint": "es. Italiano",
+    "nativeName": "Nome nativo",
+    "nativeNameHint": "es. Italiano",
+    "create": "Aggiungi lingua",
+    "open": "Apri",
+    "manage": "Gestisci",
+    "done": "Fatto",
+    "editTitle": "Modifica lingua",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "deleteConfirm": "Eliminare \"{{name}}\" e tutti i suoi dati (argomenti, parole, etichette)?"
+  },
+  "workspace": {
+    "switchLanguage": "Cambia lingua"
+  },
+  "topics": {
+    "addTitle": "Aggiungi un argomento",
+    "titlePlaceholder": "Titolo argomento",
+    "descPlaceholder": "Descrizione (facoltativa)",
+    "add": "Aggiungi argomento",
+    "empty": "Ancora nessun argomento — aggiungi il primo qui sotto.",
+    "progress": "{{done}} / {{total}} completati",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "deleteConfirm": "Eliminare questo argomento?"
+  },
+  "status": {
+    "not_started": "Non iniziato",
+    "in_progress": "In corso",
+    "done": "Completato"
+  },
+  "words": {
+    "searchPlaceholder": "Cerca parole…",
+    "add": "Aggiungi parola",
+    "addTitle": "Aggiungi una parola",
+    "editTitle": "Modifica parola",
+    "empty": "Ancora nessuna parola — aggiungi la prima qui sotto.",
+    "noResults": "Nessuna parola corrisponde alla ricerca.",
+    "deleteConfirm": "Eliminare questa parola?",
+    "fields": {
+      "term": "Parola",
+      "part_of_speech": "Tipo",
+      "phonetic": "Pronuncia",
+      "phonetic_tr": "Lettura turca",
+      "meaning_native": "Significato (TR)",
+      "meaning_english": "Inglese",
+      "definition_target": "Definizione (lingua di studio)",
+      "example_sentence": "Frase di esempio",
+      "example_translation": "Traduzione dell'esempio"
+    }
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "uiLanguage": "Lingua dell'interfaccia",
+    "english": "Inglese",
+    "turkish": "Turco",
+    "italian": "Italiano",
+    "spanish": "Spagnolo",
+    "german": "Tedesco",
+    "french": "Francese"
+  },
+  "labels": {
+    "addTitle": "Aggiungi un'etichetta",
+    "namePlaceholder": "Nome etichetta",
+    "color": "Colore",
+    "add": "Aggiungi etichetta",
+    "empty": "Ancora nessuna etichetta — aggiungi la prima qui sotto.",
+    "deleteConfirm": "Eliminare questa etichetta? Verrà rimossa da tutte le parole.",
+    "addToWord": "Aggiungi etichetta",
+    "noneToAdd": "Nessun'altra etichetta — creale nella scheda Etichette.",
+    "all": "Tutte",
+    "filterByLabel": "Filtra per etichetta"
+  },
+  "backend": {
+    "checking": "Controllo del backend…",
+    "online": "Backend attivo",
+    "offline": "Backend offline — è in esecuzione sulla porta 8010?"
+  },
+  "common": {
+    "add": "Aggiungi",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "search": "Cerca",
+    "loading": "Caricamento…",
+    "empty": "Ancora niente qui",
+    "error": "Qualcosa è andato storto",
+    "comingSoon": "Prossimamente",
+    "yes": "Sì",
+    "no": "No",
+    "confirmTitle": "Sei sicuro?"
+  }
+}
