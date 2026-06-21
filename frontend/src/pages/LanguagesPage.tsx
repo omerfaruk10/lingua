@@ -1,6 +1,18 @@
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -32,8 +44,10 @@ export function LanguagesPage() {
   const [manage, setManage] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [editing, setEditing] = useState<Language | null>(null)
+  const [activeId, setActiveId] = useState<number | null>(null)
 
   const list = languages ?? []
+  const activeLang = activeId != null ? list.find((l) => l.id === activeId) : null
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -42,8 +56,13 @@ export function LanguagesPage() {
     navigate(`/lang/${id}/topics`)
   }
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as number)
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
+    setActiveId(null)
     if (!over || active.id === over.id) return
     const oldIndex = list.findIndex((l) => l.id === active.id)
     const newIndex = list.findIndex((l) => l.id === over.id)
@@ -91,11 +110,16 @@ export function LanguagesPage() {
           <p className="text-slate-400">{t('languages.empty')}</p>
         </div>
       ) : manage ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={list.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-            <ul className="space-y-2">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={list.map((l) => l.id)} strategy={rectSortingStrategy}>
+            <ul className="grid gap-3 sm:grid-cols-2">
               {list.map((lang) => (
-                <SortableLangRow
+                <SortableLangCard
                   key={lang.id}
                   lang={lang}
                   onEdit={() => setEditing(lang)}
@@ -105,6 +129,10 @@ export function LanguagesPage() {
               ))}
             </ul>
           </SortableContext>
+
+          <DragOverlay>
+            {activeLang && <LangCardOverlay lang={activeLang} />}
+          </DragOverlay>
         </DndContext>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -155,7 +183,7 @@ export function LanguagesPage() {
   )
 }
 
-function SortableLangRow({
+function SortableLangCard({
   lang,
   onEdit,
   onDelete,
@@ -172,14 +200,15 @@ function SortableLangRow({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   }
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className="card flex items-center gap-3 p-3 transition hover:border-slate-300"
+      className={`card flex items-center gap-3 p-3.5 transition ${
+        isDragging ? 'opacity-40' : 'hover:border-slate-300'
+      }`}
     >
       <button
         {...attributes}
@@ -201,6 +230,19 @@ function SortableLangRow({
         ✕
       </button>
     </li>
+  )
+}
+
+function LangCardOverlay({ lang }: { lang: Language }) {
+  return (
+    <div className="card flex cursor-grabbing items-center gap-3 p-3.5 shadow-2xl ring-2 ring-violet-400/40">
+      <span className="text-lg leading-none text-violet-400">⠿</span>
+      <Monogram code={lang.code} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+        <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
+      </div>
+    </div>
   )
 }
 

@@ -1,5 +1,5 @@
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useState } from 'react'
@@ -35,6 +35,7 @@ export function TopicsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [addTitle, setAddTitle] = useState('')
   const [addDesc, setAddDesc] = useState('')
+  const [activeId, setActiveId] = useState<number | null>(null)
 
   const list = topics ?? []
   const doneCount = list.filter((x) => x.status === 'done').length
@@ -60,8 +61,13 @@ export function TopicsPage() {
     updateTopic.mutate({ topicId, data: { status: NEXT_STATUS[current] } })
   }
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as number)
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
+    setActiveId(null)
     if (!over || active.id === over.id) return
     const oldIndex = list.findIndex((t) => t.id === active.id)
     const newIndex = list.findIndex((t) => t.id === over.id)
@@ -110,7 +116,12 @@ export function TopicsPage() {
           <p className="text-slate-400">{t('topics.empty')}</p>
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext items={list.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <ul className="space-y-2">
               {list.map((topic) => (
@@ -124,6 +135,20 @@ export function TopicsPage() {
               ))}
             </ul>
           </SortableContext>
+          <DragOverlay>
+            {activeId != null && (() => {
+              const topic = list.find((t) => t.id === activeId)
+              return topic ? (
+                <div className={`card flex cursor-grabbing items-center gap-3 p-3.5 shadow-2xl ring-2 ring-violet-400/40 ${STATUS_STYLE[topic.status].split(' ')[0]}`}>
+                  <span className="text-lg leading-none text-violet-400">⠿</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${STATUS_STYLE[topic.status]}`}>
+                    {t(`status.${topic.status}`)}
+                  </span>
+                  <div className="flex-1 font-medium text-slate-800">{topic.title}</div>
+                </div>
+              ) : null
+            })()}
+          </DragOverlay>
         </DndContext>
       )}
 
@@ -180,14 +205,13 @@ function SortableTopicRow({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   }
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className="card group flex items-center gap-3 p-3.5 transition hover:border-slate-300"
+      className={`card group flex items-center gap-3 p-3.5 transition ${isDragging ? 'opacity-40' : 'hover:border-slate-300'}`}
     >
       <button
         {...attributes}

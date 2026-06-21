@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 
 import App from './App.tsx'
 import { ConfirmProvider } from './components/ConfirmProvider'
+import 'flag-icons/css/flag-icons.min.css'
 import './i18n'
 import './index.css'
 

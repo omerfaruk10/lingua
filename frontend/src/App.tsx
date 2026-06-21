@@ -11,11 +11,16 @@ import { LanguagesPage } from './pages/LanguagesPage'
 import { TopicsPage } from './pages/TopicsPage'
 import { WordsPage } from './pages/WordsPage'
 
-const LANG_FLAG: Record<string, string> = {
-  en: '🇬🇧', tr: '🇹🇷', it: '🇮🇹', es: '🇪🇸', de: '🇩🇪', fr: '🇫🇷',
+const LANG_FI: Record<string, string> = {
+  en: 'gb', tr: 'tr', it: 'it', es: 'es', de: 'de', fr: 'fr',
 }
 const LANG_NATIVE: Record<string, string> = {
   en: 'English', tr: 'Türkçe', it: 'Italiano', es: 'Español', de: 'Deutsch', fr: 'Français',
+}
+
+export function FlagIcon({ lang, className = '' }: { lang: string; className?: string }) {
+  const fi = LANG_FI[lang] ?? lang
+  return <span className={`fi fi-${fi} rounded-sm ${className}`} style={{ fontSize: '1.1em' }} />
 }
 
 function UiLangDropdown() {
@@ -37,9 +42,9 @@ function UiLangDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="btn-ghost flex items-center gap-1.5 px-2.5 py-1.5 text-sm"
+        className="btn-ghost flex items-center gap-2 px-2.5 py-1.5 text-sm"
       >
-        <span>{LANG_FLAG[current] ?? '🌐'}</span>
+        <FlagIcon lang={current} />
         <span className="font-medium uppercase">{current}</span>
         <span className="text-slate-400 text-xs">▾</span>
       </button>
@@ -54,7 +59,7 @@ function UiLangDropdown() {
                 lang === current ? 'font-semibold text-violet-600' : 'text-slate-700'
               }`}
             >
-              <span>{LANG_FLAG[lang]}</span>
+              <FlagIcon lang={lang} />
               <span>{LANG_NATIVE[lang]}</span>
             </button>
           ))}
