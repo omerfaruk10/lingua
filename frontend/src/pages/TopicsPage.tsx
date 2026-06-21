@@ -2,12 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useLanguageId } from '../components/WorkspaceLayout'
-import {
-  useCreateTopic,
-  useDeleteTopic,
-  useTopics,
-  useUpdateTopic,
-} from '../hooks/useTopics'
+import { useCreateTopic, useDeleteTopic, useTopics, useUpdateTopic } from '../hooks/useTopics'
 import type { TopicStatus } from '../types'
 
 const NEXT_STATUS: Record<TopicStatus, TopicStatus> = {
@@ -17,9 +12,9 @@ const NEXT_STATUS: Record<TopicStatus, TopicStatus> = {
 }
 
 const STATUS_STYLE: Record<TopicStatus, string> = {
-  not_started: 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+  not_started: 'bg-slate-100 text-slate-500 hover:bg-slate-200',
   in_progress: 'bg-amber-100 text-amber-700 hover:bg-amber-200',
-  done: 'bg-green-100 text-green-700 hover:bg-green-200',
+  done: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200',
 }
 
 export function TopicsPage() {
@@ -71,13 +66,13 @@ export function TopicsPage() {
     <div className="space-y-5">
       {list.length > 0 && (
         <div className="flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/70">
             <div
-              className="h-full bg-green-500 transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all duration-500"
               style={{ width: `${(doneCount / list.length) * 100}%` }}
             />
           </div>
-          <span className="text-sm text-slate-500">
+          <span className="text-sm font-medium text-slate-500">
             {t('topics.progress', { done: doneCount, total: list.length })}
           </span>
         </div>
@@ -86,21 +81,22 @@ export function TopicsPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-400">
-          {t('topics.empty')}
-        </p>
+        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+          <span className="text-3xl">📚</span>
+          <p className="text-slate-400">{t('topics.empty')}</p>
+        </div>
       ) : (
         <ul className="space-y-2">
           {list.map((topic, index) => (
             <li
               key={topic.id}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+              className="card group flex items-center gap-3 p-3.5 transition hover:border-slate-300"
             >
-              <div className="flex flex-col text-slate-300">
+              <div className="flex flex-col text-xs text-slate-300">
                 <button
                   onClick={() => move(index, -1)}
                   disabled={index === 0}
-                  className="leading-none hover:text-violet-600 disabled:opacity-30"
+                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
                   title={t('topics.moveUp')}
                 >
                   ▲
@@ -108,7 +104,7 @@ export function TopicsPage() {
                 <button
                   onClick={() => move(index, 1)}
                   disabled={index === list.length - 1}
-                  className="leading-none hover:text-violet-600 disabled:opacity-30"
+                  className="leading-none transition hover:text-violet-600 disabled:opacity-30"
                   title={t('topics.moveDown')}
                 >
                   ▼
@@ -124,7 +120,7 @@ export function TopicsPage() {
 
               <div className="flex-1">
                 <div
-                  className={`font-medium ${topic.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}
+                  className={`font-medium transition ${topic.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}
                 >
                   {topic.title}
                 </div>
@@ -135,7 +131,7 @@ export function TopicsPage() {
 
               <button
                 onClick={() => remove(topic.id)}
-                className="rounded-lg px-2 py-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                className="btn-icon-danger opacity-0 transition group-hover:opacity-100"
                 title={t('common.delete')}
               >
                 ✕
@@ -146,26 +142,22 @@ export function TopicsPage() {
       )}
 
       {/* Konu ekleme */}
-      <form onSubmit={submit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <form onSubmit={submit} className="card p-4">
         <h2 className="mb-3 font-semibold text-slate-800">{t('topics.addTitle')}</h2>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('topics.titlePlaceholder')}
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            className="input flex-1"
           />
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t('topics.descPlaceholder')}
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            className="input flex-1"
           />
-          <button
-            type="submit"
-            disabled={createTopic.isPending}
-            className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={createTopic.isPending} className="btn-primary">
             {t('topics.add')}
           </button>
         </div>

@@ -26,14 +26,17 @@ export function LanguagesPage() {
     createLang.mutate(form, { onSuccess: () => setForm(EMPTY) })
   }
 
-  function remove(id: number) {
+  function remove(e: React.MouseEvent, id: number) {
+    e.stopPropagation()
     if (confirm(t('languages.deleteConfirm'))) deleteLang.mutate(id)
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">{t('languages.title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          {t('languages.title')}
+        </h1>
         <p className="mt-1 text-slate-500">{t('languages.subtitle')}</p>
       </div>
 
@@ -44,40 +47,38 @@ export function LanguagesPage() {
           {languages.map((lang) => (
             <li
               key={lang.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-violet-300"
+              onClick={() => open(lang.id)}
+              className="card group flex cursor-pointer items-center gap-3.5 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.05),0_16px_32px_-16px_rgba(124,108,240,0.30)]"
             >
-              <button onClick={() => open(lang.id)} className="flex-1 text-left">
-                <div className="font-semibold text-slate-800">{lang.name}</div>
-                <div className="text-sm text-slate-500">
-                  {lang.native_name} · <span className="uppercase">{lang.code}</span>
-                </div>
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => open(lang.id)}
-                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700"
-                >
-                  {t('languages.open')}
-                </button>
-                <button
-                  onClick={() => remove(lang.id)}
-                  className="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-red-50 hover:text-red-600"
-                  title={t('common.delete')}
-                >
-                  ✕
-                </button>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-100 to-indigo-100 text-sm font-semibold uppercase text-violet-600">
+                {lang.code.slice(0, 2)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+                <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
               </div>
+              <span className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-violet-500">
+                →
+              </span>
+              <button
+                onClick={(e) => remove(e, lang.id)}
+                className="btn-icon-danger opacity-0 transition group-hover:opacity-100"
+                title={t('common.delete')}
+              >
+                ✕
+              </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-400">
-          {t('languages.empty')}
-        </p>
+        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+          <span className="text-3xl">🌍</span>
+          <p className="text-slate-400">{t('languages.empty')}</p>
+        </div>
       )}
 
       {/* Yeni dil ekleme */}
-      <form onSubmit={submit} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <form onSubmit={submit} className="card p-5">
         <h2 className="mb-4 font-semibold text-slate-800">{t('languages.addTitle')}</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field
@@ -100,13 +101,9 @@ export function LanguagesPage() {
           />
         </div>
         {createLang.isError && (
-          <p className="mt-3 text-sm text-red-600">{(createLang.error as Error).message}</p>
+          <p className="mt-3 text-sm text-red-500">{(createLang.error as Error).message}</p>
         )}
-        <button
-          type="submit"
-          disabled={createLang.isPending}
-          className="mt-4 rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={createLang.isPending} className="btn-primary mt-4">
           {t('languages.create')}
         </button>
       </form>
@@ -127,13 +124,8 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={hint}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-      />
+      <span className="field-label">{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={hint} className="input" />
     </label>
   )
 }

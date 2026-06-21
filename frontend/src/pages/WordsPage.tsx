@@ -60,19 +60,24 @@ export function WordsPage() {
     <div className="space-y-5">
       {/* Arama + ekle */}
       <div className="flex gap-2">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('words.searchPlaceholder')}
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-        />
+        <div className="relative flex-1">
+          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+            ⌕
+          </span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('words.searchPlaceholder')}
+            className="input pl-9"
+          />
+        </div>
         {!adding && (
           <button
             onClick={() => {
               setAdding(true)
               setEditingId(null)
             }}
-            className="shrink-0 rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-700"
+            className="btn-primary shrink-0"
           >
             + {t('words.add')}
           </button>
@@ -111,9 +116,12 @@ export function WordsPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-400">
-          {search.trim() || labelFilter != null ? t('words.noResults') : t('words.empty')}
-        </p>
+        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+          <span className="text-3xl">{search.trim() || labelFilter != null ? '🔍' : '📖'}</span>
+          <p className="text-slate-400">
+            {search.trim() || labelFilter != null ? t('words.noResults') : t('words.empty')}
+          </p>
+        </div>
       ) : (
         <ul className="space-y-3">
           {list.map((word) =>
@@ -165,7 +173,9 @@ function FilterChip({
       onClick={onClick}
       style={active && color ? { backgroundColor: color, borderColor: color, color: '#fff' } : undefined}
       className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-        active ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-100'
+        active
+          ? 'border-violet-600 bg-violet-600 text-white shadow-sm'
+          : 'border-slate-200 bg-white/70 text-slate-500 hover:bg-white hover:text-slate-800'
       }`}
     >
       {children}
@@ -193,11 +203,11 @@ function WordCard({
   const available = allLabels.filter((l) => !word.labels.some((wl) => wl.id === l.id))
 
   return (
-    <li className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <li className="card group p-4 transition hover:border-slate-300">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-lg font-semibold text-slate-800">{word.term}</span>
+            <span className="text-lg font-semibold text-slate-900">{word.term}</span>
             {word.part_of_speech && (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
                 {word.part_of_speech}
@@ -271,19 +281,11 @@ function WordCard({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-1">
-          <button
-            onClick={onEdit}
-            className="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-slate-100 hover:text-violet-600"
-            title={t('common.edit')}
-          >
+        <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
+          <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
             ✎
           </button>
-          <button
-            onClick={onDelete}
-            className="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-red-50 hover:text-red-600"
-            title={t('common.delete')}
-          >
+          <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>
             ✕
           </button>
         </div>

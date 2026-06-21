@@ -55,9 +55,10 @@ export function LabelsPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-400">
-          {t('labels.empty')}
-        </p>
+        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+          <span className="text-3xl">🏷️</span>
+          <p className="text-slate-400">{t('labels.empty')}</p>
+        </div>
       ) : (
         <ul className="space-y-2">
           {list.map((label) =>
@@ -77,22 +78,14 @@ export function LabelsPage() {
             ) : (
               <li
                 key={label.id}
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                className="card group flex items-center justify-between p-3 transition hover:border-slate-300"
               >
                 <LabelBadge label={label} />
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setEditingId(label.id)}
-                    className="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-slate-100 hover:text-violet-600"
-                    title={t('common.edit')}
-                  >
+                <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
+                  <button onClick={() => setEditingId(label.id)} className="btn-icon" title={t('common.edit')}>
                     ✎
                   </button>
-                  <button
-                    onClick={() => remove(label.id)}
-                    className="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-red-50 hover:text-red-600"
-                    title={t('common.delete')}
-                  >
+                  <button onClick={() => remove(label.id)} className="btn-icon-danger" title={t('common.delete')}>
                     ✕
                   </button>
                 </div>
@@ -103,27 +96,21 @@ export function LabelsPage() {
       )}
 
       {/* Etiket ekleme */}
-      <form onSubmit={create} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <form onSubmit={create} className="card p-5">
         <h2 className="mb-4 font-semibold text-slate-800">{t('labels.addTitle')}</h2>
         <div className="space-y-3">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('labels.namePlaceholder')}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            className="input"
           />
           <div>
-            <span className="mb-1.5 block text-sm font-medium text-slate-700">
-              {t('labels.color')}
-            </span>
+            <span className="field-label">{t('labels.color')}</span>
             <ColorPicker value={color} onChange={setColor} />
           </div>
         </div>
-        <button
-          type="submit"
-          disabled={createLabel.isPending}
-          className="mt-4 rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={createLabel.isPending} className="btn-primary mt-4">
           {t('labels.add')}
         </button>
       </form>
@@ -147,25 +134,18 @@ function EditRow({
   const [color, setColor] = useState(label.color ?? LABEL_PALETTE[6])
 
   return (
-    <li className="space-y-3 rounded-xl border border-violet-200 bg-white p-3 shadow-sm">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-      />
+    <li className="card space-y-3 border-violet-200 p-3">
+      <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
       <ColorPicker value={color} onChange={setColor} />
       <div className="flex gap-2">
         <button
           onClick={() => name.trim() && onSave({ name: name.trim(), color })}
           disabled={saving}
-          className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+          className="btn-primary px-3 py-1.5"
         >
           {t('common.save')}
         </button>
-        <button
-          onClick={onCancel}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-        >
+        <button onClick={onCancel} className="btn-ghost px-3 py-1.5">
           {t('common.cancel')}
         </button>
       </div>

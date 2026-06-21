@@ -1,4 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
 
 html,
 body,
@@ -8,5 +13,47 @@ body,
 
 body {
   margin: 0;
-  @apply bg-slate-50 text-slate-800 antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #3f3f52;
+  letter-spacing: -0.01em;
+  /* Cok yumusak, koselerden gelen hafif vurgu parlamasi - cirtlak degil */
+  background:
+    radial-gradient(1100px 560px at 100% -8%, rgba(124, 108, 240, 0.07), transparent 60%),
+    radial-gradient(900px 520px at -8% 108%, rgba(99, 102, 241, 0.05), transparent 60%),
+    #f6f6fb;
+  background-attachment: fixed;
+}
+
+@layer components {
+  /* Kartlar: yumusak, hafif saydam, ince golge */
+  .card {
+    @apply rounded-2xl border border-slate-200/70 bg-white/80 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.10)] backdrop-blur-sm;
+  }
+
+  /* Girdiler: yumusak odak parlamasi */
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white/90 px-3.5 py-2.5 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-600;
+  }
+
+  /* Butonlar */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-600/25 transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white/70 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-white hover:text-slate-800 active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .btn-icon {
+    @apply rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700;
+  }
+
+  .btn-icon-danger {
+    @apply rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500;
+  }
 }

@@ -29,28 +29,34 @@ export function WorkspaceLayout() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">{language.name}</h1>
-          <p className="text-sm text-slate-500">
-            {language.native_name} · <span className="uppercase">{language.code}</span>
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 text-base font-semibold uppercase text-violet-600">
+            {language.code.slice(0, 2)}
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">{language.name}</h1>
+            <p className="text-sm text-slate-500">{language.native_name}</p>
+          </div>
         </div>
-        <Link to="/languages" className="text-sm text-violet-600 hover:underline">
+        <Link
+          to="/languages"
+          className="text-sm font-medium text-slate-400 transition hover:text-violet-600"
+        >
           {t('workspace.switchLanguage')}
         </Link>
       </div>
 
-      <nav className="flex gap-1 border-b border-slate-200">
+      <nav className="flex gap-1 rounded-xl border border-slate-200/70 bg-white/60 p-1 backdrop-blur-sm">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `-mb-px border-b-2 px-4 py-2 text-sm font-medium transition ${
+              `flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium transition ${
                 isActive
-                  ? 'border-violet-600 text-violet-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
               }`
             }
           >
