@@ -4,6 +4,25 @@
 sadece ilerleme takibi (konular) + kişisel kelime bankası (kelimeler + Gmail
 tarzı etiketler). Öğretim ayrı, Claude sohbetinde yapılır.
 
+Her dil kendi çalışma alanına sahiptir; birden fazla dili paralel takip
+edebilirsin (örn. İngilizce ve İtalyanca aynı anda).
+
+## Sayfalar
+
+- **Diller** (`/languages`) — Ana sayfa. Takip ettiğin dillerin listesi.
+  Yeni dil ekler, sıralar (sürükle-bırak) ve birine tıklayıp çalışma alanına
+  girersin. URL'de dil kodu görünür: `/languages/en/...`.
+- **Konular** (`Topics`) — O dilde çalıştığın konuların kanban panosu:
+  _Başlamadı · Devam ediyor · Tamamlandı_. Kartları sürükleyip durumunu ve
+  sırasını değiştirebilirsin.
+- **Kelimeler** (`Words`) — Kişisel kelime bankan. Her kelimede okunuş,
+  anlam, tanım, örnek cümle ve etiketler tutulur. Etikete göre filtrelersin.
+- **Etiketler** (`Labels`) — Kelimeleri gruplamak için Gmail tarzı renkli
+  etiketler. Buradaki sıra, kelime kartlarındaki etiket sırasını da belirler.
+
+Arayüz dili (TR/EN/IT/ES/DE/FR) sağ üstten değiştirilebilir; öğrenilen
+dilden bağımsızdır.
+
 ## Çalıştırma (en kolay)
 
 `start-lingua.bat` dosyasına **çift tıkla**. Backend ve frontend ayrı

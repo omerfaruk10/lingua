@@ -1,15 +1,14 @@
-// Son secilen dilin id'sini hatirlar (uygulama acilista oraya doner).
-const KEY = 'lingua.languageId'
+// Son secilen dilin kodunu hatirlar (uygulama acilista oraya doner).
+const KEY = 'lingua.langCode'
 
-export function getSelectedLanguageId(): number | null {
-  const v = localStorage.getItem(KEY)
-  return v ? Number(v) : null
+export function getSelectedLangCode(): string | null {
+  return localStorage.getItem(KEY)
 }
 
-export function setSelectedLanguageId(id: number): void {
-  localStorage.setItem(KEY, String(id))
+export function setSelectedLangCode(code: string): void {
+  localStorage.setItem(KEY, code)
 }
 
-export function clearSelectedLanguageId(): void {
+export function clearSelectedLangCode(): void {
   localStorage.removeItem(KEY)
 }

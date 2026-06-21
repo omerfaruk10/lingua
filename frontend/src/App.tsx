@@ -5,7 +5,7 @@ import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { BackendStatus } from './components/BackendStatus'
 import { WorkspaceLayout } from './components/WorkspaceLayout'
 import { SUPPORTED_LANGS, setUiLang } from './i18n'
-import { getSelectedLanguageId } from './lib/selectedLanguage'
+import { getSelectedLangCode } from './lib/selectedLanguage'
 import { LabelsPage } from './pages/LabelsPage'
 import { LanguagesPage } from './pages/LanguagesPage'
 import { TopicsPage } from './pages/TopicsPage'
@@ -70,8 +70,8 @@ function UiLangDropdown() {
 }
 
 function RootRedirect() {
-  const id = getSelectedLanguageId()
-  return <Navigate to={id ? `/lang/${id}/topics` : '/languages'} replace />
+  const code = getSelectedLangCode()
+  return <Navigate to={code ? `/languages/${code}/topics` : '/languages'} replace />
 }
 
 function App() {
@@ -96,7 +96,7 @@ function App() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/languages" element={<LanguagesPage />} />
-          <Route path="/lang/:languageId" element={<WorkspaceLayout />}>
+          <Route path="/languages/:langCode" element={<WorkspaceLayout />}>
             <Route index element={<Navigate to="topics" replace />} />
             <Route path="topics" element={<TopicsPage />} />
             <Route path="words" element={<WordsPage />} />

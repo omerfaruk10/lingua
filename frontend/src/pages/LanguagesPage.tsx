@@ -27,7 +27,7 @@ import {
   useLanguages,
   useUpdateLanguage,
 } from '../hooks/useLanguages'
-import { setSelectedLanguageId } from '../lib/selectedLanguage'
+import { setSelectedLangCode } from '../lib/selectedLanguage'
 import type { Language } from '../types'
 
 const EMPTY: LanguageInput = { code: '', name: '', native_name: '' }
@@ -51,9 +51,9 @@ export function LanguagesPage() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-  function open(id: number) {
-    setSelectedLanguageId(id)
-    navigate(`/lang/${id}/topics`)
+  function open(lang: Language) {
+    setSelectedLangCode(lang.code)
+    navigate(`/languages/${lang.code}/topics`)
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -88,7 +88,6 @@ export function LanguagesPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             {t('languages.title')}
           </h1>
-          <p className="mt-1 text-slate-500">{t('languages.subtitle')}</p>
         </div>
         <div className="flex shrink-0 gap-2">
           {list.length > 0 && (
@@ -139,7 +138,7 @@ export function LanguagesPage() {
           {list.map((lang) => (
             <li
               key={lang.id}
-              onClick={() => open(lang.id)}
+              onClick={() => open(lang)}
               className="card group flex cursor-pointer items-center gap-3.5 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_2px_4px_rgba(16,24,40,0.05),0_16px_32px_-16px_rgba(124,108,240,0.30)]"
             >
               <Monogram code={lang.code} />

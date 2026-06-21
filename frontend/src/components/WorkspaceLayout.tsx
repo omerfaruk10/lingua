@@ -1,23 +1,25 @@
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, NavLink, Outlet, useParams } from 'react-router-dom'
 
-import { useLanguage } from '../hooks/useLanguages'
-import { clearSelectedLanguageId, getSelectedLanguageId } from '../lib/selectedLanguage'
+import { useLanguages } from '../hooks/useLanguages'
+import { clearSelectedLangCode, getSelectedLangCode } from '../lib/selectedLanguage'
 
 export function useLanguageId(): number {
-  const { languageId } = useParams()
-  return Number(languageId)
+  const { langCode } = useParams()
+  // Dil listesi zaten cache'te; koddan id'yi cozeriz (ekstra istek yok).
+  const { data: languages } = useLanguages()
+  return languages?.find((l) => l.code === langCode)?.id ?? 0
 }
 
 export function WorkspaceLayout() {
   const { t } = useTranslation()
-  const languageId = useLanguageId()
-  const { data: language, isLoading, isError } = useLanguage(languageId)
+  const { langCode } = useParams()
+  const { data: languages, isLoading } = useLanguages()
+  const language = languages?.find((l) => l.code === langCode)
 
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
-  if (isError || !language) {
-    // Secili dil silinmis/gecersiz: hatirlanan id'yi temizle, secim sayfasina don.
-    if (getSelectedLanguageId() === languageId) clearSelectedLanguageId()
+  if (!language) {
+    if (getSelectedLangCode() === langCode) clearSelectedLangCode()
     return <Navigate to="/languages" replace />
   }
 
