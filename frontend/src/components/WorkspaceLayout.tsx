@@ -41,8 +41,9 @@ export function WorkspaceLayout() {
         </div>
         <Link
           to="/languages"
-          className="text-sm font-medium text-slate-400 transition hover:text-violet-600"
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-slate-500 shadow-sm transition hover:border-violet-200 hover:text-violet-600"
         >
+          <span className="text-base leading-none">⇄</span>
           {t('workspace.switchLanguage')}
         </Link>
       </div>

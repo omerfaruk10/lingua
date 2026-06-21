@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { DndContext, DragOverlay, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useConfirm } from '../components/ConfirmProvider'
 import { LabelBadge } from '../components/LabelBadge'
 import { LABEL_PALETTE } from '../components/labelColors'
+import { Modal } from '../components/Modal'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useCreateLabel, useDeleteLabel, useLabels, useUpdateLabel } from '../hooks/useLabels'
 import type { Label } from '../types'
@@ -36,16 +41,46 @@ export function LabelsPage() {
   const updateLabel = useUpdateLabel(languageId)
   const deleteLabel = useDeleteLabel(languageId)
 
+  const [addOpen, setAddOpen] = useState(false)
+  const [editingLabel, setEditingLabel] = useState<Label | null>(null)
   const [name, setName] = useState('')
   const [color, setColor] = useState<string>(LABEL_PALETTE[6])
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [activeId, setActiveId] = useState<number | null>(null)
+  const [localList, setLocalList] = useState<Label[]>([])
 
-  const list = labels ?? []
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  useEffect(() => {
+    if (activeId !== null) return
+    const serverList = labels ?? []
+    const serverIds = new Set(serverList.map((l) => l.id))
+    const localIds = new Set(localList.map((l) => l.id))
+    const changed = serverList.length !== localList.length || serverList.some((l) => !localIds.has(l.id)) || localList.some((l) => !serverIds.has(l.id))
+    if (changed) setLocalList(serverList)
+  }, [labels, activeId])
 
   function create(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    createLabel.mutate({ name: name.trim(), color }, { onSuccess: () => setName('') })
+    createLabel.mutate(
+      { name: name.trim(), color },
+      { onSuccess: () => { setName(''); setColor(LABEL_PALETTE[6]); setAddOpen(false) } },
+    )
+  }
+
+  function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingLabel || !name.trim()) return
+    updateLabel.mutate(
+      { labelId: editingLabel.id, data: { name: name.trim(), color } },
+      { onSuccess: () => setEditingLabel(null) },
+    )
+  }
+
+  function openEdit(label: Label) {
+    setEditingLabel(label)
+    setName(label.name)
+    setColor(label.color ?? LABEL_PALETTE[6])
   }
 
   async function remove(id: number) {
@@ -57,104 +92,149 @@ export function LabelsPage() {
     if (ok) deleteLabel.mutate(id)
   }
 
+  function handleDragStart(event: { active: { id: number | string } }) {
+    setActiveId(event.active.id as number)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over || active.id === over.id) return
+    const oldIndex = localList.findIndex((l) => l.id === active.id)
+    const newIndex = localList.findIndex((l) => l.id === over.id)
+    const reordered = arrayMove(localList, oldIndex, newIndex)
+    setLocalList(reordered)
+    reordered.forEach((label, pos) => {
+      if ((labels ?? []).findIndex((l) => l.id === label.id) !== pos)
+        updateLabel.mutate({ labelId: label.id, data: { order_index: pos } })
+    })
+  }
+
+  const activeLabel = localList.find((l) => l.id === activeId)
+
   return (
     <div className="space-y-5">
+      <div className="flex justify-end">
+        <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0 px-3 py-2">
+          + {t('labels.add')}
+        </button>
+      </div>
+
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
-      ) : list.length === 0 ? (
+      ) : localList.length === 0 ? (
         <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">🏷️</span>
           <p className="text-slate-400">{t('labels.empty')}</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {list.map((label) =>
-            editingId === label.id ? (
-              <EditRow
-                key={label.id}
-                label={label}
-                saving={updateLabel.isPending}
-                onSave={(data) =>
-                  updateLabel.mutate(
-                    { labelId: label.id, data },
-                    { onSuccess: () => setEditingId(null) },
-                  )
-                }
-                onCancel={() => setEditingId(null)}
-              />
-            ) : (
-              <li
-                key={label.id}
-                className="card group flex items-center justify-between p-3 transition hover:border-slate-300"
-              >
-                <LabelBadge label={label} />
-                <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
-                  <button onClick={() => setEditingId(label.id)} className="btn-icon" title={t('common.edit')}>
-                    ✎
-                  </button>
-                  <button onClick={() => remove(label.id)} className="btn-icon-danger" title={t('common.delete')}>
-                    ✕
-                  </button>
-                </div>
-              </li>
-            ),
-          )}
-        </ul>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={localList.map((l) => l.id)} strategy={rectSortingStrategy}>
+            <ul className="grid grid-cols-4 gap-2">
+              {localList.map((label) => (
+                <SortableLabelCard
+                  key={label.id}
+                  label={label}
+                  onEdit={() => openEdit(label)}
+                  onDelete={() => remove(label.id)}
+                  t={t}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+          <DragOverlay>
+            {activeLabel && (
+              <div className="card flex items-center gap-2 p-3 shadow-2xl ring-2 ring-violet-400/40">
+                <LabelBadge label={activeLabel} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       )}
 
-      {/* Etiket ekleme */}
-      <form onSubmit={create} className="card p-5">
-        <h2 className="mb-4 font-semibold text-slate-800">{t('labels.addTitle')}</h2>
-        <div className="space-y-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('labels.namePlaceholder')}
-            className="input"
-          />
-          <div>
-            <span className="field-label">{t('labels.color')}</span>
-            <ColorPicker value={color} onChange={setColor} />
-          </div>
-        </div>
-        <button type="submit" disabled={createLabel.isPending} className="btn-primary mt-4">
-          {t('labels.add')}
-        </button>
-      </form>
+      {addOpen && (
+        <Modal title={t('labels.addTitle')} onClose={() => setAddOpen(false)}>
+          <form onSubmit={create} className="space-y-4">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('labels.namePlaceholder')}
+              className="input"
+              autoFocus
+            />
+            <div>
+              <span className="field-label">{t('labels.color')}</span>
+              <ColorPicker value={color} onChange={setColor} />
+            </div>
+            <button type="submit" disabled={createLabel.isPending} className="btn-primary w-full">
+              {t('labels.add')}
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {editingLabel && (
+        <Modal title={t('common.edit')} onClose={() => setEditingLabel(null)}>
+          <form onSubmit={saveEdit} className="space-y-4">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('labels.namePlaceholder')}
+              className="input"
+              autoFocus
+            />
+            <div>
+              <span className="field-label">{t('labels.color')}</span>
+              <ColorPicker value={color} onChange={setColor} />
+            </div>
+            <button type="submit" disabled={updateLabel.isPending} className="btn-primary w-full">
+              {t('common.save')}
+            </button>
+          </form>
+        </Modal>
+      )}
     </div>
   )
 }
 
-function EditRow({
+function SortableLabelCard({
   label,
-  saving,
-  onSave,
-  onCancel,
+  onEdit,
+  onDelete,
+  t,
 }: {
   label: Label
-  saving: boolean
-  onSave: (data: { name: string; color: string }) => void
-  onCancel: () => void
+  onEdit: () => void
+  onDelete: () => void
+  t: (key: string) => string
 }) {
-  const { t } = useTranslation()
-  const [name, setName] = useState(label.name)
-  const [color, setColor] = useState(label.color ?? LABEL_PALETTE[6])
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
+  const style = { transform: CSS.Transform.toString(transform), transition: transition ? 'transform 700ms ease' : undefined }
 
   return (
-    <li className="card space-y-3 border-violet-200 p-3">
-      <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
-      <ColorPicker value={color} onChange={setColor} />
-      <div className="flex gap-2">
-        <button
-          onClick={() => name.trim() && onSave({ name: name.trim(), color })}
-          disabled={saving}
-          className="btn-primary px-3 py-1.5"
-        >
-          {t('common.save')}
-        </button>
-        <button onClick={onCancel} className="btn-ghost px-3 py-1.5">
-          {t('common.cancel')}
-        </button>
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`card group flex items-center justify-between gap-2 p-3 transition-[border-color,box-shadow] ${isDragging ? 'invisible' : 'hover:border-slate-300'}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab touch-none text-slate-300 hover:text-violet-500 active:cursor-grabbing"
+      >
+        ⠿
+      </button>
+      <div className="flex-1 min-w-0">
+        <LabelBadge label={label} />
+      </div>
+      <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
+        <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>✎</button>
+        <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>✕</button>
       </div>
     </li>
   )

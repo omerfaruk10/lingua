@@ -199,7 +199,7 @@ function SortableLangCard({
   })
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition ? 'transform 700ms ease' : undefined,
   }
 
   return (
@@ -207,7 +207,7 @@ function SortableLangCard({
       ref={setNodeRef}
       style={style}
       className={`card flex items-center gap-3 p-3.5 transition ${
-        isDragging ? 'opacity-40' : 'hover:border-slate-300'
+        isDragging ? 'invisible' : 'hover:border-slate-300'
       }`}
     >
       <button

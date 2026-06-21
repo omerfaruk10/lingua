@@ -25,22 +25,22 @@ export function Modal({
   }, [onClose])
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
       <div className="animate-overlay absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
-        className={`animate-panel relative z-10 w-full ${maxWidth} rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/10`}
+        className={`animate-panel relative z-10 flex max-h-full w-full flex-col ${maxWidth} overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10`}
       >
         {title && (
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 px-6 py-4">
             <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
             <button onClick={onClose} className="btn-icon -mr-1.5" aria-label="close">
               ✕
             </button>
           </div>
         )}
-        {children}
+        <div className="overflow-y-auto p-6">{children}</div>
       </div>
     </div>,
     document.body,

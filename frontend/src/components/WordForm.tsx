@@ -75,8 +75,8 @@ export function WordForm({
               <textarea
                 value={values[f.name]}
                 onChange={(e) => set(f.name, e.target.value)}
-                rows={2}
-                className="input resize-y"
+                rows={3}
+                className="input resize-none overflow-y-auto"
               />
             ) : (
               <input

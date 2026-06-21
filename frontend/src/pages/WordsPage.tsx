@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import type { WordInput } from '../api/words'
@@ -130,7 +131,7 @@ export function WordsPage() {
       )}
 
       {addOpen && (
-        <Modal title={t('words.addTitle')} onClose={() => setAddOpen(false)}>
+        <Modal title={t('words.addTitle')} onClose={() => setAddOpen(false)} maxWidth="max-w-2xl">
           <WordForm
             bare
             submitLabel={t('words.add')}
@@ -142,7 +143,7 @@ export function WordsPage() {
       )}
 
       {editingWord && (
-        <Modal title={t('words.editTitle')} onClose={() => setEditingWord(null)}>
+        <Modal title={t('words.editTitle')} onClose={() => setEditingWord(null)} maxWidth="max-w-2xl">
           <WordForm
             bare
             initial={editingWord}
@@ -152,6 +153,74 @@ export function WordsPage() {
             onCancel={() => setEditingWord(null)}
           />
         </Modal>
+      )}
+    </div>
+  )
+}
+
+function LabelPicker({ available, onAdd, open, onToggle, t }: {
+  available: Label[]
+  onAdd: (id: number) => void
+  open: boolean
+  onToggle: () => void
+  t: (k: string) => string
+}) {
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      const target = e.target as Node
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      onToggle()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  function handleToggle() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, left: r.left })
+    }
+    onToggle()
+  }
+
+  return (
+    <div>
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
+        className="rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-xs text-slate-400 hover:border-violet-400 hover:text-violet-600"
+      >
+        + {t('labels.addToWord')}
+      </button>
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          style={{ top: pos.top, left: pos.left }}
+          className="fixed z-50 max-w-xs rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
+        >
+          {available.length === 0 ? (
+            <p className="px-1 py-0.5 text-xs text-slate-400">{t('labels.noneToAdd')}</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {available.map((label) => (
+                <button
+                  key={label.id}
+                  onClick={() => onAdd(label.id)}
+                  style={{ backgroundColor: labelColor(label.color) }}
+                  className="rounded-full px-2 py-0.5 text-xs font-medium text-white hover:opacity-80"
+                >
+                  {label.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>,
+        document.body
       )}
     </div>
   )
@@ -250,37 +319,13 @@ function WordCard({
             {word.labels.map((label) => (
               <LabelBadge key={label.id} label={label} onRemove={() => onRemoveLabel(label.id)} />
             ))}
-            <div className="relative">
-              <button
-                onClick={() => setPicking((p) => !p)}
-                className="rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-xs text-slate-400 hover:border-violet-400 hover:text-violet-600"
-              >
-                + {t('labels.addToWord')}
-              </button>
-              {picking && (
-                <div className="absolute z-10 mt-1 w-48 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
-                  {available.length === 0 ? (
-                    <p className="px-1 py-0.5 text-xs text-slate-400">{t('labels.noneToAdd')}</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {available.map((label) => (
-                        <button
-                          key={label.id}
-                          onClick={() => {
-                            onAddLabel(label.id)
-                            setPicking(false)
-                          }}
-                          style={{ backgroundColor: labelColor(label.color) }}
-                          className="rounded-full px-2 py-0.5 text-xs font-medium text-white hover:opacity-80"
-                        >
-                          {label.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <LabelPicker
+              available={available}
+              onAdd={(id) => { onAddLabel(id); setPicking(false) }}
+              open={picking}
+              onToggle={() => setPicking((p) => !p)}
+              t={t}
+            />
           </div>
         </div>
 
