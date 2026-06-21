@@ -14,8 +14,9 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# Ortam degiskenleri
+# Ortam degiskenleri (.env.example repoya girer, gercek .env girmez)
 .env
+!.env.example
 
 # Editor / OS
 .vscode/
