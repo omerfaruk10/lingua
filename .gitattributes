@@ -1,2 +1,5 @@
 # Satir sonlarini repoda LF olarak normalize et (Windows/Unix tutarliligi)
 * text=auto eol=lf
+
+# Windows batch dosyalari CRLF olmali (cmd.exe LF'de takilabilir)
+*.bat text eol=crlf
