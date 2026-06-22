@@ -44,7 +44,7 @@ export function LabelsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [editingLabel, setEditingLabel] = useState<Label | null>(null)
   const [name, setName] = useState('')
-  const [color, setColor] = useState<string>(LABEL_PALETTE[6])
+  const [color, setColor] = useState<string>(LABEL_PALETTE[0])
   const [activeId, setActiveId] = useState<number | null>(null)
   const [localList, setLocalList] = useState<Label[]>([])
 
@@ -64,7 +64,7 @@ export function LabelsPage() {
     if (!name.trim()) return
     createLabel.mutate(
       { name: name.trim(), color },
-      { onSuccess: () => { setName(''); setColor(LABEL_PALETTE[6]); setAddOpen(false) } },
+      { onSuccess: () => { setName(''); setColor(LABEL_PALETTE[0]); setAddOpen(false) } },
     )
   }
 
@@ -85,7 +85,7 @@ export function LabelsPage() {
   function openEdit(label: Label) {
     setEditingLabel(label)
     setName(label.name)
-    setColor(label.color ?? LABEL_PALETTE[6])
+    setColor(label.color ?? LABEL_PALETTE[0])
   }
 
   async function remove(id: number) {
@@ -120,7 +120,7 @@ export function LabelsPage() {
   return (
     <div className="space-y-5">
       <div className="flex justify-end">
-        <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0 px-3 py-2">
+        <button onClick={() => { setName(''); setColor(LABEL_PALETTE[0]); setAddOpen(true) }} className="btn-primary shrink-0 px-3 py-2">
           + {t('labels.add')}
         </button>
       </div>
