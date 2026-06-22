@@ -4,7 +4,14 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.database import get_db
 from app.models.word import Word
-from app.schemas.word import WordCreate, WordRead, WordUpdate
+from app.schemas.word import (
+    LearningStatus,
+    WordCreate,
+    WordRead,
+    WordReviewRequest,
+    WordStatusUpdate,
+    WordUpdate,
+)
 
 router = APIRouter(prefix="/languages/{language_id}/words", tags=["words"])
 
@@ -33,16 +40,25 @@ def list_words(
     language_id: int,
     search: str | None = None,
     label_id: int | None = None,
+    status: LearningStatus | None = None,
     db: Session = Depends(get_db),
 ):
     _ensure_language(db, language_id)
-    return crud.word.get_words(db, language_id, search=search, label_id=label_id)
+    return crud.word.get_words(
+        db, language_id, search=search, label_id=label_id, status=status
+    )
 
 
 @router.post("", response_model=WordRead, status_code=status.HTTP_201_CREATED)
 def create_word(language_id: int, data: WordCreate, db: Session = Depends(get_db)):
     _ensure_language(db, language_id)
     return crud.word.create_word(db, language_id, data)
+
+
+@router.get("/due", response_model=list[WordRead])
+def list_due_words(language_id: int, db: Session = Depends(get_db)):
+    _ensure_language(db, language_id)
+    return crud.word.get_due_words(db, language_id)
 
 
 @router.get("/{word_id}", response_model=WordRead)
@@ -60,6 +76,22 @@ def update_word(language_id: int, word_id: int, data: WordUpdate, db: Session = 
 def delete_word(language_id: int, word_id: int, db: Session = Depends(get_db)):
     word = _get_owned_word(db, language_id, word_id)
     crud.word.delete_word(db, word)
+
+
+@router.patch("/{word_id}/status", response_model=WordRead)
+def set_word_status(
+    language_id: int, word_id: int, data: WordStatusUpdate, db: Session = Depends(get_db)
+):
+    word = _get_owned_word(db, language_id, word_id)
+    return crud.word.set_learning_status(db, word, data.status)
+
+
+@router.post("/{word_id}/review", response_model=WordRead)
+def review_word(
+    language_id: int, word_id: int, data: WordReviewRequest, db: Session = Depends(get_db)
+):
+    word = _get_owned_word(db, language_id, word_id)
+    return crud.word.review_word(db, word, data.result)
 
 
 @router.post("/{word_id}/labels/{label_id}", response_model=WordRead)

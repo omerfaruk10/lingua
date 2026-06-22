@@ -8,7 +8,29 @@
     "topics": "Themen",
     "words": "Wörter",
     "labels": "Labels",
+    "review": "Wiederholen",
     "settings": "Einstellungen"
+  },
+  "learning": {
+    "status": "Status",
+    "new": "Nicht begonnen",
+    "learning": "Wird gelernt",
+    "learned": "Gelernt",
+    "all": "Alle",
+    "changeConfirm": "Status dieses Wortes auf \"{{status}}\" ändern?",
+    "resetConfirm": "Dadurch wird der Wiederholungsfortschritt zurückgesetzt. Auf \"{{status}}\" ändern?"
+  },
+  "review": {
+    "title": "Heute wiederholen",
+    "subtitle": "Fällige Wörter wiederholen",
+    "empty": "Heute keine Wörter zu wiederholen.",
+    "emptyHint": "Markiere ein Wort als \"Gelernt\", um es zum Wiederholungsplan hinzuzufügen (1·3·7·14·30 Tage).",
+    "remaining": "Noch {{n}}",
+    "reveal": "Antwort zeigen",
+    "known": "Wusste ich",
+    "forgot": "Vergessen",
+    "finished": "Für heute fertig!",
+    "finishedHint": "Du hast {{n}} Wörter wiederholt."
   },
   "languages": {
     "title": "Sprachen",

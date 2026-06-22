@@ -8,6 +8,7 @@ import { SUPPORTED_LANGS, setUiLang } from './i18n'
 import { getSelectedLangCode } from './lib/selectedLanguage'
 import { LabelsPage } from './pages/LabelsPage'
 import { LanguagesPage } from './pages/LanguagesPage'
+import { ReviewPage } from './pages/ReviewPage'
 import { TopicsPage } from './pages/TopicsPage'
 import { WordsPage } from './pages/WordsPage'
 
@@ -100,6 +101,7 @@ function App() {
             <Route index element={<Navigate to="topics" replace />} />
             <Route path="topics" element={<TopicsPage />} />
             <Route path="words" element={<WordsPage />} />
+            <Route path="review" element={<ReviewPage />} />
             <Route path="labels" element={<LabelsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

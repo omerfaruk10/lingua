@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -30,6 +30,13 @@ class Word(Base):
 
     example_sentence: Mapped[str | None] = mapped_column(Text, default=None)
     example_translation: Mapped[str | None] = mapped_column(Text, default=None)
+
+    # Ogrenme / aralikli tekrar (SRS) durumu.
+    # new = baslanmadi, learning = tekrar dongusunde, learned = mezun.
+    learning_status: Mapped[str] = mapped_column(String(20), default="new", index=True)
+    review_stage: Mapped[int] = mapped_column(default=0)  # INTERVALS icindeki konum
+    next_review_date: Mapped[date | None] = mapped_column(Date, default=None, index=True)
+    learned_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

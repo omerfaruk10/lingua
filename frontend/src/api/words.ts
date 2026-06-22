@@ -1,4 +1,4 @@
-import type { Word } from '../types'
+import type { LearningStatus, Word } from '../types'
 import { api } from './client'
 
 export interface WordInput {
@@ -16,6 +16,7 @@ export interface WordInput {
 export interface WordQuery {
   search?: string
   label_id?: number
+  status?: LearningStatus
 }
 
 function buildQuery(q?: WordQuery): string {
@@ -23,6 +24,7 @@ function buildQuery(q?: WordQuery): string {
   const params = new URLSearchParams()
   if (q.search) params.set('search', q.search)
   if (q.label_id != null) params.set('label_id', String(q.label_id))
+  if (q.status) params.set('status', q.status)
   const s = params.toString()
   return s ? `?${s}` : ''
 }
@@ -30,12 +32,17 @@ function buildQuery(q?: WordQuery): string {
 export const wordsApi = {
   list: (languageId: number, query?: WordQuery) =>
     api.get<Word[]>(`/languages/${languageId}/words${buildQuery(query)}`),
+  due: (languageId: number) => api.get<Word[]>(`/languages/${languageId}/words/due`),
   create: (languageId: number, data: WordInput) =>
     api.post<Word>(`/languages/${languageId}/words`, data),
   update: (languageId: number, wordId: number, data: Partial<WordInput>) =>
     api.patch<Word>(`/languages/${languageId}/words/${wordId}`, data),
   remove: (languageId: number, wordId: number) =>
     api.delete<void>(`/languages/${languageId}/words/${wordId}`),
+  setStatus: (languageId: number, wordId: number, status: LearningStatus) =>
+    api.patch<Word>(`/languages/${languageId}/words/${wordId}/status`, { status }),
+  review: (languageId: number, wordId: number, result: 'known' | 'forgot') =>
+    api.post<Word>(`/languages/${languageId}/words/${wordId}/review`, { result }),
   addLabel: (languageId: number, wordId: number, labelId: number) =>
     api.post<Word>(`/languages/${languageId}/words/${wordId}/labels/${labelId}`),
   removeLabel: (languageId: number, wordId: number, labelId: number) =>

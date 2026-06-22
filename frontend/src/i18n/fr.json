@@ -8,7 +8,29 @@
     "topics": "Sujets",
     "words": "Mots",
     "labels": "Étiquettes",
+    "review": "Révision",
     "settings": "Paramètres"
+  },
+  "learning": {
+    "status": "Statut",
+    "new": "Pas commencé",
+    "learning": "En cours",
+    "learned": "Appris",
+    "all": "Tous",
+    "changeConfirm": "Changer le statut de ce mot en « {{status}} » ?",
+    "resetConfirm": "Cela réinitialisera la progression de révision. Changer en « {{status}} » ?"
+  },
+  "review": {
+    "title": "Révision du jour",
+    "subtitle": "Révisez les mots à revoir",
+    "empty": "Aucun mot à réviser aujourd'hui.",
+    "emptyHint": "Marquez un mot comme « Appris » pour l'ajouter au planning de révision (1·3·7·14·30 jours).",
+    "remaining": "{{n}} restants",
+    "reveal": "Afficher la réponse",
+    "known": "Je le savais",
+    "forgot": "Oublié",
+    "finished": "Terminé pour aujourd'hui !",
+    "finishedHint": "Vous avez révisé {{n}} mots."
   },
   "languages": {
     "title": "Langues",

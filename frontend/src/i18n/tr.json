@@ -8,7 +8,29 @@
     "topics": "Konular",
     "words": "Kelimeler",
     "labels": "Etiketler",
+    "review": "Tekrar",
     "settings": "Ayarlar"
+  },
+  "learning": {
+    "status": "Durum",
+    "new": "Başlanmadı",
+    "learning": "Öğreniliyor",
+    "learned": "Öğrenildi",
+    "all": "Tümü",
+    "changeConfirm": "Bu kelimenin durumu \"{{status}}\" olarak değiştirilsin mi?",
+    "resetConfirm": "Bu kelimenin tekrar ilerlemesi sıfırlanacak. \"{{status}}\" olarak değiştirilsin mi?"
+  },
+  "review": {
+    "title": "Bugün Tekrar",
+    "subtitle": "Vakti gelen kelimeleri tekrar et",
+    "empty": "Bugün tekrar edilecek kelime yok.",
+    "emptyHint": "Bir kelimeyi \"Öğrenildi\" yapınca tekrar programına girer (1·3·7·14·30 gün).",
+    "remaining": "{{n}} kaldı",
+    "reveal": "Cevabı göster",
+    "known": "Biliyordum",
+    "forgot": "Unutmuşum",
+    "finished": "Bugünlük tamam!",
+    "finishedHint": "{{n}} kelimeyi tekrar ettin."
   },
   "languages": {
     "title": "Diller",

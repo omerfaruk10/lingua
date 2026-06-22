@@ -1,8 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.label import LabelRead
+
+LearningStatus = Literal["new", "learning", "learned"]
 
 
 class WordBase(BaseModel):
@@ -40,5 +43,17 @@ class WordRead(WordBase):
     id: int
     language_id: int
     labels: list[LabelRead] = []
+    learning_status: LearningStatus
+    review_stage: int
+    next_review_date: date | None
+    learned_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class WordStatusUpdate(BaseModel):
+    status: LearningStatus
+
+
+class WordReviewRequest(BaseModel):
+    result: Literal["known", "forgot"]

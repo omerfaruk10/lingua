@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { wordsApi, type WordInput, type WordQuery } from '../api/words'
+import type { LearningStatus } from '../types'
 
 function base(languageId: number) {
   return ['languages', languageId, 'words'] as const
@@ -11,6 +12,32 @@ export function useWords(languageId: number, query?: WordQuery) {
     queryKey: [...base(languageId), query ?? {}],
     queryFn: () => wordsApi.list(languageId, query),
     enabled: languageId > 0,
+  })
+}
+
+export function useDueWords(languageId: number) {
+  return useQuery({
+    queryKey: [...base(languageId), 'due'],
+    queryFn: () => wordsApi.due(languageId),
+    enabled: languageId > 0,
+  })
+}
+
+export function useSetWordStatus(languageId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ wordId, status }: { wordId: number; status: LearningStatus }) =>
+      wordsApi.setStatus(languageId, wordId, status),
+    onSuccess: () => qc.invalidateQueries({ queryKey: base(languageId) }),
+  })
+}
+
+export function useReviewWord(languageId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ wordId, result }: { wordId: number; result: 'known' | 'forgot' }) =>
+      wordsApi.review(languageId, wordId, result),
+    onSuccess: () => qc.invalidateQueries({ queryKey: base(languageId) }),
   })
 }
 

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, NavLink, Outlet, useParams } from 'react-router-dom'
 
 import { useLanguages } from '../hooks/useLanguages'
+import { useDueWords } from '../hooks/useWords'
 import { clearSelectedLangCode, getSelectedLangCode } from '../lib/selectedLanguage'
 
 export function useLanguageId(): number {
@@ -16,6 +17,7 @@ export function WorkspaceLayout() {
   const { langCode } = useParams()
   const { data: languages, isLoading } = useLanguages()
   const language = languages?.find((l) => l.code === langCode)
+  const dueCount = useDueWords(language?.id ?? 0).data?.length ?? 0
 
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (!language) {
@@ -26,6 +28,7 @@ export function WorkspaceLayout() {
   const tabs = [
     { to: 'topics', label: t('nav.topics') },
     { to: 'words', label: t('nav.words') },
+    { to: 'review', label: t('nav.review'), badge: dueCount },
     { to: 'labels', label: t('nav.labels') },
   ]
 
@@ -56,7 +59,7 @@ export function WorkspaceLayout() {
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium transition ${
+              `flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-center text-sm font-medium transition ${
                 isActive
                   ? 'bg-white text-violet-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'
@@ -64,6 +67,11 @@ export function WorkspaceLayout() {
             }
           >
             {tab.label}
+            {'badge' in tab && tab.badge ? (
+              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 text-xs font-semibold text-white tabular-nums">
+                {tab.badge}
+              </span>
+            ) : null}
           </NavLink>
         ))}
       </nav>

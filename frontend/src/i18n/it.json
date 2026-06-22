@@ -8,7 +8,29 @@
     "topics": "Argomenti",
     "words": "Parole",
     "labels": "Etichette",
+    "review": "Ripasso",
     "settings": "Impostazioni"
+  },
+  "learning": {
+    "status": "Stato",
+    "new": "Da iniziare",
+    "learning": "In corso",
+    "learned": "Imparata",
+    "all": "Tutte",
+    "changeConfirm": "Cambiare lo stato di questa parola in \"{{status}}\"?",
+    "resetConfirm": "Questo azzererà i progressi di ripasso. Cambiare in \"{{status}}\"?"
+  },
+  "review": {
+    "title": "Ripasso di oggi",
+    "subtitle": "Ripassa le parole in scadenza",
+    "empty": "Nessuna parola da ripassare oggi.",
+    "emptyHint": "Segna una parola come \"Imparata\" per aggiungerla al programma di ripasso (1·3·7·14·30 giorni).",
+    "remaining": "{{n}} rimaste",
+    "reveal": "Mostra risposta",
+    "known": "La sapevo",
+    "forgot": "Dimenticata",
+    "finished": "Fatto per oggi!",
+    "finishedHint": "Hai ripassato {{n}} parole."
   },
   "languages": {
     "title": "Lingue",

@@ -8,7 +8,29 @@
     "topics": "Topics",
     "words": "Words",
     "labels": "Labels",
+    "review": "Review",
     "settings": "Settings"
+  },
+  "learning": {
+    "status": "Status",
+    "new": "Not started",
+    "learning": "Learning",
+    "learned": "Learned",
+    "all": "All",
+    "changeConfirm": "Change this word's status to \"{{status}}\"?",
+    "resetConfirm": "This will reset the word's review progress. Change to \"{{status}}\"?"
+  },
+  "review": {
+    "title": "Review today",
+    "subtitle": "Review the words that are due",
+    "empty": "No words to review today.",
+    "emptyHint": "Mark a word as \"Learned\" to add it to the review schedule (1·3·7·14·30 days).",
+    "remaining": "{{n}} left",
+    "reveal": "Show answer",
+    "known": "I knew it",
+    "forgot": "Forgot it",
+    "finished": "Done for today!",
+    "finishedHint": "You reviewed {{n}} words."
   },
   "languages": {
     "title": "Languages",

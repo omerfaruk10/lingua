@@ -31,6 +31,8 @@ export interface Label {
   created_at: string
 }
 
+export type LearningStatus = 'new' | 'learning' | 'learned'
+
 export interface Word {
   id: number
   language_id: number
@@ -44,6 +46,10 @@ export interface Word {
   example_sentence: string | null
   example_translation: string | null
   labels: Label[]
+  learning_status: LearningStatus
+  review_stage: number
+  next_review_date: string | null
+  learned_at: string | null
   created_at: string
   updated_at: string
 }

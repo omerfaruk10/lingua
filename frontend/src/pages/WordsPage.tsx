@@ -15,10 +15,19 @@ import {
   useCreateWord,
   useDeleteWord,
   useRemoveWordLabel,
+  useSetWordStatus,
   useUpdateWord,
   useWords,
 } from '../hooks/useWords'
-import type { Label, Word } from '../types'
+import type { Label, LearningStatus, Word } from '../types'
+
+const LEARNING_STATUSES: LearningStatus[] = ['new', 'learning', 'learned']
+
+const LEARNING_STYLE: Record<LearningStatus, string> = {
+  new: 'bg-slate-100 text-slate-500',
+  learning: 'bg-amber-100 text-amber-700',
+  learned: 'bg-emerald-100 text-emerald-700',
+}
 
 export function WordsPage() {
   const { t } = useTranslation()
@@ -26,10 +35,12 @@ export function WordsPage() {
   const languageId = useLanguageId()
   const [search, setSearch] = useState('')
   const [labelFilter, setLabelFilter] = useState<number | null>(null)
+  const [statusFilter, setStatusFilter] = useState<LearningStatus | null>(null)
 
   const query = {
     ...(search.trim() ? { search: search.trim() } : {}),
     ...(labelFilter != null ? { label_id: labelFilter } : {}),
+    ...(statusFilter != null ? { status: statusFilter } : {}),
   }
   const { data: words, isLoading } = useWords(
     languageId,
@@ -42,6 +53,7 @@ export function WordsPage() {
   const deleteWord = useDeleteWord(languageId)
   const addLabel = useAddWordLabel(languageId)
   const removeLabel = useRemoveWordLabel(languageId)
+  const setStatus = useSetWordStatus(languageId)
 
   const [addOpen, setAddOpen] = useState(false)
   const [editingWord, setEditingWord] = useState<Word | null>(null)
@@ -85,6 +97,22 @@ export function WordsPage() {
         </button>
       </div>
 
+      {/* Ogrenme durumuna gore filtre */}
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterChip active={statusFilter == null} onClick={() => setStatusFilter(null)}>
+          {t('learning.all')}
+        </FilterChip>
+        {LEARNING_STATUSES.map((s) => (
+          <FilterChip
+            key={s}
+            active={statusFilter === s}
+            onClick={() => setStatusFilter((cur) => (cur === s ? null : s))}
+          >
+            {t(`learning.${s}`)}
+          </FilterChip>
+        ))}
+      </div>
+
       {/* Etikete gore filtre */}
       {allLabels.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
@@ -123,6 +151,7 @@ export function WordsPage() {
               allLabels={allLabels}
               onAddLabel={(labelId) => addLabel.mutate({ wordId: word.id, labelId })}
               onRemoveLabel={(labelId) => removeLabel.mutate({ wordId: word.id, labelId })}
+              onSetStatus={(status) => setStatus.mutate({ wordId: word.id, status })}
               onEdit={() => setEditingWord(word)}
               onDelete={() => remove(word.id)}
             />
@@ -252,12 +281,98 @@ function FilterChip({
   )
 }
 
+function WordStatusDropdown({
+  word,
+  onSetStatus,
+}: {
+  word: Word
+  onSetStatus: (s: LearningStatus) => void
+}) {
+  const { t } = useTranslation()
+  const confirm = useConfirm()
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Tekrar programi 'learned' durumunda yasar; oradan cikmak programi siler.
+  function losesProgress(target: LearningStatus): boolean {
+    return word.learning_status === 'learned' && target !== 'learned'
+  }
+
+  async function pick(s: LearningStatus) {
+    setOpen(false)
+    if (s === word.learning_status) return
+    const reset = losesProgress(s)
+    const status = t(`learning.${s}`)
+    const ok = await confirm({
+      message: t(reset ? 'learning.resetConfirm' : 'learning.changeConfirm', { status }),
+      confirmLabel: t('common.yes'),
+      danger: reset,
+    })
+    if (!ok) return
+    onSetStatus(s)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      const target = e.target as Node
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  function handleOpen() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, left: r.right - 150 })
+    }
+    setOpen((v) => !v)
+  }
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition hover:opacity-80 ${LEARNING_STYLE[word.learning_status]}`}
+      >
+        {t(`learning.${word.learning_status}`)}
+        <span className="opacity-60">▾</span>
+      </button>
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          style={{ top: pos.top, left: pos.left }}
+          className="fixed z-50 min-w-[150px] rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {LEARNING_STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => pick(s)}
+              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition hover:bg-slate-50 ${word.learning_status === s ? 'text-slate-900' : 'text-slate-600'}`}
+            >
+              {word.learning_status === s ? <span className="text-[10px]">✓</span> : <span className="w-3" />}
+              <span>{t(`learning.${s}`)}</span>
+            </button>
+          ))}
+        </div>,
+        document.body,
+      )}
+    </>
+  )
+}
+
 function WordCard({
   word,
   index,
   allLabels,
   onAddLabel,
   onRemoveLabel,
+  onSetStatus,
   onEdit,
   onDelete,
 }: {
@@ -266,6 +381,7 @@ function WordCard({
   allLabels: Label[]
   onAddLabel: (labelId: number) => void
   onRemoveLabel: (labelId: number) => void
+  onSetStatus: (s: LearningStatus) => void
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -334,13 +450,16 @@ function WordCard({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100">
-          <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
-            ✎
-          </button>
-          <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>
-            ✕
-          </button>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <WordStatusDropdown word={word} onSetStatus={onSetStatus} />
+          <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
+            <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
+              ✎
+            </button>
+            <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>
+              ✕
+            </button>
+          </div>
         </div>
       </div>
     </li>

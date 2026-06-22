@@ -46,11 +46,28 @@ def ensure_schema() -> None:
     gelene kadar bu kucuk yardimci tek tek eklemeleri ustlenir.
     """
     inspector = inspect(engine)
-    if "languages" not in inspector.get_table_names():
+    tables = set(inspector.get_table_names())
+    if "languages" not in tables:
         return
-    cols = {c["name"] for c in inspector.get_columns("languages")}
-    if "order_index" not in cols:
+
+    lang_cols = {c["name"] for c in inspector.get_columns("languages")}
+    if "order_index" not in lang_cols:
         with engine.begin() as conn:
             conn.execute(
                 text("ALTER TABLE languages ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0")
             )
+
+    # SRS alanlari: var olan words tablosuna eksikse ekle (veri korunur).
+    if "words" in tables:
+        word_cols = {c["name"] for c in inspector.get_columns("words")}
+        word_additions = {
+            "learning_status": "ALTER TABLE words ADD COLUMN learning_status VARCHAR(20) NOT NULL DEFAULT 'new'",
+            "review_stage": "ALTER TABLE words ADD COLUMN review_stage INTEGER NOT NULL DEFAULT 0",
+            "next_review_date": "ALTER TABLE words ADD COLUMN next_review_date DATE",
+            "learned_at": "ALTER TABLE words ADD COLUMN learned_at DATETIME",
+        }
+        missing = [sql for col, sql in word_additions.items() if col not in word_cols]
+        if missing:
+            with engine.begin() as conn:
+                for sql in missing:
+                    conn.execute(text(sql))
