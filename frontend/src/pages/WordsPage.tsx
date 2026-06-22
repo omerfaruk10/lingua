@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { useParams } from 'react-router-dom'
 
 import type { WordInput } from '../api/words'
 import { LabelBadge } from '../components/LabelBadge'
@@ -10,6 +11,7 @@ import { Modal } from '../components/Modal'
 import { WordForm } from '../components/WordForm'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useLabels } from '../hooks/useLabels'
+import { downloadCsv, toCsv } from '../lib/csv'
 import {
   useAddWordLabel,
   useCreateWord,
@@ -32,6 +34,7 @@ const LEARNING_STYLE: Record<LearningStatus, string> = {
 export function WordsPage() {
   const { t } = useTranslation()
   const confirm = useConfirm()
+  const { langCode } = useParams()
   const languageId = useLanguageId()
   const [search, setSearch] = useState('')
   const [labelFilter, setLabelFilter] = useState<number | null>(null)
@@ -77,6 +80,39 @@ export function WordsPage() {
     if (ok) deleteWord.mutate(wordId)
   }
 
+  async function exportCsv() {
+    if (list.length === 0) return
+    const ok = await confirm({
+      message: t('words.exportConfirm', { n: list.length }),
+      confirmLabel: t('words.export'),
+    })
+    if (!ok) return
+    // O an filtrelenmis listeyi disa aktar; etiketleri global sirayla yaz.
+    const order = new Map(allLabels.map((l, i) => [l.id, i]))
+    const f = (k: string) => t(`words.fields.${k}`)
+    const headers = [
+      f('term'), f('part_of_speech'), f('phonetic'), f('phonetic_tr'),
+      f('meaning_native'), f('meaning_english'), f('definition_target'),
+      f('example_sentence'), f('example_translation'),
+      t('nav.labels'), t('learning.status'),
+    ]
+    const rows = list.map((w) => {
+      const labelNames = [...w.labels]
+        .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+        .map((l) => l.name)
+        .join('; ')
+      return [
+        w.term, w.part_of_speech, w.phonetic, w.phonetic_tr,
+        w.meaning_native, w.meaning_english, w.definition_target,
+        w.example_sentence, w.example_translation,
+        labelNames, t(`learning.${w.learning_status}`),
+      ].map((v) => v ?? '')
+    })
+    const date = new Date().toISOString().slice(0, 10)
+    const code = langCode ?? 'words'
+    downloadCsv(`lingua-${code}-words-${date}.csv`, toCsv([headers, ...rows]))
+  }
+
   return (
     <div className="space-y-5">
       {/* Arama + ekle */}
@@ -92,6 +128,14 @@ export function WordsPage() {
             className="input pl-9"
           />
         </div>
+        <button
+          onClick={exportCsv}
+          disabled={list.length === 0}
+          className="btn-ghost shrink-0"
+          title={t('words.export')}
+        >
+          ⤓ {t('words.export')}
+        </button>
         <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0">
           + {t('words.add')}
         </button>

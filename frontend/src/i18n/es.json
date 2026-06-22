@@ -73,6 +73,8 @@
   },
   "words": {
     "searchPlaceholder": "Buscar palabras…",
+    "export": "Exportar",
+    "exportConfirm": "¿Exportar {{n}} palabras como CSV?",
     "add": "Añadir palabra",
     "addTitle": "Añadir una palabra",
     "editTitle": "Editar palabra",

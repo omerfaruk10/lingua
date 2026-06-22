@@ -73,6 +73,8 @@
   },
   "words": {
     "searchPlaceholder": "Kelime ara…",
+    "export": "Dışa aktar",
+    "exportConfirm": "{{n}} kelime CSV olarak dışa aktarılsın mı?",
     "add": "Kelime ekle",
     "addTitle": "Kelime ekle",
     "editTitle": "Kelimeyi düzenle",
