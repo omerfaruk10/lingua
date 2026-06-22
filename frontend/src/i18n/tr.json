@@ -9,6 +9,7 @@
     "words": "Kelimeler",
     "labels": "Etiketler",
     "review": "Tekrar",
+    "stats": "İstatistik",
     "settings": "Ayarlar"
   },
   "learning": {
@@ -31,6 +32,19 @@
     "forgot": "Unutmuşum",
     "finished": "Bugünlük tamam!",
     "finishedHint": "{{n}} kelimeyi tekrar ettin."
+  },
+  "stats": {
+    "month": "Ay",
+    "week": "Hafta",
+    "day": "Gün",
+    "totalWords": "Toplam kelime",
+    "thisWeek": "Bu hafta",
+    "learned": "Öğrenilen",
+    "streak": "Seri",
+    "streakDays": "{{n}} gün",
+    "added": "eklenen",
+    "reviewed": "tekrar",
+    "dayEmpty": "Bu gün eklenen kelime yok."
   },
   "languages": {
     "title": "Diller",

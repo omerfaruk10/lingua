@@ -9,6 +9,7 @@
     "words": "Palabras",
     "labels": "Etiquetas",
     "review": "Repaso",
+    "stats": "Estadísticas",
     "settings": "Ajustes"
   },
   "learning": {
@@ -31,6 +32,19 @@
     "forgot": "La olvidé",
     "finished": "¡Listo por hoy!",
     "finishedHint": "Repasaste {{n}} palabras."
+  },
+  "stats": {
+    "month": "Mes",
+    "week": "Semana",
+    "day": "Día",
+    "totalWords": "Palabras totales",
+    "thisWeek": "Esta semana",
+    "learned": "Aprendidas",
+    "streak": "Racha",
+    "streakDays": "{{n}} días",
+    "added": "añadidas",
+    "reviewed": "repasos",
+    "dayEmpty": "No se añadieron palabras este día."
   },
   "languages": {
     "title": "Idiomas",

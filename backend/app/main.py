@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401 -- modelleri Base.metadata'ya kaydeder
 from app.database import Base, engine, ensure_schema
-from app.routers import labels, languages, topics, words
+from app.routers import labels, languages, stats, topics, words
 
 # Iskelet asamasi: tablolari dogrudan olustur.
 # SRS alanlari eklerken sema degisecegi icin ileride Alembic (migration) gelecek.
@@ -31,6 +31,7 @@ app.include_router(languages.router)
 app.include_router(topics.router)
 app.include_router(words.router)
 app.include_router(labels.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")

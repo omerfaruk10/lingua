@@ -30,6 +30,7 @@ export function WorkspaceLayout() {
     { to: 'words', label: t('nav.words') },
     { to: 'review', label: t('nav.review'), badge: dueCount },
     { to: 'labels', label: t('nav.labels') },
+    { to: 'stats', label: t('nav.stats') },
   ]
 
   return (

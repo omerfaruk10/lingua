@@ -9,6 +9,7 @@
     "words": "Words",
     "labels": "Labels",
     "review": "Review",
+    "stats": "Stats",
     "settings": "Settings"
   },
   "learning": {
@@ -31,6 +32,19 @@
     "forgot": "Forgot it",
     "finished": "Done for today!",
     "finishedHint": "You reviewed {{n}} words."
+  },
+  "stats": {
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "totalWords": "Total words",
+    "thisWeek": "This week",
+    "learned": "Learned",
+    "streak": "Streak",
+    "streakDays": "{{n}} days",
+    "added": "added",
+    "reviewed": "reviews",
+    "dayEmpty": "No words added this day."
   },
   "languages": {
     "title": "Languages",

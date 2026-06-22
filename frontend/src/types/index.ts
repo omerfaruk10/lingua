@@ -31,6 +31,12 @@ export interface Label {
   created_at: string
 }
 
+export interface DailyStat {
+  day: string // YYYY-MM-DD (yerel gun)
+  added: number
+  reviewed: number
+}
+
 export type LearningStatus = 'new' | 'learning' | 'learned'
 
 export interface Word {

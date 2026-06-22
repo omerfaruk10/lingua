@@ -9,6 +9,7 @@ import { getSelectedLangCode } from './lib/selectedLanguage'
 import { LabelsPage } from './pages/LabelsPage'
 import { LanguagesPage } from './pages/LanguagesPage'
 import { ReviewPage } from './pages/ReviewPage'
+import { StatsPage } from './pages/StatsPage'
 import { TopicsPage } from './pages/TopicsPage'
 import { WordsPage } from './pages/WordsPage'
 
@@ -103,6 +104,7 @@ function App() {
             <Route path="words" element={<WordsPage />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="labels" element={<LabelsPage />} />
+            <Route path="stats" element={<StatsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

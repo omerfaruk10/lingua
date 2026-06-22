@@ -9,6 +9,7 @@
     "words": "Parole",
     "labels": "Etichette",
     "review": "Ripasso",
+    "stats": "Statistiche",
     "settings": "Impostazioni"
   },
   "learning": {
@@ -31,6 +32,19 @@
     "forgot": "Dimenticata",
     "finished": "Fatto per oggi!",
     "finishedHint": "Hai ripassato {{n}} parole."
+  },
+  "stats": {
+    "month": "Mese",
+    "week": "Settimana",
+    "day": "Giorno",
+    "totalWords": "Parole totali",
+    "thisWeek": "Questa settimana",
+    "learned": "Imparate",
+    "streak": "Serie",
+    "streakDays": "{{n}} giorni",
+    "added": "aggiunte",
+    "reviewed": "ripassi",
+    "dayEmpty": "Nessuna parola aggiunta in questo giorno."
   },
   "languages": {
     "title": "Lingue",

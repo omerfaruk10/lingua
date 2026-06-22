@@ -9,6 +9,7 @@
     "words": "Mots",
     "labels": "Étiquettes",
     "review": "Révision",
+    "stats": "Stats",
     "settings": "Paramètres"
   },
   "learning": {
@@ -31,6 +32,19 @@
     "forgot": "Oublié",
     "finished": "Terminé pour aujourd'hui !",
     "finishedHint": "Vous avez révisé {{n}} mots."
+  },
+  "stats": {
+    "month": "Mois",
+    "week": "Semaine",
+    "day": "Jour",
+    "totalWords": "Mots au total",
+    "thisWeek": "Cette semaine",
+    "learned": "Appris",
+    "streak": "Série",
+    "streakDays": "{{n}} jours",
+    "added": "ajoutés",
+    "reviewed": "révisions",
+    "dayEmpty": "Aucun mot ajouté ce jour."
   },
   "languages": {
     "title": "Langues",

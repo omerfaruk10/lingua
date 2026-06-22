@@ -9,6 +9,7 @@
     "words": "Wörter",
     "labels": "Labels",
     "review": "Wiederholen",
+    "stats": "Statistik",
     "settings": "Einstellungen"
   },
   "learning": {
@@ -31,6 +32,19 @@
     "forgot": "Vergessen",
     "finished": "Für heute fertig!",
     "finishedHint": "Du hast {{n}} Wörter wiederholt."
+  },
+  "stats": {
+    "month": "Monat",
+    "week": "Woche",
+    "day": "Tag",
+    "totalWords": "Wörter gesamt",
+    "thisWeek": "Diese Woche",
+    "learned": "Gelernt",
+    "streak": "Serie",
+    "streakDays": "{{n}} Tage",
+    "added": "hinzugefügt",
+    "reviewed": "Wiederholungen",
+    "dayEmpty": "An diesem Tag keine Wörter hinzugefügt."
   },
   "languages": {
     "title": "Sprachen",
