@@ -95,6 +95,18 @@
     "empty": "No words yet — add your first one below.",
     "noResults": "No words match your search.",
     "deleteConfirm": "Delete this word?",
+    "partsOfSpeech": {
+      "noun": "Noun",
+      "verb": "Verb",
+      "adjective": "Adjective",
+      "adverb": "Adverb",
+      "pronoun": "Pronoun",
+      "preposition": "Preposition",
+      "conjunction": "Conjunction",
+      "interjection": "Interjection",
+      "article": "Article",
+      "numeral": "Numeral"
+    },
     "fields": {
       "term": "Word",
       "part_of_speech": "Type",

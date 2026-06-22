@@ -95,6 +95,18 @@
     "empty": "Aucun mot pour l'instant — ajoute le premier ci-dessous.",
     "noResults": "Aucun mot ne correspond à la recherche.",
     "deleteConfirm": "Supprimer ce mot ?",
+    "partsOfSpeech": {
+      "noun": "Nom",
+      "verb": "Verbe",
+      "adjective": "Adjectif",
+      "adverb": "Adverbe",
+      "pronoun": "Pronom",
+      "preposition": "Préposition",
+      "conjunction": "Conjonction",
+      "interjection": "Interjection",
+      "article": "Article",
+      "numeral": "Numéral"
+    },
     "fields": {
       "term": "Mot",
       "part_of_speech": "Type",

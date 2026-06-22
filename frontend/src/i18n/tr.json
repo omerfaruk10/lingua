@@ -95,6 +95,18 @@
     "empty": "Henüz kelime yok — aşağıdan ilkini ekle.",
     "noResults": "Aramana uyan kelime yok.",
     "deleteConfirm": "Bu kelime silinsin mi?",
+    "partsOfSpeech": {
+      "noun": "İsim",
+      "verb": "Fiil",
+      "adjective": "Sıfat",
+      "adverb": "Zarf",
+      "pronoun": "Zamir",
+      "preposition": "Edat",
+      "conjunction": "Bağlaç",
+      "interjection": "Ünlem",
+      "article": "Artikül",
+      "numeral": "Sayı"
+    },
     "fields": {
       "term": "Kelime",
       "part_of_speech": "Tür",

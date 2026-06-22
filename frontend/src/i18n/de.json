@@ -95,6 +95,18 @@
     "empty": "Noch keine Wörter — füge unten das erste hinzu.",
     "noResults": "Keine Wörter passen zur Suche.",
     "deleteConfirm": "Dieses Wort löschen?",
+    "partsOfSpeech": {
+      "noun": "Nomen",
+      "verb": "Verb",
+      "adjective": "Adjektiv",
+      "adverb": "Adverb",
+      "pronoun": "Pronomen",
+      "preposition": "Präposition",
+      "conjunction": "Konjunktion",
+      "interjection": "Interjektion",
+      "article": "Artikel",
+      "numeral": "Numerale"
+    },
     "fields": {
       "term": "Wort",
       "part_of_speech": "Art",

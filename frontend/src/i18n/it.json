@@ -95,6 +95,18 @@
     "empty": "Ancora nessuna parola — aggiungi la prima qui sotto.",
     "noResults": "Nessuna parola corrisponde alla ricerca.",
     "deleteConfirm": "Eliminare questa parola?",
+    "partsOfSpeech": {
+      "noun": "Sostantivo",
+      "verb": "Verbo",
+      "adjective": "Aggettivo",
+      "adverb": "Avverbio",
+      "pronoun": "Pronome",
+      "preposition": "Preposizione",
+      "conjunction": "Congiunzione",
+      "interjection": "Interiezione",
+      "article": "Articolo",
+      "numeral": "Numerale"
+    },
     "fields": {
       "term": "Parola",
       "part_of_speech": "Tipo",
