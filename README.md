@@ -2,16 +2,20 @@
 
 Çok dilli dil öğrenme takip sistemi. İlerleme takibi (konular) ve kişisel kelime bankası (kelimeler + etiketler) sunar.
 
+Her **kurs**, bir hedef dil + bir ana dil + 0-3 yardımcı dilden oluşur (örn. İtalyanca öğrenirken ana dil Türkçe, yardımcı diller İngilizce/Almanca olabilir). Aynı hedef dil için farklı ana/yardımcı dil kombinasyonlarıyla birden fazla kurs açılabilir; her kurs bağımsız bir çalışma alanıdır.
+
 ## Sayfalar
 
 | Sayfa | URL | Açıklama |
 |---|---|---|
-| Diller | `/languages` | Takip edilen dillerin listesi. Sürükle-bırak ile sıralama desteklenir. |
-| Konular | `/languages/:code/topics` | Kanban panosu: Başlamadı · Devam Ediyor · Tamamlandı |
-| Kelimeler | `/languages/:code/words` | Kelime bankası. Her kayıtta okunuş, anlam, tanım, örnek cümle ve etiketler bulunur. |
-| Etiketler | `/languages/:code/labels` | Renk kodlu etiketler. Buradaki sıra, kelime kartlarındaki etiket sırasını belirler. |
+| Diller | `/languages` | Kursların listesi. Sürükle-bırak ile sıralama desteklenir. |
+| Konular | `/languages/:courseSlug/topics` | Kanban panosu: Başlamadı · Devam Ediyor · Tamamlandı |
+| Kelimeler | `/languages/:courseSlug/words` | Kelime bankası. Her kayıtta okunuş, kursun her dili için ayrı anlam, tanım, örnek cümle, çeviri ve etiketler bulunur. CSV/TXT olarak toplu içe/dışa aktarma desteklenir (sütunlar sabit sırada okunur, başlık satırı içeriğine bakılmaz). |
+| Tekrar | `/languages/:courseSlug/review` | Zamanlanmış (1·3·7·14·30 gün) aralıklı tekrar akışı. |
+| Etiketler | `/languages/:courseSlug/labels` | Renk kodlu etiketler. Buradaki sıra, kelime kartlarındaki etiket sırasını belirler. |
+| İstatistik | `/languages/:courseSlug/stats` | Günlük/haftalık/aylık ilerleme grafikleri. |
 
-Her dil bağımsız bir çalışma alanına sahiptir. Arayüz dili (TR/EN/IT/ES/DE/FR) öğrenilen dilden bağımsız olarak değiştirilebilir.
+`:courseSlug` hedef-ana[-yardımcı...] dil kodlarının birleşimidir (örn. `it-tr` veya `it-tr-en-de`). Arayüz dili (TR/EN/IT/ES/DE/FR) öğrenilen dilden bağımsız olarak değiştirilebilir.
 
 ## Çalıştırma
 
