@@ -333,7 +333,9 @@ function DayView({
           {dayWords.map((w) => (
             <li key={w.id} className="flex items-baseline gap-2 py-2">
               <span className="font-medium text-slate-800">{w.term}</span>
-              {w.meaning_native && <span className="text-sm text-slate-400">{w.meaning_native}</span>}
+              {w.meanings[0]?.value && (
+                <span className="text-sm text-slate-400">{w.meanings[0].value}</span>
+              )}
             </li>
           ))}
         </ul>

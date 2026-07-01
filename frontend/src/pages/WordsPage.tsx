@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
 
 import type { WordInput } from '../api/words'
 import { LabelBadge } from '../components/LabelBadge'
 import { labelColor } from '../components/labelColors'
 import { useConfirm } from '../components/ConfirmProvider'
+import { ImportWordsModal } from '../components/ImportWordsModal'
 import { Modal } from '../components/Modal'
 import { WordForm } from '../components/WordForm'
-import { useLanguageId } from '../components/WorkspaceLayout'
+import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useLabels } from '../hooks/useLabels'
 import { downloadCsv, toCsv } from '../lib/csv'
+import { buildWordCsvSchema } from '../lib/wordCsvSchema'
 import {
   useAddWordLabel,
   useCreateWord,
@@ -21,7 +22,7 @@ import {
   useUpdateWord,
   useWords,
 } from '../hooks/useWords'
-import type { Label, LearningStatus, Word } from '../types'
+import type { Label, LanguageBrief, LearningStatus, Word } from '../types'
 
 const LEARNING_STATUSES: LearningStatus[] = ['new', 'learning', 'learned']
 
@@ -34,8 +35,13 @@ const LEARNING_STYLE: Record<LearningStatus, string> = {
 export function WordsPage() {
   const { t } = useTranslation()
   const confirm = useConfirm()
-  const { langCode } = useParams()
   const languageId = useLanguageId()
+  const course = useCurrentCourse()
+  const nativeLang = course?.native_language ?? null
+  const helperLangs = course?.helper_languages ?? []
+  const targetLang = course?.target_language ?? null
+  // Anlamlari etiketlemek/siralamak icin: ana dil once, sonra yardimcilar.
+  const meaningLangs: LanguageBrief[] = nativeLang ? [nativeLang, ...helperLangs] : []
   const [search, setSearch] = useState('')
   const [labelFilter, setLabelFilter] = useState<number | null>(null)
   const [statusFilter, setStatusFilter] = useState<LearningStatus | null>(null)
@@ -59,6 +65,7 @@ export function WordsPage() {
   const setStatus = useSetWordStatus(languageId)
 
   const [addOpen, setAddOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingWord, setEditingWord] = useState<Word | null>(null)
 
   const list = words ?? []
@@ -87,30 +94,22 @@ export function WordsPage() {
       confirmLabel: t('words.export'),
     })
     if (!ok) return
-    // O an filtrelenmis listeyi disa aktar; etiketleri global sirayla yaz.
-    const order = new Map(allLabels.map((l, i) => [l.id, i]))
-    const f = (k: string) => t(`words.fields.${k}`)
-    const headers = [
-      f('term'), f('part_of_speech'), f('phonetic'), f('phonetic_tr'),
-      f('meaning_native'), f('meaning_english'), f('definition_target'),
-      f('example_sentence'), f('example_translation'),
-      t('nav.labels'), t('learning.status'),
-    ]
+    // Basliklar import ile ayni kaynaktan (wordCsvSchema) gelir, ikisi senkron kalir.
+    // Sabit 8+H sutun: etiket/durum yazilmaz ki export tekrar import edilebilsin.
+    const schema = buildWordCsvSchema(t, nativeLang, helperLangs, targetLang)
     const rows = list.map((w) => {
-      const labelNames = [...w.labels]
-        .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
-        .map((l) => l.name)
-        .join('; ')
+      const meaningCells = schema.meaningLangs.map(
+        (lang) => w.meanings.find((m) => m.language_id === lang.id)?.value ?? '',
+      )
       return [
-        w.term, w.part_of_speech, w.phonetic, w.phonetic_tr,
-        w.meaning_native, w.meaning_english, w.definition_target,
+        w.term, w.part_of_speech, w.phonetic, w.phonetic_native,
+        ...meaningCells, w.definition_target,
         w.example_sentence, w.example_translation,
-        labelNames, t(`learning.${w.learning_status}`),
       ].map((v) => v ?? '')
     })
     const date = new Date().toISOString().slice(0, 10)
-    const code = langCode ?? 'words'
-    downloadCsv(`lingua-${code}-words-${date}.csv`, toCsv([headers, ...rows]))
+    const code = course?.code ?? 'words'
+    downloadCsv(`lingua-${code}-words-${date}.csv`, toCsv([schema.headers, ...rows]))
   }
 
   return (
@@ -134,7 +133,10 @@ export function WordsPage() {
           className="btn-ghost shrink-0"
           title={t('words.export')}
         >
-          ⤓ {t('words.export')}
+          ⤒ {t('words.export')}
+        </button>
+        <button onClick={() => setImportOpen(true)} className="btn-ghost shrink-0" title={t('words.import')}>
+          ⤓ {t('words.import')}
         </button>
         <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0">
           + {t('words.add')}
@@ -192,6 +194,7 @@ export function WordsPage() {
               key={word.id}
               word={word}
               index={index + 1}
+              meaningLangs={meaningLangs}
               allLabels={allLabels}
               onAddLabel={(labelId) => addLabel.mutate({ wordId: word.id, labelId })}
               onRemoveLabel={(labelId) => removeLabel.mutate({ wordId: word.id, labelId })}
@@ -203,10 +206,13 @@ export function WordsPage() {
         </ul>
       )}
 
-      {addOpen && (
+      {addOpen && nativeLang && targetLang && (
         <Modal title={t('words.addTitle')} onClose={() => setAddOpen(false)} maxWidth="max-w-2xl">
           <WordForm
             bare
+            nativeLang={nativeLang}
+            helperLangs={helperLangs}
+            targetLang={targetLang}
             submitLabel={t('words.add')}
             submitting={createWord.isPending}
             onSubmit={create}
@@ -215,17 +221,30 @@ export function WordsPage() {
         </Modal>
       )}
 
-      {editingWord && (
+      {editingWord && nativeLang && targetLang && (
         <Modal title={t('words.editTitle')} onClose={() => setEditingWord(null)} maxWidth="max-w-2xl">
           <WordForm
             bare
             initial={editingWord}
+            nativeLang={nativeLang}
+            helperLangs={helperLangs}
+            targetLang={targetLang}
             submitLabel={t('common.save')}
             submitting={updateWord.isPending}
             onSubmit={update}
             onCancel={() => setEditingWord(null)}
           />
         </Modal>
+      )}
+
+      {importOpen && (
+        <ImportWordsModal
+          courseId={languageId}
+          nativeLang={nativeLang}
+          helperLangs={helperLangs}
+          targetLang={targetLang}
+          onClose={() => setImportOpen(false)}
+        />
       )}
     </div>
   )
@@ -413,6 +432,7 @@ function WordStatusDropdown({
 function WordCard({
   word,
   index,
+  meaningLangs,
   allLabels,
   onAddLabel,
   onRemoveLabel,
@@ -422,6 +442,7 @@ function WordCard({
 }: {
   word: Word
   index: number
+  meaningLangs: LanguageBrief[]
   allLabels: Label[]
   onAddLabel: (labelId: number) => void
   onRemoveLabel: (labelId: number) => void
@@ -437,6 +458,11 @@ function WordCard({
   const sortedLabels = [...word.labels].sort(
     (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
   )
+  // Anlamlari kurs dil sirasiyla goster (ana dil once); deger girilmemis dilleri atla.
+  const meaningById = new Map(word.meanings.map((m) => [m.language_id, m.value]))
+  const orderedMeanings = meaningLangs
+    .map((lang) => meaningById.get(lang.id))
+    .filter((v): v is string => !!v && v.trim().length > 0)
 
   return (
     <li className="card group p-4 transition hover:border-slate-300">
@@ -447,21 +473,21 @@ function WordCard({
             <span className="text-lg font-semibold text-slate-900">{word.term}</span>
             {word.part_of_speech && (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                {word.part_of_speech}
+                {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
               </span>
             )}
-            {(word.phonetic || word.phonetic_tr) && (
+            {(word.phonetic || word.phonetic_native) && (
               <span className="text-sm text-slate-400">
-                {[word.phonetic, word.phonetic_tr].filter(Boolean).join(' · ')}
+                {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
               </span>
             )}
           </div>
 
-          {(word.meaning_native || word.meaning_english) && (
+          {orderedMeanings.length > 0 && (
             <div className="mt-1 text-slate-700">
-              {word.meaning_native}
-              {word.meaning_english && (
-                <span className="text-slate-400"> · {word.meaning_english}</span>
+              {orderedMeanings[0]}
+              {orderedMeanings.length > 1 && (
+                <span className="text-slate-400"> · {orderedMeanings.slice(1).join(' · ')}</span>
               )}
             </div>
           )}

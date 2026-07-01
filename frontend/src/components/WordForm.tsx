@@ -2,33 +2,25 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { WordInput } from '../api/words'
-
-type FieldName = keyof Omit<WordInput, never>
+import { langName } from '../lib/langName'
+import type { LanguageBrief } from '../types'
 
 const PARTS_OF_SPEECH = [
   'noun', 'verb', 'adjective', 'adverb', 'pronoun',
   'preposition', 'conjunction', 'interjection', 'article', 'numeral',
 ] as const
 
-const FIELDS: { name: FieldName; required?: boolean; multiline?: boolean; wide?: boolean }[] = [
-  { name: 'term', required: true },
-  { name: 'part_of_speech' },
-  { name: 'phonetic' },
-  { name: 'phonetic_tr' },
-  { name: 'meaning_native' },
-  { name: 'meaning_english' },
-  { name: 'definition_target', multiline: true, wide: true },
-  { name: 'example_sentence', multiline: true, wide: true },
-  { name: 'example_translation', multiline: true, wide: true },
-]
+// Anlam disindaki sabit alanlar. Anlam alanlari kursun dillerine gore uretilir.
+type ScalarField =
+  | 'term'
+  | 'part_of_speech'
+  | 'phonetic'
+  | 'phonetic_native'
+  | 'definition_target'
+  | 'example_sentence'
+  | 'example_translation'
 
-type FormValues = Record<FieldName, string>
-
-function toForm(initial?: Partial<WordInput>): FormValues {
-  const o = {} as FormValues
-  for (const f of FIELDS) o[f.name] = (initial?.[f.name] as string | null | undefined) ?? ''
-  return o
-}
+type ScalarValues = Record<ScalarField, string>
 
 function PosCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { t } = useTranslation()
@@ -37,7 +29,7 @@ function PosCombobox({ value, onChange }: { value: string; onChange: (v: string)
   const ref = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const label = value ? t(`words.partsOfSpeech.${value}`) : ''
+  const label = value ? t(`words.partsOfSpeech.${value}`, { defaultValue: value }) : ''
 
   const filtered = PARTS_OF_SPEECH.filter((pos) =>
     t(`words.partsOfSpeech.${pos}`).toLowerCase().includes(query.toLowerCase())
@@ -92,7 +84,7 @@ function PosCombobox({ value, onChange }: { value: string; onChange: (v: string)
         <button
           type="button"
           onClick={openDropdown}
-          className="input flex items-center justify-between text-left w-full cursor-text"
+          className="input flex min-h-[2.875rem] items-center justify-between text-left w-full cursor-text"
         >
           <span className="text-slate-800">{label || ' '}</span>
           {value && (
@@ -127,8 +119,18 @@ function PosCombobox({ value, onChange }: { value: string; onChange: (v: string)
   )
 }
 
+function emptyScalars(): ScalarValues {
+  return {
+    term: '', part_of_speech: '', phonetic: '', phonetic_native: '',
+    definition_target: '', example_sentence: '', example_translation: '',
+  }
+}
+
 export function WordForm({
   initial,
+  nativeLang,
+  helperLangs,
+  targetLang,
   title,
   submitLabel,
   submitting,
@@ -137,6 +139,9 @@ export function WordForm({
   onCancel,
 }: {
   initial?: Partial<WordInput>
+  nativeLang: LanguageBrief
+  helperLangs: LanguageBrief[]
+  targetLang: LanguageBrief
   title?: string
   submitLabel: string
   submitting?: boolean
@@ -145,54 +150,137 @@ export function WordForm({
   onCancel?: () => void
 }) {
   const { t } = useTranslation()
-  const [values, setValues] = useState<FormValues>(() => toForm(initial))
 
-  function set(name: FieldName, value: string) {
-    setValues((v) => ({ ...v, [name]: value }))
+  // Anlam alanlari: once ana dil, sonra yardimci diller.
+  const meaningLangs: LanguageBrief[] = [nativeLang, ...helperLangs]
+
+  const [scalars, setScalars] = useState<ScalarValues>(() => {
+    const s = emptyScalars()
+    if (initial) {
+      for (const k of Object.keys(s) as ScalarField[]) {
+        s[k] = (initial[k] as string | null | undefined) ?? ''
+      }
+    }
+    return s
+  })
+
+  // Anlam degerleri language_id -> metin.
+  const [meanings, setMeanings] = useState<Record<number, string>>(() => {
+    const m: Record<number, string> = {}
+    for (const lang of meaningLangs) {
+      m[lang.id] = initial?.meanings?.find((x) => x.language_id === lang.id)?.value ?? ''
+    }
+    return m
+  })
+
+  function setScalar(name: ScalarField, value: string) {
+    setScalars((v) => ({ ...v, [name]: value }))
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!values.term.trim()) return
-    const payload = { term: values.term.trim() } as WordInput
-    for (const f of FIELDS) {
-      if (f.name === 'term') continue
-      payload[f.name] = values[f.name].trim() || null
-    }
+    if (!scalars.term.trim()) return
+    const payload: WordInput = { term: scalars.term.trim() }
+    const scalarKeys: Exclude<ScalarField, 'term'>[] = [
+      'part_of_speech', 'phonetic', 'phonetic_native',
+      'definition_target', 'example_sentence', 'example_translation',
+    ]
+    for (const k of scalarKeys) payload[k] = scalars[k].trim() || null
+    payload.meanings = meaningLangs.map((lang) => ({
+      language_id: lang.id,
+      value: (meanings[lang.id] ?? '').trim() || null,
+    }))
     onSubmit(payload)
+  }
+
+  const nativeDisplay = langName(t, nativeLang.code, nativeLang.native_name)
+  const targetDisplay = langName(t, targetLang.code, targetLang.native_name)
+
+  function meaningLabel(lang: LanguageBrief, isNative: boolean): string {
+    return isNative
+      ? t('words.meaningIn', { lang: nativeDisplay })
+      : langName(t, lang.code, lang.name)
   }
 
   const inner = (
     <>
       {title && <h2 className="mb-4 font-semibold text-slate-800">{title}</h2>}
       <div className="grid gap-3 sm:grid-cols-2">
-        {FIELDS.map((f) => {
-          const Wrapper = f.name === 'part_of_speech' ? 'div' : 'label'
-          return (
-          <Wrapper key={f.name} className={`block ${f.wide ? 'sm:col-span-2' : ''}`}>
-            <span className={`field-label${f.name === 'part_of_speech' ? ' cursor-default' : ''}`}>
-              {t(`words.fields.${f.name}`)}
-              {f.required && <span className="text-violet-500"> *</span>}
-            </span>
-            {f.name === 'part_of_speech' ? (
-              <PosCombobox value={values[f.name]} onChange={(v) => set(f.name, v)} />
-            ) : f.multiline ? (
-              <textarea
-                value={values[f.name]}
-                onChange={(e) => set(f.name, e.target.value)}
-                rows={3}
-                className="input resize-none overflow-y-auto"
-              />
-            ) : (
-              <input
-                value={values[f.name]}
-                onChange={(e) => set(f.name, e.target.value)}
-                className="input"
-              />
-            )}
-          </Wrapper>
-          )
-        })}
+        {/* Kelime + tur */}
+        <label className="block">
+          <span className="field-label">
+            {t('words.fields.term')}
+            <span className="text-violet-500"> *</span>
+          </span>
+          <input
+            value={scalars.term}
+            onChange={(e) => setScalar('term', e.target.value)}
+            className="input"
+          />
+        </label>
+        <div className="block">
+          <span className="field-label cursor-default">{t('words.fields.part_of_speech')}</span>
+          <PosCombobox value={scalars.part_of_speech} onChange={(v) => setScalar('part_of_speech', v)} />
+        </div>
+
+        {/* Okunuslar */}
+        <label className="block">
+          <span className="field-label">{t('words.fields.phonetic')}</span>
+          <input
+            value={scalars.phonetic}
+            onChange={(e) => setScalar('phonetic', e.target.value)}
+            className="input"
+          />
+        </label>
+        <label className="block">
+          <span className="field-label">{t('words.readingIn', { lang: nativeDisplay })}</span>
+          <input
+            value={scalars.phonetic_native}
+            onChange={(e) => setScalar('phonetic_native', e.target.value)}
+            className="input"
+          />
+        </label>
+
+        {/* Anlamlar: ana dil + yardimci diller */}
+        {meaningLangs.map((lang, i) => (
+          <label key={lang.id} className="block">
+            <span className="field-label">{meaningLabel(lang, i === 0)}</span>
+            <input
+              value={meanings[lang.id] ?? ''}
+              onChange={(e) => setMeanings((m) => ({ ...m, [lang.id]: e.target.value }))}
+              className="input"
+            />
+          </label>
+        ))}
+
+        {/* Tanim + ornek */}
+        <label className="block sm:col-span-2">
+          <span className="field-label">{t('words.definitionIn', { lang: targetDisplay })}</span>
+          <textarea
+            value={scalars.definition_target}
+            onChange={(e) => setScalar('definition_target', e.target.value)}
+            rows={3}
+            className="input resize-none overflow-y-auto"
+          />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="field-label">{t('words.fields.example_sentence')}</span>
+          <textarea
+            value={scalars.example_sentence}
+            onChange={(e) => setScalar('example_sentence', e.target.value)}
+            rows={3}
+            className="input resize-none overflow-y-auto"
+          />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="field-label">{t('words.translationIn', { lang: nativeDisplay })}</span>
+          <textarea
+            value={scalars.example_translation}
+            onChange={(e) => setScalar('example_translation', e.target.value)}
+            rows={3}
+            className="input resize-none overflow-y-auto"
+          />
+        </label>
       </div>
       <div className="mt-4 flex gap-2">
         <button type="submit" disabled={submitting} className="btn-primary">

@@ -1,16 +1,43 @@
-import type { LearningStatus, Word } from '../types'
+import type { Label, LearningStatus, Word } from '../types'
 import { api } from './client'
+
+export interface WordMeaningInput {
+  language_id: number
+  value: string | null
+}
 
 export interface WordInput {
   term: string
   phonetic?: string | null
-  phonetic_tr?: string | null
+  phonetic_native?: string | null
   part_of_speech?: string | null
-  meaning_native?: string | null
-  meaning_english?: string | null
   definition_target?: string | null
   example_sentence?: string | null
   example_translation?: string | null
+  meanings?: WordMeaningInput[]
+}
+
+export interface WordImportRow extends WordInput {
+  action: 'create' | 'replace'
+  replace_word_id?: number
+}
+
+export interface WordImportRequest {
+  rows: WordImportRow[]
+  label_name?: string
+  label_color?: string
+}
+
+export interface WordImportRowError {
+  row: number
+  message: string
+}
+
+export interface WordImportResult {
+  created: number
+  replaced: number
+  errors: WordImportRowError[]
+  label: Label | null
 }
 
 export interface WordQuery {
@@ -33,6 +60,8 @@ export const wordsApi = {
   list: (languageId: number, query?: WordQuery) =>
     api.get<Word[]>(`/languages/${languageId}/words${buildQuery(query)}`),
   due: (languageId: number) => api.get<Word[]>(`/languages/${languageId}/words/due`),
+  importBatch: (languageId: number, data: WordImportRequest) =>
+    api.post<WordImportResult>(`/languages/${languageId}/words/import`, data),
   create: (languageId: number, data: WordInput) =>
     api.post<Word>(`/languages/${languageId}/words`, data),
   update: (languageId: number, wordId: number, data: Partial<WordInput>) =>

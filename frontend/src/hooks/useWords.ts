@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { wordsApi, type WordInput, type WordQuery } from '../api/words'
+import { wordsApi, type WordImportRequest, type WordInput, type WordQuery } from '../api/words'
 import type { LearningStatus } from '../types'
 
 function base(languageId: number) {
@@ -46,6 +46,18 @@ export function useCreateWord(languageId: number) {
   return useMutation({
     mutationFn: (data: WordInput) => wordsApi.create(languageId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: base(languageId) }),
+  })
+}
+
+export function useImportWords(languageId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: WordImportRequest) => wordsApi.importBatch(languageId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: base(languageId) })
+      // Import yeni bir etiket olusturmus olabilir.
+      qc.invalidateQueries({ queryKey: ['languages', languageId, 'labels'] })
+    },
   })
 }
 

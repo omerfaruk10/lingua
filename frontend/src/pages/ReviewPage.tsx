@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useLanguageId } from '../components/WorkspaceLayout'
+import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useDueWords, useReviewWord } from '../hooks/useWords'
 import type { Word } from '../types'
 
 export function ReviewPage() {
   const { t } = useTranslation()
   const languageId = useLanguageId()
+  const course = useCurrentCourse()
+  // Anlamlari kurs dil sirasiyla goster (ana dil once).
+  const meaningOrder = course?.native_language
+    ? [course.native_language.id, ...course.helper_languages.map((h) => h.id)]
+    : []
   const { data: due, isLoading } = useDueWords(languageId)
   const review = useReviewWord(languageId)
 
@@ -48,6 +53,10 @@ export function ReviewPage() {
   const word = queue[idx]
   const total = queue.length
   const remaining = total - idx
+  const meaningById = new Map(word.meanings.map((m) => [m.language_id, m.value]))
+  const orderedMeanings = meaningOrder
+    .map((id) => meaningById.get(id))
+    .filter((v): v is string => !!v && v.trim().length > 0)
 
   function grade(result: 'known' | 'forgot') {
     review.mutate({ wordId: word.id, result })
@@ -78,23 +87,23 @@ export function ReviewPage() {
             <span className="text-3xl font-semibold text-slate-900">{word.term}</span>
             {word.part_of_speech && (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                {word.part_of_speech}
+                {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
               </span>
             )}
           </div>
-          {(word.phonetic || word.phonetic_tr) && (
+          {(word.phonetic || word.phonetic_native) && (
             <div className="mt-1.5 text-sm text-slate-400">
-              {[word.phonetic, word.phonetic_tr].filter(Boolean).join(' · ')}
+              {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
             </div>
           )}
 
           {revealed && (
             <div className="mt-5 w-full space-y-2 border-t border-slate-100 pt-5">
-              {(word.meaning_native || word.meaning_english) && (
+              {orderedMeanings.length > 0 && (
                 <div className="text-lg text-slate-800">
-                  {word.meaning_native}
-                  {word.meaning_english && (
-                    <span className="text-slate-400"> · {word.meaning_english}</span>
+                  {orderedMeanings[0]}
+                  {orderedMeanings.length > 1 && (
+                    <span className="text-slate-400"> · {orderedMeanings.slice(1).join(' · ')}</span>
                   )}
                 </div>
               )}

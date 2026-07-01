@@ -1,3 +1,3 @@
-from app.crud import label, language, stats, topic, word
+from app.crud import course, label, language, stats, topic, word
 
-__all__ = ["language", "topic", "word", "label", "stats"]
+__all__ = ["language", "course", "topic", "word", "label", "stats"]

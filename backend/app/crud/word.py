@@ -3,10 +3,20 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.crud.label import create_label, get_labels
 from app.models.label import Label
 from app.models.review_event import ReviewEvent
 from app.models.word import Word
-from app.schemas.word import LearningStatus, WordCreate, WordUpdate
+from app.models.word_meaning import WordMeaning
+from app.schemas.label import LabelCreate, LabelRead
+from app.schemas.word import (
+    LearningStatus,
+    WordCreate,
+    WordImportRequest,
+    WordImportResult,
+    WordImportRowError,
+    WordUpdate,
+)
 
 # Aralikli tekrar merdiveni (gun). Bir kelime baslatildiginda 1 gun sonra,
 # sonra 3, 7, 14, 30 gun aralarla tekrar edilir; sonuncuyu gecince "ogrenildi".
@@ -15,19 +25,18 @@ INTERVALS = [1, 3, 7, 14, 30]
 
 def get_words(
     db: Session,
-    language_id: int,
+    course_id: int,
     search: str | None = None,
     label_id: int | None = None,
     status: LearningStatus | None = None,
 ) -> list[Word]:
-    stmt = select(Word).where(Word.language_id == language_id)
+    stmt = select(Word).where(Word.course_id == course_id)
     if search:
         pattern = f"%{search}%"
         stmt = stmt.where(
             or_(
                 Word.term.ilike(pattern),
-                Word.meaning_native.ilike(pattern),
-                Word.meaning_english.ilike(pattern),
+                Word.meanings.any(WordMeaning.value.ilike(pattern)),
             )
         )
     if label_id is not None:
@@ -38,7 +47,7 @@ def get_words(
     return list(db.scalars(stmt))
 
 
-def get_due_words(db: Session, language_id: int) -> list[Word]:
+def get_due_words(db: Session, course_id: int) -> list[Word]:
     """Bugun (ve gecmiste) tekrar vakti gelmis, ogrenilmis kelimeler.
 
     Tekrar programini 'learned' durumu tetikler: kelime ogrenildi isaretlenince
@@ -48,7 +57,7 @@ def get_due_words(db: Session, language_id: int) -> list[Word]:
     stmt = (
         select(Word)
         .where(
-            Word.language_id == language_id,
+            Word.course_id == course_id,
             Word.learning_status == "learned",
             Word.next_review_date.is_not(None),
             Word.next_review_date <= date.today(),
@@ -101,7 +110,7 @@ def review_word(db: Session, word: Word, result: str) -> Word:
         word.learned_at = datetime.now()
 
     db.add(
-        ReviewEvent(word_id=word.id, language_id=word.language_id, result=result)
+        ReviewEvent(word_id=word.id, course_id=word.course_id, result=result)
     )
     db.commit()
     db.refresh(word)
@@ -128,8 +137,25 @@ def get_word(db: Session, word_id: int) -> Word | None:
     return db.get(Word, word_id)
 
 
-def create_word(db: Session, language_id: int, data: WordCreate) -> Word:
-    word = Word(language_id=language_id, **data.model_dump())
+def _meaning_rows(meanings: list[dict]) -> list[WordMeaning]:
+    """Bos value'lari atlayarak WordMeaning satirlari uretir; ayni dil bir kez."""
+    rows: list[WordMeaning] = []
+    seen: set[int] = set()
+    for m in meanings:
+        value = (m.get("value") or "").strip()
+        lang_id = m.get("language_id")
+        if not value or lang_id is None or lang_id in seen:
+            continue
+        seen.add(lang_id)
+        rows.append(WordMeaning(language_id=lang_id, value=value))
+    return rows
+
+
+def create_word(db: Session, course_id: int, data: WordCreate) -> Word:
+    payload = data.model_dump()
+    meanings = payload.pop("meanings", [])
+    word = Word(course_id=course_id, **payload)
+    word.meanings = _meaning_rows(meanings)
     db.add(word)
     db.commit()
     db.refresh(word)
@@ -137,8 +163,17 @@ def create_word(db: Session, language_id: int, data: WordCreate) -> Word:
 
 
 def update_word(db: Session, word: Word, data: WordUpdate) -> Word:
-    for field, value in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+    meanings = payload.pop("meanings", None)
+    for field, value in payload.items():
         setattr(word, field, value)
+    if meanings is not None:
+        # Gonderilen anlamlar mevcutlarin tamamiyla yerini alir. Once eskileri silip
+        # flush ediyoruz; aksi halde ayni (word, language) icin INSERT eskisinin DELETE'i
+        # oncesine dusup UNIQUE kisitini ihlal edebilir.
+        word.meanings = []
+        db.flush()
+        word.meanings = _meaning_rows(meanings)
     db.commit()
     db.refresh(word)
     return word
@@ -147,3 +182,68 @@ def update_word(db: Session, word: Word, data: WordUpdate) -> Word:
 def delete_word(db: Session, word: Word) -> None:
     db.delete(word)
     db.commit()
+
+
+def _resolve_batch_label(
+    db: Session, course_id: int, name: str | None, color: str | None
+) -> Label | None:
+    """Partinin etiketini bulur (case-insensitive isim) ya da yoksa olusturur."""
+    name = (name or "").strip()
+    if not name:
+        return None
+    existing = next(
+        (l for l in get_labels(db, course_id) if l.name.strip().lower() == name.lower()),
+        None,
+    )
+    if existing is not None:
+        return existing
+    return create_label(db, course_id, LabelCreate(name=name, color=color))
+
+
+def import_words(db: Session, course_id: int, data: WordImportRequest) -> WordImportResult:
+    """CSV'den toplu kelime ekler/gunceller. Satir hatalari diger satirlari durdurmaz
+    (best-effort): gecerli satirlar islenir, hatali olanlar raporlanir."""
+    label = _resolve_batch_label(db, course_id, data.label_name, data.label_color)
+
+    created = 0
+    replaced = 0
+    errors: list[WordImportRowError] = []
+
+    for idx, row in enumerate(data.rows, start=1):
+        if not row.term.strip():
+            errors.append(WordImportRowError(row=idx, message="Term is empty"))
+            continue
+
+        payload = row.model_dump(exclude={"action", "replace_word_id"})
+        meanings = payload.pop("meanings", [])
+
+        if row.action == "replace":
+            if row.replace_word_id is None:
+                errors.append(
+                    WordImportRowError(row=idx, message="replace_word_id is required for replace")
+                )
+                continue
+            word = get_word(db, row.replace_word_id)
+            if word is None or word.course_id != course_id:
+                errors.append(WordImportRowError(row=idx, message="Word to replace not found"))
+                continue
+            for field, value in payload.items():
+                setattr(word, field, value)
+            word.meanings = []
+            db.flush()
+            word.meanings = _meaning_rows(meanings)
+            replaced += 1
+        else:
+            word = Word(course_id=course_id, **payload)
+            word.meanings = _meaning_rows(meanings)
+            db.add(word)
+            created += 1
+
+        if label is not None and label not in word.labels:
+            word.labels.append(label)
+
+    db.commit()
+    if label is not None:
+        db.refresh(label)
+    label_read = LabelRead.model_validate(label) if label is not None else None
+    return WordImportResult(created=created, replaced=replaced, errors=errors, label=label_read)

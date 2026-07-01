@@ -8,24 +8,25 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.label import Label
+    from app.models.word_meaning import WordMeaning
 
 
 class Word(Base):
     __tablename__ = "words"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    language_id: Mapped[int] = mapped_column(
-        ForeignKey("languages.id", ondelete="CASCADE"), index=True
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"), index=True
     )
 
     # Tek zorunlu alan term; gerisi opsiyonel (kullaniciyi kisitlamamak icin).
     term: Mapped[str] = mapped_column(String(200), index=True)  # gatto
-    phonetic: Mapped[str | None] = mapped_column(String(200), default=None)  # gat·to
-    phonetic_tr: Mapped[str | None] = mapped_column(String(200), default=None)  # gatto (TR okunus)
+    phonetic: Mapped[str | None] = mapped_column(String(200), default=None)  # gat·to (IPA)
+    # Ana dilde yaklasik okunus (eski adi phonetic_tr; artik ana dile gore).
+    phonetic_native: Mapped[str | None] = mapped_column(String(200), default=None)
     part_of_speech: Mapped[str | None] = mapped_column(String(50), default=None)  # isim/fiil...
 
-    meaning_native: Mapped[str | None] = mapped_column(Text, default=None)  # kedi
-    meaning_english: Mapped[str | None] = mapped_column(Text, default=None)  # cat (kopru dil)
+    # Anlamlar (ana dil + yardimci diller) artik word_meanings tablosunda tutulur.
     definition_target: Mapped[str | None] = mapped_column(Text, default=None)  # hedef dilde tanim
 
     example_sentence: Mapped[str | None] = mapped_column(Text, default=None)
@@ -46,3 +47,8 @@ class Word(Base):
     # Cok-cok: secondary tablo adi string olarak verilir (dongusel import yok).
     # selectin: kelime okununca etiketleri tek ek sorguda yukler.
     labels: Mapped[list["Label"]] = relationship(secondary="word_labels", lazy="selectin")
+
+    # Anlamlar: kelimeyle birlikte yuklenir, kelime silinince/temizlenince silinir.
+    meanings: Mapped[list["WordMeaning"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin"
+    )
