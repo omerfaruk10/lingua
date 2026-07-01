@@ -1,5 +1,14 @@
 // Backend Pydantic semalariyla es TS tipleri.
 
+export interface LanguageBrief {
+  id: number
+  code: string
+  name: string
+  native_name: string
+}
+
+// Bir kurs (ogrenme kurulumu): hedef dil + ana dil + yardimci diller.
+// Ayni hedef dil icin birden fazla kurs olabilir (id ile ayirt edilir, code ile degil).
 export interface Language {
   id: number
   code: string
@@ -7,13 +16,16 @@ export interface Language {
   native_name: string
   order_index: number
   created_at: string
+  target_language: LanguageBrief
+  native_language: LanguageBrief
+  helper_languages: LanguageBrief[]
 }
 
 export type TopicStatus = 'not_started' | 'in_progress' | 'done'
 
 export interface Topic {
   id: number
-  language_id: number
+  course_id: number
   title: string
   description: string | null
   order_index: number
@@ -24,7 +36,7 @@ export interface Topic {
 
 export interface Label {
   id: number
-  language_id: number
+  course_id: number
   name: string
   color: string | null
   order_index: number
@@ -39,18 +51,22 @@ export interface DailyStat {
 
 export type LearningStatus = 'new' | 'learning' | 'learned'
 
+export interface WordMeaning {
+  language_id: number
+  value: string
+}
+
 export interface Word {
   id: number
-  language_id: number
+  course_id: number
   term: string
   phonetic: string | null
-  phonetic_tr: string | null
+  phonetic_native: string | null
   part_of_speech: string | null
-  meaning_native: string | null
-  meaning_english: string | null
   definition_target: string | null
   example_sentence: string | null
   example_translation: string | null
+  meanings: WordMeaning[]
   labels: Label[]
   learning_status: LearningStatus
   review_stage: number

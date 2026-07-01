@@ -7,11 +7,11 @@ from app.models.topic import Topic, TopicStatus
 from app.schemas.topic import TopicCreate, TopicUpdate
 
 
-def get_topics(db: Session, language_id: int) -> list[Topic]:
+def get_topics(db: Session, course_id: int) -> list[Topic]:
     return list(
         db.scalars(
             select(Topic)
-            .where(Topic.language_id == language_id)
+            .where(Topic.course_id == course_id)
             .order_by(Topic.order_index, Topic.id)
         )
     )
@@ -21,8 +21,8 @@ def get_topic(db: Session, topic_id: int) -> Topic | None:
     return db.get(Topic, topic_id)
 
 
-def create_topic(db: Session, language_id: int, data: TopicCreate) -> Topic:
-    topic = Topic(language_id=language_id, **data.model_dump())
+def create_topic(db: Session, course_id: int, data: TopicCreate) -> Topic:
+    topic = Topic(course_id=course_id, **data.model_dump())
     _sync_completed_at(topic)
     db.add(topic)
     db.commit()

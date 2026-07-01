@@ -27,6 +27,6 @@ class TopicRead(TopicBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    language_id: int
+    course_id: int
     completed_at: datetime | None
     created_at: datetime

@@ -22,6 +22,6 @@ class LabelRead(LabelBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    language_id: int
+    course_id: int
     order_index: int
     created_at: datetime

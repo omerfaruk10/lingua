@@ -1,14 +1,15 @@
-// Son secilen dilin kodunu hatirlar (uygulama acilista oraya doner).
-const KEY = 'lingua.langCode'
+// Son secilen kursun slug'ini hatirlar (uygulama acilista oraya doner).
+// Slug = hedef-ana[-yardimci...] kod sirasi (orn. "it-tr-en") -- bkz. courseSlug.ts.
+const KEY = 'lingua.courseSlug'
 
-export function getSelectedLangCode(): string | null {
+export function getSelectedCourseSlug(): string | null {
   return localStorage.getItem(KEY)
 }
 
-export function setSelectedLangCode(code: string): void {
-  localStorage.setItem(KEY, code)
+export function setSelectedCourseSlug(slug: string): void {
+  localStorage.setItem(KEY, slug)
 }
 
-export function clearSelectedLangCode(): void {
+export function clearSelectedCourseSlug(): void {
   localStorage.removeItem(KEY)
 }

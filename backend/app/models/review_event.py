@@ -19,9 +19,9 @@ class ReviewEvent(Base):
     word_id: Mapped[int] = mapped_column(
         ForeignKey("words.id", ondelete="CASCADE"), index=True
     )
-    # Per-dil sorgulari kolaylassin diye denormalize edildi.
-    language_id: Mapped[int] = mapped_column(
-        ForeignKey("languages.id", ondelete="CASCADE"), index=True
+    # Per-kurs sorgulari kolaylassin diye denormalize edildi.
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"), index=True
     )
     result: Mapped[str] = mapped_column(String(10))  # known | forgot
     reviewed_at: Mapped[datetime] = mapped_column(

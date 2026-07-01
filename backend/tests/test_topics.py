@@ -30,7 +30,11 @@ def test_completed_at_automation(client, language):
 def test_isolation(client, language):
     lid = language["id"]
     other = client.post(
-        "/languages", json={"code": "es", "name": "Spanish", "native_name": "Espanol"}
+        "/languages",
+        json={
+            "target": {"code": "es", "name": "Spanish", "native_name": "Espanol"},
+            "native": {"code": "tr", "name": "Turkish", "native_name": "Türkçe"},
+        },
     ).json()
     t = client.post(f"/languages/{lid}/topics", json={"title": "X"}).json()
     # baska dil uzerinden erisim

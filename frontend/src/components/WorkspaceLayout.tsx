@@ -3,25 +3,32 @@ import { Link, Navigate, NavLink, Outlet, useParams } from 'react-router-dom'
 
 import { useLanguages } from '../hooks/useLanguages'
 import { useDueWords } from '../hooks/useWords'
-import { clearSelectedLangCode, getSelectedLangCode } from '../lib/selectedLanguage'
+import { findCourseBySlug } from '../lib/courseSlug'
+import { langName } from '../lib/langName'
+import { clearSelectedCourseSlug, getSelectedCourseSlug } from '../lib/selectedLanguage'
+import type { Language } from '../types'
+
+export function useCurrentCourse(): Language | undefined {
+  const { courseSlug: slug } = useParams()
+  // Kurs listesi zaten cache'te; slug'dan kursu cozeriz (ekstra istek yok).
+  const { data: languages } = useLanguages()
+  return findCourseBySlug(languages ?? [], slug)
+}
 
 export function useLanguageId(): number {
-  const { langCode } = useParams()
-  // Dil listesi zaten cache'te; koddan id'yi cozeriz (ekstra istek yok).
-  const { data: languages } = useLanguages()
-  return languages?.find((l) => l.code === langCode)?.id ?? 0
+  return useCurrentCourse()?.id ?? 0
 }
 
 export function WorkspaceLayout() {
   const { t } = useTranslation()
-  const { langCode } = useParams()
+  const { courseSlug: slug } = useParams()
   const { data: languages, isLoading } = useLanguages()
-  const language = languages?.find((l) => l.code === langCode)
+  const language = findCourseBySlug(languages ?? [], slug)
   const dueCount = useDueWords(language?.id ?? 0).data?.length ?? 0
 
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (!language) {
-    if (getSelectedLangCode() === langCode) clearSelectedLangCode()
+    if (getSelectedCourseSlug() === slug) clearSelectedCourseSlug()
     return <Navigate to="/languages" replace />
   }
 
@@ -41,7 +48,9 @@ export function WorkspaceLayout() {
             {language.code.slice(0, 2)}
           </span>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900">{language.name}</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+              {langName(t, language.code, language.name)}
+            </h1>
             <p className="text-sm text-slate-500">{language.native_name}</p>
           </div>
         </div>

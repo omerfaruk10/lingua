@@ -14,29 +14,34 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
-import type { LanguageInput } from '../api/languages'
+import type { CourseInput, CourseUpdate, LangRef } from '../api/languages'
 import { useConfirm } from '../components/ConfirmProvider'
 import { Modal } from '../components/Modal'
 import {
+  useCatalog,
   useCreateLanguage,
   useDeleteLanguage,
   useLanguages,
   useUpdateLanguage,
 } from '../hooks/useLanguages'
-import { setSelectedLangCode } from '../lib/selectedLanguage'
-import type { Language } from '../types'
+import { translateApiError } from '../lib/apiErrors'
+import { courseSlug } from '../lib/courseSlug'
+import { langName } from '../lib/langName'
+import { setSelectedCourseSlug } from '../lib/selectedLanguage'
+import type { Language, LanguageBrief } from '../types'
 
-const EMPTY: LanguageInput = { code: '', name: '', native_name: '' }
+const MAX_HELPERS = 3
 
 export function LanguagesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const confirm = useConfirm()
   const { data: languages, isLoading } = useLanguages()
+  const { data: catalog } = useCatalog()
   const createLang = useCreateLanguage()
   const updateLang = useUpdateLanguage()
   const deleteLang = useDeleteLanguage()
@@ -47,13 +52,15 @@ export function LanguagesPage() {
   const [activeId, setActiveId] = useState<number | null>(null)
 
   const list = languages ?? []
+  const catalogList = catalog ?? []
   const activeLang = activeId != null ? list.find((l) => l.id === activeId) : null
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   function open(lang: Language) {
-    setSelectedLangCode(lang.code)
-    navigate(`/languages/${lang.code}/topics`)
+    const slug = courseSlug(lang)
+    setSelectedCourseSlug(slug)
+    navigate(`/languages/${slug}/topics`)
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -80,6 +87,9 @@ export function LanguagesPage() {
     })
     if (ok) deleteLang.mutate(lang.id)
   }
+
+  // Hedef ve ana dil icin tum katalog (standart diller) secilebilir.
+  const targetOptions = catalogList
 
   return (
     <div className="space-y-6">
@@ -123,7 +133,6 @@ export function LanguagesPage() {
                   lang={lang}
                   onEdit={() => setEditing(lang)}
                   onDelete={() => remove(lang)}
-                  t={t}
                 />
               ))}
             </ul>
@@ -143,8 +152,11 @@ export function LanguagesPage() {
             >
               <Monogram code={lang.code} />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+                <div className="truncate font-semibold text-slate-800">
+                  {langName(t, lang.code, lang.name)}
+                </div>
                 <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
+                <CourseMeta lang={lang} />
               </div>
               <span className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-violet-500">
                 →
@@ -155,8 +167,10 @@ export function LanguagesPage() {
       )}
 
       {addOpen && (
-        <Modal title={t('languages.addTitle')} onClose={() => setAddOpen(false)}>
-          <LanguageForm
+        <Modal title={t('languages.addTitle')} onClose={() => { setAddOpen(false); createLang.reset() }}>
+          <CourseForm
+            targetOptions={targetOptions}
+            catalog={catalogList}
             submitLabel={t('languages.create')}
             submitting={createLang.isPending}
             error={createLang.error}
@@ -166,13 +180,15 @@ export function LanguagesPage() {
       )}
 
       {editing && (
-        <Modal title={t('languages.editTitle')} onClose={() => setEditing(null)}>
-          <LanguageForm
-            initial={editing}
+        <Modal title={t('languages.editTitle')} onClose={() => { setEditing(null); updateLang.reset() }}>
+          <CourseForm
+            editing={editing}
+            targetOptions={targetOptions}
+            catalog={catalogList}
             submitLabel={t('common.save')}
             submitting={updateLang.isPending}
             error={updateLang.error}
-            onSubmit={(data) =>
+            onSubmitUpdate={(data) =>
               updateLang.mutate({ id: editing.id, data }, { onSuccess: () => setEditing(null) })
             }
           />
@@ -182,17 +198,306 @@ export function LanguagesPage() {
   )
 }
 
+function CourseMeta({ lang }: { lang: Language }) {
+  const { t } = useTranslation()
+  const nativeName = langName(t, lang.native_language.code, lang.native_language.native_name)
+  const helpers = lang.helper_languages.map((h) => langName(t, h.code, h.name)).join(', ')
+  return (
+    <div className="mt-0.5 truncate text-xs text-slate-400">
+      {t('languages.nativeLabel')}: {nativeName}
+      {helpers && ` · ${t('languages.helperLabel')}: ${helpers}`}
+    </div>
+  )
+}
+
+// ---- Kurs formu (hedef + ana dil + yardimci diller) ----
+
+function CourseForm({
+  editing,
+  targetOptions,
+  catalog,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+  onSubmitUpdate,
+}: {
+  editing?: Language
+  targetOptions: LanguageBrief[]
+  catalog: LanguageBrief[]
+  submitLabel: string
+  submitting: boolean
+  error: unknown
+  onSubmit?: (data: CourseInput) => void
+  onSubmitUpdate?: (data: CourseUpdate) => void
+}) {
+  const { t } = useTranslation()
+
+  const [target, setTarget] = useState<LangRef | null>(null)
+  const [native, setNative] = useState<LangRef | null>(
+    editing?.native_language ? { id: editing.native_language.id } : null,
+  )
+  const [helpers, setHelpers] = useState<(LangRef | null)[]>(
+    editing ? editing.helper_languages.map((h) => ({ id: h.id })) : [],
+  )
+
+  function refValid(ref: LangRef | null): boolean {
+    return ref != null && (ref.id != null || !!(ref.code && ref.code.trim()))
+  }
+
+  function cleanHelpers(): LangRef[] {
+    return helpers.filter(refValid) as LangRef[]
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!refValid(native)) return
+    if (editing && onSubmitUpdate) {
+      onSubmitUpdate({ native: native!, helpers: cleanHelpers() })
+      return
+    }
+    if (!refValid(target) || !onSubmit) return
+    onSubmit({ target: target!, native: native!, helpers: cleanHelpers() })
+  }
+
+  function addHelper() {
+    if (helpers.length < MAX_HELPERS) setHelpers((h) => [...h, null])
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      {editing ? (
+        // Hedef dil olusturulduktan sonra degistirilemez (yeni kurs olarak eklenir).
+        <div className="block">
+          <span className="field-label">
+            {t('languages.targetLang')}
+            <span className="text-violet-500"> *</span>
+          </span>
+          <div className="input flex min-h-[2.875rem] items-center bg-slate-50 text-slate-500">
+            {langName(t, editing.code, editing.name)} ({editing.code})
+          </div>
+        </div>
+      ) : (
+        <div className="block">
+          <span className="field-label">
+            {t('languages.targetLang')}
+            <span className="text-violet-500"> *</span>
+          </span>
+          <LangPicker options={targetOptions} value={target} onChange={setTarget} />
+        </div>
+      )}
+
+      <div className="block">
+        <span className="field-label">
+          {t('languages.nativeLang')}
+          <span className="text-violet-500"> *</span>
+        </span>
+        <LangPicker options={catalog} value={native} onChange={setNative} />
+      </div>
+
+      <div className="block">
+        <span className="field-label">{t('languages.helperLangs')}</span>
+        <div className="space-y-2">
+          {helpers.map((h, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="flex-1">
+                <LangPicker
+                  options={catalog}
+                  value={h}
+                  onChange={(v) => setHelpers((arr) => arr.map((x, j) => (j === i ? v : x)))}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setHelpers((arr) => arr.filter((_, j) => j !== i))}
+                className="btn-icon-danger mt-1"
+                title={t('common.delete')}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {helpers.length < MAX_HELPERS && (
+            <button type="button" onClick={addHelper} className="btn-ghost text-sm">
+              + {t('languages.addHelper')}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {error != null && <p className="text-sm text-red-500">{translateApiError(t, error)}</p>}
+      <button type="submit" disabled={submitting} className="btn-primary w-full">
+        {submitLabel}
+      </button>
+    </form>
+  )
+}
+
+// Tek dil secici: aranabilir combobox (tur secimi gibi). Katalogtan sec ya da
+// 'o anlik' yeni dil ekle. Placeholder yok; secili degilse bos gorunur.
+function LangPicker({
+  options,
+  value,
+  onChange,
+}: {
+  options: LanguageBrief[]
+  value: LangRef | null
+  onChange: (v: LangRef | null) => void
+}) {
+  const { t } = useTranslation()
+  const isNew = value != null && value.id == null
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const selected = value?.id != null ? options.find((o) => o.id === value.id) : undefined
+  const label = selected ? `${langName(t, selected.code, selected.name)} (${selected.code})` : ''
+
+  // Diakritik/Turkce İ duyarsiz arama ("ital" -> "İtalyanca" eslessin).
+  const norm = (s: string) =>
+    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  const filtered = options.filter((o) =>
+    norm(`${langName(t, o.code, o.name)} ${o.name} ${o.code}`).includes(norm(query)),
+  )
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  function openDropdown() {
+    setOpen(true)
+    setQuery('')
+    setTimeout(() => {
+      const el = inputRef.current
+      if (el) { el.focus(); el.select() }
+    }, 0)
+  }
+
+  function select(o: LanguageBrief) {
+    onChange({ id: o.id })
+    setOpen(false)
+    setQuery('')
+  }
+
+  function startNew() {
+    onChange({ code: '', name: '', native_name: '' })
+    setOpen(false)
+    setQuery('')
+  }
+
+  function clear(e: React.MouseEvent) {
+    e.stopPropagation()
+    onChange(null)
+  }
+
+  // 'O anlik' yeni dil: 3 alanli mini form + vazgec.
+  if (isNew) {
+    return (
+      <div className="space-y-2 rounded-lg border border-dashed border-violet-200 bg-violet-50/40 p-2">
+        <div className="grid grid-cols-3 gap-2">
+          <input
+            value={value?.code ?? ''}
+            onChange={(e) => onChange({ ...value, code: e.target.value })}
+            placeholder={t('languages.code')}
+            className="input"
+            autoFocus
+          />
+          <input
+            value={value?.name ?? ''}
+            onChange={(e) => onChange({ ...value, name: e.target.value })}
+            placeholder={t('languages.name')}
+            className="input"
+          />
+          <input
+            value={value?.native_name ?? ''}
+            onChange={(e) => onChange({ ...value, native_name: e.target.value })}
+            placeholder={t('languages.nativeName')}
+            className="input"
+          />
+        </div>
+        <button type="button" onClick={() => onChange(null)} className="text-xs text-slate-400 hover:text-slate-600">
+          ‹ {t('common.cancel')}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      {open ? (
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="input"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { setOpen(false); setQuery('') }
+            if (e.key === 'Enter' && filtered.length > 0) { e.preventDefault(); select(filtered[0]) }
+          }}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={openDropdown}
+          className="input flex min-h-[2.875rem] items-center justify-between text-left w-full cursor-text"
+        >
+          <span className="text-slate-800">{label || ' '}</span>
+          {value?.id != null && (
+            <span
+              onClick={clear}
+              className="text-slate-400 hover:text-slate-600 px-0.5 leading-none text-base cursor-pointer"
+              role="button"
+              aria-label={t('common.delete')}
+            >
+              ×
+            </span>
+          )}
+        </button>
+      )}
+
+      {open && (
+        <ul className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+          {filtered.map((o) => (
+            <li
+              key={o.id}
+              onMouseDown={() => select(o)}
+              className={`cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-violet-50 hover:text-violet-700 ${
+                o.id === value?.id ? 'bg-violet-50 font-medium text-violet-700' : 'text-slate-700'
+              }`}
+            >
+              {langName(t, o.code, o.name)} <span className="text-slate-400">({o.code})</span>
+            </li>
+          ))}
+          <li
+            onMouseDown={startNew}
+            className="cursor-pointer border-t border-slate-100 px-3 py-2 text-sm font-medium text-violet-600 hover:bg-violet-50"
+          >
+            + {t('languages.addNewLanguage')}
+          </li>
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function SortableLangCard({
   lang,
   onEdit,
   onDelete,
-  t,
 }: {
   lang: Language
   onEdit: () => void
   onDelete: () => void
-  t: (key: string) => string
 }) {
+  const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lang.id,
   })
@@ -219,7 +524,9 @@ function SortableLangCard({
       </button>
       <Monogram code={lang.code} />
       <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+        <div className="truncate font-semibold text-slate-800">
+          {langName(t, lang.code, lang.name)}
+        </div>
         <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
       </div>
       <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
@@ -233,12 +540,15 @@ function SortableLangCard({
 }
 
 function LangCardOverlay({ lang }: { lang: Language }) {
+  const { t } = useTranslation()
   return (
     <div className="card flex cursor-grabbing items-center gap-3 p-3.5 shadow-2xl ring-2 ring-violet-400/40">
       <span className="text-lg leading-none text-violet-400">⠿</span>
       <Monogram code={lang.code} />
       <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold text-slate-800">{lang.name}</div>
+        <div className="truncate font-semibold text-slate-800">
+          {langName(t, lang.code, lang.name)}
+        </div>
         <div className="truncate text-sm text-slate-500">{lang.native_name}</div>
       </div>
     </div>
@@ -250,91 +560,5 @@ function Monogram({ code }: { code: string }) {
     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-100 to-indigo-100 text-sm font-semibold uppercase text-violet-600">
       {code.slice(0, 2)}
     </span>
-  )
-}
-
-function LanguageForm({
-  initial,
-  submitLabel,
-  submitting,
-  error,
-  onSubmit,
-}: {
-  initial?: Language
-  submitLabel: string
-  submitting: boolean
-  error: unknown
-  onSubmit: (data: LanguageInput) => void
-}) {
-  const { t } = useTranslation()
-  const [form, setForm] = useState<LanguageInput>(
-    initial
-      ? { code: initial.code, name: initial.name, native_name: initial.native_name }
-      : EMPTY,
-  )
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.code.trim() || !form.name.trim() || !form.native_name.trim()) return
-    onSubmit({
-      code: form.code.trim(),
-      name: form.name.trim(),
-      native_name: form.native_name.trim(),
-    })
-  }
-
-  return (
-    <form onSubmit={submit} className="space-y-4">
-      <Field
-        label={t('languages.code')}
-        hint={t('languages.codeHint')}
-        value={form.code}
-        onChange={(v) => setForm((f) => ({ ...f, code: v }))}
-        autoFocus
-      />
-      <Field
-        label={t('languages.name')}
-        hint={t('languages.nameHint')}
-        value={form.name}
-        onChange={(v) => setForm((f) => ({ ...f, name: v }))}
-      />
-      <Field
-        label={t('languages.nativeName')}
-        hint={t('languages.nativeNameHint')}
-        value={form.native_name}
-        onChange={(v) => setForm((f) => ({ ...f, native_name: v }))}
-      />
-      {error != null && <p className="text-sm text-red-500">{(error as Error).message}</p>}
-      <button type="submit" disabled={submitting} className="btn-primary w-full">
-        {submitLabel}
-      </button>
-    </form>
-  )
-}
-
-function Field({
-  label,
-  hint,
-  value,
-  onChange,
-  autoFocus,
-}: {
-  label: string
-  hint: string
-  value: string
-  onChange: (v: string) => void
-  autoFocus?: boolean
-}) {
-  return (
-    <label className="block">
-      <span className="field-label">{label}</span>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={hint}
-        autoFocus={autoFocus}
-        className="input"
-      />
-    </label>
   )
 }

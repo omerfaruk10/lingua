@@ -41,7 +41,16 @@ def client():
 
 @pytest.fixture
 def language(client):
-    """Hazir bir dil (cogu test buna ihtiyac duyar)."""
+    """Hazir bir kurs (hedef IT, ana dil TR, yardimci EN) — cogu test buna ihtiyac duyar.
+
+    Test DB'si in-memory ve katalog tohumlanmadigi icin diller ad-hoc olarak yaratilir.
+    Donen nesne bir kurs (LanguageRead): id, code='it' vb. icerir.
+    """
     return client.post(
-        "/languages", json={"code": "it", "name": "Italian", "native_name": "Italiano"}
+        "/languages",
+        json={
+            "target": {"code": "it", "name": "Italian", "native_name": "Italiano"},
+            "native": {"code": "tr", "name": "Turkish", "native_name": "Türkçe"},
+            "helpers": [{"code": "en", "name": "English", "native_name": "English"}],
+        },
     ).json()

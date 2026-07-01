@@ -55,7 +55,11 @@ def test_detach(client, language):
 def test_cross_language_label_404(client, language):
     lid = language["id"]
     other = client.post(
-        "/languages", json={"code": "es", "name": "Spanish", "native_name": "Espanol"}
+        "/languages",
+        json={
+            "target": {"code": "es", "name": "Spanish", "native_name": "Espanol"},
+            "native": {"code": "tr", "name": "Turkish", "native_name": "Türkçe"},
+        },
     ).json()
     es_label = client.post(f"/languages/{other['id']}/labels", json={"name": "X"}).json()
     w = _word(client, lid)

@@ -18,8 +18,8 @@ class Label(Base):
     __tablename__ = "labels"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    language_id: Mapped[int] = mapped_column(
-        ForeignKey("languages.id", ondelete="CASCADE"), index=True
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[str] = mapped_column(String(100))
     color: Mapped[str | None] = mapped_column(String(20), default=None)  # opsiyonel, Gmail gibi
