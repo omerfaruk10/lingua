@@ -130,7 +130,10 @@ export function TopicsPage() {
           <form onSubmit={submitAdd} className="space-y-3">
             <div>
               <label className="block">
-                <span className="field-label">{t('topics.titlePlaceholder')}</span>
+                <span className="field-label">
+                  {t('topics.titlePlaceholder')}
+                  <span className="text-violet-500"> *</span>
+                </span>
                 <input
                   value={addTitle}
                   onChange={(e) => setAddTitle(e.target.value)}

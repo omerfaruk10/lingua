@@ -1,19 +1,20 @@
 {
-  "app": {
-    "title": "Lingua",
-    "tagline": "Tu rastreador de aprendizaje de idiomas"
+  "langNames": {
+    "tr": "Turco",
+    "en": "Inglés",
+    "it": "Italiano",
+    "es": "Español",
+    "de": "Alemán",
+    "fr": "Francés"
   },
   "nav": {
-    "languages": "Idiomas",
     "topics": "Temas",
     "words": "Palabras",
     "labels": "Etiquetas",
     "review": "Repaso",
-    "stats": "Estadísticas",
-    "settings": "Ajustes"
+    "stats": "Estadísticas"
   },
   "learning": {
-    "status": "Estado",
     "new": "Sin empezar",
     "learning": "Aprendiendo",
     "learned": "Aprendida",
@@ -22,8 +23,6 @@
     "resetConfirm": "Esto reiniciará el progreso de repaso. ¿Cambiar a \"{{status}}\"?"
   },
   "review": {
-    "title": "Repaso de hoy",
-    "subtitle": "Repasa las palabras pendientes",
     "empty": "No hay palabras para repasar hoy.",
     "emptyHint": "Marca una palabra como \"Aprendida\" para añadirla al calendario de repaso (1·3·7·14·30 días).",
     "remaining": "{{n}} restantes",
@@ -48,20 +47,28 @@
   },
   "languages": {
     "title": "Idiomas",
-    "subtitle": "Elige un idioma para trabajar o añade uno nuevo.",
-    "empty": "Aún no hay idiomas — añade el primero abajo.",
-    "addTitle": "Añadir un idioma",
+    "subtitle": "Elige un idioma para trabajar o añade un nuevo curso.",
+    "empty": "Aún no hay cursos — añade el primero.",
+    "addTitle": "Añadir un curso",
     "code": "Código",
     "codeHint": "p. ej. it, es, de",
     "name": "Nombre",
     "nameHint": "p. ej. Italiano",
     "nativeName": "Nombre nativo",
     "nativeNameHint": "p. ej. Italiano",
-    "create": "Añadir idioma",
+    "create": "Añadir curso",
+    "targetLang": "Idioma objetivo",
+    "nativeLang": "Idioma nativo",
+    "helperLangs": "Idiomas de apoyo",
+    "addHelper": "Añadir idioma de apoyo",
+    "addNewLanguage": "Nuevo idioma",
+    "selectPlaceholder": "Seleccionar…",
+    "nativeLabel": "Nativo",
+    "helperLabel": "Apoyo",
     "open": "Abrir",
     "manage": "Gestionar",
     "done": "Hecho",
-    "editTitle": "Editar idioma",
+    "editTitle": "Editar curso",
     "moveUp": "Subir",
     "moveDown": "Bajar",
     "deleteConfirm": "¿Eliminar \"{{name}}\" y todos sus datos (temas, palabras, etiquetas)?"
@@ -72,9 +79,9 @@
   "topics": {
     "addTitle": "Añadir un tema",
     "titlePlaceholder": "Título del tema",
-    "descPlaceholder": "Descripción (opcional)",
+    "descPlaceholder": "Descripción",
     "add": "Añadir tema",
-    "empty": "Aún no hay temas — añade el primero abajo.",
+    "empty": "Aún no hay temas — añade el primero.",
     "progress": "{{done}} / {{total}} completados",
     "moveUp": "Subir",
     "moveDown": "Bajar",
@@ -92,9 +99,34 @@
     "add": "Añadir palabra",
     "addTitle": "Añadir una palabra",
     "editTitle": "Editar palabra",
-    "empty": "Aún no hay palabras — añade la primera abajo.",
+    "empty": "Aún no hay palabras — añade la primera.",
     "noResults": "Ninguna palabra coincide con la búsqueda.",
     "deleteConfirm": "¿Eliminar esta palabra?",
+    "meaningIn": "Significado ({{lang}})",
+    "readingIn": "Lectura ({{lang}})",
+    "translationIn": "Traducción ({{lang}})",
+    "definitionIn": "Definición ({{lang}})",
+    "import": "Importar",
+    "importTitle": "Importar palabras",
+    "importHint": "Elige un archivo CSV o TXT. Usa Exportar para ver el formato exacto de columnas.",
+    "importChooseFile": "Elegir archivo",
+    "importDropHint": "Arrastra un archivo CSV o TXT aquí o haz clic para elegir",
+    "importLabelName": "Nombre de etiqueta",
+    "importSummaryNew": "{{n}} palabras nuevas",
+    "importSummaryConflicts": "{{n}} palabras ya existen",
+    "importSummarySkippedRows": "{{n}} filas omitidas",
+    "importSummarySkippedConflicts": "{{n}} palabras existentes sin cambios",
+    "importConflicts": "Palabras existentes",
+    "importSkip": "Omitir",
+    "importReplace": "Reemplazar",
+    "importSkipAll": "Omitir todas",
+    "importReplaceAll": "Reemplazar todas",
+    "importConfirm": "Importar {{n}} palabras",
+    "importSuccess": "{{created}} palabras añadidas, {{replaced}} actualizadas.",
+    "importRowError": "Fila {{row}}: {{message}}",
+    "importErrorEmpty": "El archivo está vacío.",
+    "importErrorTooFewColumns": "Esta fila no tiene suficientes columnas para la configuración de idiomas de este curso.",
+    "importErrorBlankTerm": "Palabra vacía, fila omitida.",
     "partsOfSpeech": {
       "noun": "Sustantivo",
       "verb": "Verbo",
@@ -111,30 +143,15 @@
       "term": "Palabra",
       "part_of_speech": "Tipo",
       "phonetic": "Pronunciación",
-      "phonetic_tr": "Lectura turca",
-      "meaning_native": "Significado (TR)",
-      "meaning_english": "Inglés",
-      "definition_target": "Definición (idioma de estudio)",
-      "example_sentence": "Frase de ejemplo",
-      "example_translation": "Traducción del ejemplo"
+      "example_sentence": "Frase de ejemplo"
     }
-  },
-  "settings": {
-    "title": "Ajustes",
-    "uiLanguage": "Idioma de la interfaz",
-    "english": "Inglés",
-    "turkish": "Turco",
-    "italian": "Italiano",
-    "spanish": "Español",
-    "german": "Alemán",
-    "french": "Francés"
   },
   "labels": {
     "addTitle": "Añadir una etiqueta",
     "namePlaceholder": "Nombre de la etiqueta",
     "color": "Color",
     "add": "Añadir etiqueta",
-    "empty": "Aún no hay etiquetas — añade la primera abajo.",
+    "empty": "Aún no hay etiquetas — añade la primera.",
     "deleteConfirm": "¿Eliminar esta etiqueta? Se quitará de todas las palabras.",
     "addToWord": "Añadir etiqueta",
     "noneToAdd": "No hay más etiquetas — créalas en la pestaña Etiquetas.",
@@ -145,6 +162,15 @@
     "checking": "Comprobando el backend…",
     "online": "Backend en línea",
     "offline": "Backend desconectado — ¿está en el puerto 8010?"
+  },
+  "errors": {
+    "duplicateCourse": "Ya existe un curso con esta combinación de idioma objetivo/nativo/de apoyo.",
+    "targetEqualsNative": "El idioma objetivo y el nativo no pueden ser el mismo.",
+    "courseNotFound": "Curso no encontrado.",
+    "languageNotFound": "Idioma no encontrado.",
+    "importTermEmpty": "La palabra está vacía.",
+    "importMissingReplaceId": "Falta la palabra a reemplazar.",
+    "importReplaceWordNotFound": "No se encontró la palabra a reemplazar."
   },
   "common": {
     "add": "Añadir",
@@ -159,6 +185,7 @@
     "comingSoon": "Próximamente",
     "yes": "Sí",
     "no": "No",
+    "close": "Cerrar",
     "confirmTitle": "¿Estás seguro?"
   }
 }

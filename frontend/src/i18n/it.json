@@ -1,19 +1,20 @@
 {
-  "app": {
-    "title": "Lingua",
-    "tagline": "Il tuo tracker per imparare le lingue"
+  "langNames": {
+    "tr": "Turco",
+    "en": "Inglese",
+    "it": "Italiano",
+    "es": "Spagnolo",
+    "de": "Tedesco",
+    "fr": "Francese"
   },
   "nav": {
-    "languages": "Lingue",
     "topics": "Argomenti",
     "words": "Parole",
     "labels": "Etichette",
     "review": "Ripasso",
-    "stats": "Statistiche",
-    "settings": "Impostazioni"
+    "stats": "Statistiche"
   },
   "learning": {
-    "status": "Stato",
     "new": "Da iniziare",
     "learning": "In corso",
     "learned": "Imparata",
@@ -22,8 +23,6 @@
     "resetConfirm": "Questo azzererà i progressi di ripasso. Cambiare in \"{{status}}\"?"
   },
   "review": {
-    "title": "Ripasso di oggi",
-    "subtitle": "Ripassa le parole in scadenza",
     "empty": "Nessuna parola da ripassare oggi.",
     "emptyHint": "Segna una parola come \"Imparata\" per aggiungerla al programma di ripasso (1·3·7·14·30 giorni).",
     "remaining": "{{n}} rimaste",
@@ -48,20 +47,28 @@
   },
   "languages": {
     "title": "Lingue",
-    "subtitle": "Scegli una lingua su cui lavorare o aggiungine una nuova.",
-    "empty": "Ancora nessuna lingua — aggiungi la prima qui sotto.",
-    "addTitle": "Aggiungi una lingua",
+    "subtitle": "Scegli una lingua su cui lavorare o aggiungi un nuovo corso.",
+    "empty": "Ancora nessun corso — aggiungi il primo.",
+    "addTitle": "Aggiungi un corso",
     "code": "Codice",
     "codeHint": "es. it, es, de",
     "name": "Nome",
     "nameHint": "es. Italiano",
     "nativeName": "Nome nativo",
     "nativeNameHint": "es. Italiano",
-    "create": "Aggiungi lingua",
+    "create": "Aggiungi corso",
+    "targetLang": "Lingua di destinazione",
+    "nativeLang": "Lingua madre",
+    "helperLangs": "Lingue di supporto",
+    "addHelper": "Aggiungi lingua di supporto",
+    "addNewLanguage": "Nuova lingua",
+    "selectPlaceholder": "Seleziona…",
+    "nativeLabel": "Madre",
+    "helperLabel": "Supporto",
     "open": "Apri",
     "manage": "Gestisci",
     "done": "Fatto",
-    "editTitle": "Modifica lingua",
+    "editTitle": "Modifica corso",
     "moveUp": "Sposta su",
     "moveDown": "Sposta giù",
     "deleteConfirm": "Eliminare \"{{name}}\" e tutti i suoi dati (argomenti, parole, etichette)?"
@@ -72,9 +79,9 @@
   "topics": {
     "addTitle": "Aggiungi un argomento",
     "titlePlaceholder": "Titolo argomento",
-    "descPlaceholder": "Descrizione (facoltativa)",
+    "descPlaceholder": "Descrizione",
     "add": "Aggiungi argomento",
-    "empty": "Ancora nessun argomento — aggiungi il primo qui sotto.",
+    "empty": "Ancora nessun argomento — aggiungi il primo.",
     "progress": "{{done}} / {{total}} completati",
     "moveUp": "Sposta su",
     "moveDown": "Sposta giù",
@@ -92,9 +99,34 @@
     "add": "Aggiungi parola",
     "addTitle": "Aggiungi una parola",
     "editTitle": "Modifica parola",
-    "empty": "Ancora nessuna parola — aggiungi la prima qui sotto.",
+    "empty": "Ancora nessuna parola — aggiungi la prima.",
     "noResults": "Nessuna parola corrisponde alla ricerca.",
     "deleteConfirm": "Eliminare questa parola?",
+    "meaningIn": "Significato ({{lang}})",
+    "readingIn": "Lettura ({{lang}})",
+    "translationIn": "Traduzione ({{lang}})",
+    "definitionIn": "Definizione ({{lang}})",
+    "import": "Importa",
+    "importTitle": "Importa parole",
+    "importHint": "Scegli un file CSV o TXT. Usa Esporta per vedere il formato esatto delle colonne.",
+    "importChooseFile": "Scegli file",
+    "importDropHint": "Trascina qui un file CSV o TXT oppure clicca per sfogliare",
+    "importLabelName": "Nome etichetta",
+    "importSummaryNew": "{{n}} parole nuove",
+    "importSummaryConflicts": "{{n}} parole già esistenti",
+    "importSummarySkippedRows": "{{n}} righe saltate",
+    "importSummarySkippedConflicts": "{{n}} parole esistenti lasciate invariate",
+    "importConflicts": "Parole esistenti",
+    "importSkip": "Salta",
+    "importReplace": "Sostituisci",
+    "importSkipAll": "Salta tutte",
+    "importReplaceAll": "Sostituisci tutte",
+    "importConfirm": "Importa {{n}} parole",
+    "importSuccess": "{{created}} parole aggiunte, {{replaced}} aggiornate.",
+    "importRowError": "Riga {{row}}: {{message}}",
+    "importErrorEmpty": "Il file è vuoto.",
+    "importErrorTooFewColumns": "Questa riga non ha abbastanza colonne per la configurazione linguistica di questo corso.",
+    "importErrorBlankTerm": "Parola vuota, riga saltata.",
     "partsOfSpeech": {
       "noun": "Sostantivo",
       "verb": "Verbo",
@@ -111,30 +143,15 @@
       "term": "Parola",
       "part_of_speech": "Tipo",
       "phonetic": "Pronuncia",
-      "phonetic_tr": "Lettura turca",
-      "meaning_native": "Significato (TR)",
-      "meaning_english": "Inglese",
-      "definition_target": "Definizione (lingua di studio)",
-      "example_sentence": "Frase di esempio",
-      "example_translation": "Traduzione dell'esempio"
+      "example_sentence": "Frase di esempio"
     }
-  },
-  "settings": {
-    "title": "Impostazioni",
-    "uiLanguage": "Lingua dell'interfaccia",
-    "english": "Inglese",
-    "turkish": "Turco",
-    "italian": "Italiano",
-    "spanish": "Spagnolo",
-    "german": "Tedesco",
-    "french": "Francese"
   },
   "labels": {
     "addTitle": "Aggiungi un'etichetta",
     "namePlaceholder": "Nome etichetta",
     "color": "Colore",
     "add": "Aggiungi etichetta",
-    "empty": "Ancora nessuna etichetta — aggiungi la prima qui sotto.",
+    "empty": "Ancora nessuna etichetta — aggiungi la prima.",
     "deleteConfirm": "Eliminare questa etichetta? Verrà rimossa da tutte le parole.",
     "addToWord": "Aggiungi etichetta",
     "noneToAdd": "Nessun'altra etichetta — creale nella scheda Etichette.",
@@ -145,6 +162,15 @@
     "checking": "Controllo del backend…",
     "online": "Backend attivo",
     "offline": "Backend offline — è in esecuzione sulla porta 8010?"
+  },
+  "errors": {
+    "duplicateCourse": "Esiste già un corso con questa combinazione di lingua di destinazione/madre/supporto.",
+    "targetEqualsNative": "La lingua di destinazione e quella madre non possono coincidere.",
+    "courseNotFound": "Corso non trovato.",
+    "languageNotFound": "Lingua non trovata.",
+    "importTermEmpty": "La parola è vuota.",
+    "importMissingReplaceId": "Parola da sostituire non specificata.",
+    "importReplaceWordNotFound": "Parola da sostituire non trovata."
   },
   "common": {
     "add": "Aggiungi",
@@ -159,6 +185,7 @@
     "comingSoon": "Prossimamente",
     "yes": "Sì",
     "no": "No",
+    "close": "Chiudi",
     "confirmTitle": "Sei sicuro?"
   }
 }

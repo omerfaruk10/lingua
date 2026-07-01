@@ -1,19 +1,20 @@
 {
-  "app": {
-    "title": "Lingua",
-    "tagline": "Your language learning tracker"
+  "langNames": {
+    "tr": "Turkish",
+    "en": "English",
+    "it": "Italian",
+    "es": "Spanish",
+    "de": "German",
+    "fr": "French"
   },
   "nav": {
-    "languages": "Languages",
     "topics": "Topics",
     "words": "Words",
     "labels": "Labels",
     "review": "Review",
-    "stats": "Stats",
-    "settings": "Settings"
+    "stats": "Stats"
   },
   "learning": {
-    "status": "Status",
     "new": "Not started",
     "learning": "Learning",
     "learned": "Learned",
@@ -22,8 +23,6 @@
     "resetConfirm": "This will reset the word's review progress. Change to \"{{status}}\"?"
   },
   "review": {
-    "title": "Review today",
-    "subtitle": "Review the words that are due",
     "empty": "No words to review today.",
     "emptyHint": "Mark a word as \"Learned\" to add it to the review schedule (1·3·7·14·30 days).",
     "remaining": "{{n}} left",
@@ -49,19 +48,27 @@
   "languages": {
     "title": "Languages",
     "subtitle": "Pick a language to work on, or add a new one.",
-    "empty": "No languages yet — add your first one below.",
-    "addTitle": "Add a language",
+    "empty": "No courses yet — add your first one.",
+    "addTitle": "Add a course",
     "code": "Code",
     "codeHint": "e.g. it, es, de",
     "name": "Name",
     "nameHint": "e.g. Italian",
     "nativeName": "Native name",
     "nativeNameHint": "e.g. Italiano",
-    "create": "Add language",
+    "create": "Add course",
+    "targetLang": "Target language",
+    "nativeLang": "Native language",
+    "helperLangs": "Helper languages",
+    "addHelper": "Add helper",
+    "addNewLanguage": "New language",
+    "selectPlaceholder": "Select…",
+    "nativeLabel": "Native",
+    "helperLabel": "Helper",
     "open": "Open",
     "manage": "Manage",
     "done": "Done",
-    "editTitle": "Edit language",
+    "editTitle": "Edit course",
     "moveUp": "Move up",
     "moveDown": "Move down",
     "deleteConfirm": "Delete \"{{name}}\" and all its data (topics, words, labels)?"
@@ -72,9 +79,9 @@
   "topics": {
     "addTitle": "Add a topic",
     "titlePlaceholder": "Topic title",
-    "descPlaceholder": "Description (optional)",
+    "descPlaceholder": "Description",
     "add": "Add topic",
-    "empty": "No topics yet — add your first one below.",
+    "empty": "No topics yet — add your first one.",
     "progress": "{{done}} / {{total}} done",
     "moveUp": "Move up",
     "moveDown": "Move down",
@@ -92,9 +99,34 @@
     "add": "Add word",
     "addTitle": "Add a word",
     "editTitle": "Edit word",
-    "empty": "No words yet — add your first one below.",
+    "empty": "No words yet — add your first one.",
     "noResults": "No words match your search.",
     "deleteConfirm": "Delete this word?",
+    "meaningIn": "{{lang}} Meaning",
+    "readingIn": "{{lang}} Reading",
+    "translationIn": "{{lang}} Translation",
+    "definitionIn": "{{lang}} Definition",
+    "import": "Import",
+    "importTitle": "Import words",
+    "importHint": "Choose a CSV or TXT file. Use Export to see the exact column layout.",
+    "importChooseFile": "Choose file",
+    "importDropHint": "Drag a CSV or TXT file here, or click to browse",
+    "importLabelName": "Label name",
+    "importSummaryNew": "{{n}} new words",
+    "importSummaryConflicts": "{{n}} words already exist",
+    "importSummarySkippedRows": "{{n}} rows skipped",
+    "importSummarySkippedConflicts": "{{n}} existing words left unchanged",
+    "importConflicts": "Existing words",
+    "importSkip": "Skip",
+    "importReplace": "Replace",
+    "importSkipAll": "Skip all",
+    "importReplaceAll": "Replace all",
+    "importConfirm": "Import {{n}} words",
+    "importSuccess": "{{created}} words added, {{replaced}} updated.",
+    "importRowError": "Row {{row}}: {{message}}",
+    "importErrorEmpty": "The file is empty.",
+    "importErrorTooFewColumns": "This row doesn't have enough columns for this course's language setup.",
+    "importErrorBlankTerm": "Word is empty, row skipped.",
     "partsOfSpeech": {
       "noun": "Noun",
       "verb": "Verb",
@@ -111,30 +143,15 @@
       "term": "Word",
       "part_of_speech": "Type",
       "phonetic": "Pronunciation",
-      "phonetic_tr": "Turkish reading",
-      "meaning_native": "Meaning (TR)",
-      "meaning_english": "English",
-      "definition_target": "Definition (target language)",
-      "example_sentence": "Example sentence",
-      "example_translation": "Example translation"
+      "example_sentence": "Example sentence"
     }
-  },
-  "settings": {
-    "title": "Settings",
-    "uiLanguage": "Interface language",
-    "english": "English",
-    "turkish": "Turkish",
-    "italian": "Italian",
-    "spanish": "Spanish",
-    "german": "German",
-    "french": "French"
   },
   "labels": {
     "addTitle": "Add a label",
     "namePlaceholder": "Label name",
     "color": "Color",
     "add": "Add label",
-    "empty": "No labels yet — add your first one below.",
+    "empty": "No labels yet — add your first one.",
     "deleteConfirm": "Delete this label? It will be removed from all words.",
     "addToWord": "Add label",
     "noneToAdd": "No more labels — create them in the Labels tab.",
@@ -145,6 +162,15 @@
     "checking": "Checking backend…",
     "online": "Backend online",
     "offline": "Backend offline — is it running on port 8010?"
+  },
+  "errors": {
+    "duplicateCourse": "A course with this target/native/helper combination already exists.",
+    "targetEqualsNative": "Target and native language cannot be the same.",
+    "courseNotFound": "Course not found.",
+    "languageNotFound": "Language not found.",
+    "importTermEmpty": "Word is empty.",
+    "importMissingReplaceId": "Missing word to replace.",
+    "importReplaceWordNotFound": "Word to replace was not found."
   },
   "common": {
     "add": "Add",
@@ -159,6 +185,7 @@
     "comingSoon": "Coming soon",
     "yes": "Yes",
     "no": "No",
+    "close": "Close",
     "confirmTitle": "Are you sure?"
   }
 }

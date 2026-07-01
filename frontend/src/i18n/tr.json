@@ -1,19 +1,20 @@
 {
-  "app": {
-    "title": "Lingua",
-    "tagline": "Dil öğrenme takip sistemin"
+  "langNames": {
+    "tr": "Türkçe",
+    "en": "İngilizce",
+    "it": "İtalyanca",
+    "es": "İspanyolca",
+    "de": "Almanca",
+    "fr": "Fransızca"
   },
   "nav": {
-    "languages": "Diller",
     "topics": "Konular",
     "words": "Kelimeler",
     "labels": "Etiketler",
     "review": "Tekrar",
-    "stats": "İstatistik",
-    "settings": "Ayarlar"
+    "stats": "İstatistik"
   },
   "learning": {
-    "status": "Durum",
     "new": "Başlanmadı",
     "learning": "Öğreniliyor",
     "learned": "Öğrenildi",
@@ -22,8 +23,6 @@
     "resetConfirm": "Bu kelimenin tekrar ilerlemesi sıfırlanacak. \"{{status}}\" olarak değiştirilsin mi?"
   },
   "review": {
-    "title": "Bugün Tekrar",
-    "subtitle": "Vakti gelen kelimeleri tekrar et",
     "empty": "Bugün tekrar edilecek kelime yok.",
     "emptyHint": "Bir kelimeyi \"Öğrenildi\" yapınca tekrar programına girer (1·3·7·14·30 gün).",
     "remaining": "{{n}} kaldı",
@@ -48,20 +47,28 @@
   },
   "languages": {
     "title": "Diller",
-    "subtitle": "Çalışmak için bir dil seç ya da yeni bir dil ekle.",
-    "empty": "Henüz dil yok — aşağıdan ilkini ekle.",
-    "addTitle": "Dil ekle",
+    "subtitle": "Çalışmak için bir dil seç ya da yeni bir kurs ekle.",
+    "empty": "Henüz kurs yok — ilkini ekle.",
+    "addTitle": "Kurs ekle",
     "code": "Kod",
     "codeHint": "örn. it, es, de",
     "name": "Ad",
     "nameHint": "örn. İtalyanca",
     "nativeName": "Yerel adı",
     "nativeNameHint": "örn. Italiano",
-    "create": "Dil ekle",
+    "create": "Kurs ekle",
+    "targetLang": "Hedef dil",
+    "nativeLang": "Ana dil",
+    "helperLangs": "Yardımcı diller",
+    "addHelper": "Yardımcı dil ekle",
+    "addNewLanguage": "Yeni dil ekle",
+    "selectPlaceholder": "Seç…",
+    "nativeLabel": "Ana dil",
+    "helperLabel": "Yardımcı",
     "open": "Aç",
     "manage": "Düzenle",
     "done": "Bitti",
-    "editTitle": "Dili düzenle",
+    "editTitle": "Kursu düzenle",
     "moveUp": "Yukarı taşı",
     "moveDown": "Aşağı taşı",
     "deleteConfirm": "\"{{name}}\" ve tüm verisi (konular, kelimeler, etiketler) silinsin mi?"
@@ -72,9 +79,9 @@
   "topics": {
     "addTitle": "Konu ekle",
     "titlePlaceholder": "Konu başlığı",
-    "descPlaceholder": "Açıklama (opsiyonel)",
+    "descPlaceholder": "Açıklama",
     "add": "Konu ekle",
-    "empty": "Henüz konu yok — aşağıdan ilkini ekle.",
+    "empty": "Henüz konu yok — ilkini ekle.",
     "progress": "{{done}} / {{total}} tamamlandı",
     "moveUp": "Yukarı taşı",
     "moveDown": "Aşağı taşı",
@@ -92,9 +99,34 @@
     "add": "Kelime ekle",
     "addTitle": "Kelime ekle",
     "editTitle": "Kelimeyi düzenle",
-    "empty": "Henüz kelime yok — aşağıdan ilkini ekle.",
+    "empty": "Henüz kelime yok — ilkini ekle.",
     "noResults": "Aramana uyan kelime yok.",
     "deleteConfirm": "Bu kelime silinsin mi?",
+    "meaningIn": "{{lang}} Anlamı",
+    "readingIn": "{{lang}} Okunuşu",
+    "translationIn": "{{lang}} Çevirisi",
+    "definitionIn": "{{lang}} Tanımı",
+    "import": "İçe aktar",
+    "importTitle": "Kelime içe aktar",
+    "importHint": "Bir CSV veya TXT dosyası seç. Tam düzeni görmek için Dışa aktar'ı kullanabilirsin.",
+    "importChooseFile": "Dosya seç",
+    "importDropHint": "Bir CSV veya TXT dosyasını buraya sürükle ya da seçmek için tıkla",
+    "importLabelName": "Etiket adı",
+    "importSummaryNew": "{{n}} yeni kelime",
+    "importSummaryConflicts": "{{n}} kelime zaten var",
+    "importSummarySkippedRows": "{{n}} satır atlandı",
+    "importSummarySkippedConflicts": "{{n}} mevcut kelimeye dokunulmadı",
+    "importConflicts": "Mevcut kelimeler",
+    "importSkip": "Atla",
+    "importReplace": "Değiştir",
+    "importSkipAll": "Tümünü atla",
+    "importReplaceAll": "Tümünü değiştir",
+    "importConfirm": "{{n}} kelimeyi içe aktar",
+    "importSuccess": "{{created}} kelime eklendi, {{replaced}} kelime güncellendi.",
+    "importRowError": "Satır {{row}}: {{message}}",
+    "importErrorEmpty": "Dosya boş.",
+    "importErrorTooFewColumns": "Bu satırda, bu kursun dil ayarları için yeterli sütun yok.",
+    "importErrorBlankTerm": "Kelime boş, satır atlandı.",
     "partsOfSpeech": {
       "noun": "İsim",
       "verb": "Fiil",
@@ -111,30 +143,15 @@
       "term": "Kelime",
       "part_of_speech": "Tür",
       "phonetic": "Okunuş",
-      "phonetic_tr": "Türkçe okunuş",
-      "meaning_native": "Anlamı (TR)",
-      "meaning_english": "İngilizce",
-      "definition_target": "Tanım (hedef dil)",
-      "example_sentence": "Örnek cümle",
-      "example_translation": "Cümlenin çevirisi"
+      "example_sentence": "Örnek cümle"
     }
-  },
-  "settings": {
-    "title": "Ayarlar",
-    "uiLanguage": "Arayüz dili",
-    "english": "İngilizce",
-    "turkish": "Türkçe",
-    "italian": "İtalyanca",
-    "spanish": "İspanyolca",
-    "german": "Almanca",
-    "french": "Fransızca"
   },
   "labels": {
     "addTitle": "Etiket ekle",
     "namePlaceholder": "Etiket adı",
     "color": "Renk",
     "add": "Etiket ekle",
-    "empty": "Henüz etiket yok — aşağıdan ilkini ekle.",
+    "empty": "Henüz etiket yok — ilkini ekle.",
     "deleteConfirm": "Bu etiket silinsin mi? Tüm kelimelerden kaldırılır.",
     "addToWord": "Etiket ekle",
     "noneToAdd": "Başka etiket yok — Etiketler sekmesinden oluştur.",
@@ -145,6 +162,15 @@
     "checking": "Backend kontrol ediliyor…",
     "online": "Backend çalışıyor",
     "offline": "Backend kapalı — 8010 portunda çalışıyor mu?"
+  },
+  "errors": {
+    "duplicateCourse": "Bu hedef/ana/yardımcı dil kombinasyonuyla bir kurs zaten var.",
+    "targetEqualsNative": "Hedef ve ana dil aynı olamaz.",
+    "courseNotFound": "Kurs bulunamadı.",
+    "languageNotFound": "Dil bulunamadı.",
+    "importTermEmpty": "Kelime boş.",
+    "importMissingReplaceId": "Değiştirilecek kelime belirtilmedi.",
+    "importReplaceWordNotFound": "Değiştirilecek kelime bulunamadı."
   },
   "common": {
     "add": "Ekle",
@@ -159,6 +185,7 @@
     "comingSoon": "Yakında",
     "yes": "Evet",
     "no": "Hayır",
+    "close": "Kapat",
     "confirmTitle": "Emin misin?"
   }
 }

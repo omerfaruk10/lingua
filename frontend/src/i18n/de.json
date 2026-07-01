@@ -1,19 +1,20 @@
 {
-  "app": {
-    "title": "Lingua",
-    "tagline": "Dein Tracker zum Sprachenlernen"
+  "langNames": {
+    "tr": "Türkisch",
+    "en": "Englisch",
+    "it": "Italienisch",
+    "es": "Spanisch",
+    "de": "Deutsch",
+    "fr": "Französisch"
   },
   "nav": {
-    "languages": "Sprachen",
     "topics": "Themen",
     "words": "Wörter",
     "labels": "Labels",
     "review": "Wiederholen",
-    "stats": "Statistik",
-    "settings": "Einstellungen"
+    "stats": "Statistik"
   },
   "learning": {
-    "status": "Status",
     "new": "Nicht begonnen",
     "learning": "Wird gelernt",
     "learned": "Gelernt",
@@ -22,8 +23,6 @@
     "resetConfirm": "Dadurch wird der Wiederholungsfortschritt zurückgesetzt. Auf \"{{status}}\" ändern?"
   },
   "review": {
-    "title": "Heute wiederholen",
-    "subtitle": "Fällige Wörter wiederholen",
     "empty": "Heute keine Wörter zu wiederholen.",
     "emptyHint": "Markiere ein Wort als \"Gelernt\", um es zum Wiederholungsplan hinzuzufügen (1·3·7·14·30 Tage).",
     "remaining": "Noch {{n}}",
@@ -48,20 +47,28 @@
   },
   "languages": {
     "title": "Sprachen",
-    "subtitle": "Wähle eine Sprache zum Arbeiten oder füge eine neue hinzu.",
-    "empty": "Noch keine Sprachen — füge unten die erste hinzu.",
-    "addTitle": "Sprache hinzufügen",
+    "subtitle": "Wähle eine Sprache zum Arbeiten oder füge einen neuen Kurs hinzu.",
+    "empty": "Noch keine Kurse — füge deinen ersten hinzu.",
+    "addTitle": "Kurs hinzufügen",
     "code": "Code",
     "codeHint": "z. B. it, es, de",
     "name": "Name",
     "nameHint": "z. B. Italienisch",
     "nativeName": "Eigenname",
     "nativeNameHint": "z. B. Italiano",
-    "create": "Sprache hinzufügen",
+    "create": "Kurs hinzufügen",
+    "targetLang": "Zielsprache",
+    "nativeLang": "Muttersprache",
+    "helperLangs": "Hilfssprachen",
+    "addHelper": "Hilfssprache hinzufügen",
+    "addNewLanguage": "Neue Sprache",
+    "selectPlaceholder": "Auswählen…",
+    "nativeLabel": "Muttersprache",
+    "helperLabel": "Hilfe",
     "open": "Öffnen",
     "manage": "Verwalten",
     "done": "Fertig",
-    "editTitle": "Sprache bearbeiten",
+    "editTitle": "Kurs bearbeiten",
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
     "deleteConfirm": "\"{{name}}\" und alle Daten (Themen, Wörter, Labels) löschen?"
@@ -72,9 +79,9 @@
   "topics": {
     "addTitle": "Thema hinzufügen",
     "titlePlaceholder": "Thementitel",
-    "descPlaceholder": "Beschreibung (optional)",
+    "descPlaceholder": "Beschreibung",
     "add": "Thema hinzufügen",
-    "empty": "Noch keine Themen — füge unten das erste hinzu.",
+    "empty": "Noch keine Themen — füge das erste hinzu.",
     "progress": "{{done}} / {{total}} erledigt",
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
@@ -92,9 +99,34 @@
     "add": "Wort hinzufügen",
     "addTitle": "Ein Wort hinzufügen",
     "editTitle": "Wort bearbeiten",
-    "empty": "Noch keine Wörter — füge unten das erste hinzu.",
+    "empty": "Noch keine Wörter — füge das erste hinzu.",
     "noResults": "Keine Wörter passen zur Suche.",
     "deleteConfirm": "Dieses Wort löschen?",
+    "meaningIn": "Bedeutung ({{lang}})",
+    "readingIn": "Aussprache ({{lang}})",
+    "translationIn": "Übersetzung ({{lang}})",
+    "definitionIn": "Definition ({{lang}})",
+    "import": "Importieren",
+    "importTitle": "Wörter importieren",
+    "importHint": "Wähle eine CSV- oder TXT-Datei. Nutze Exportieren, um das genaue Spaltenformat zu sehen.",
+    "importChooseFile": "Datei auswählen",
+    "importDropHint": "CSV- oder TXT-Datei hierher ziehen oder klicken zum Auswählen",
+    "importLabelName": "Label-Name",
+    "importSummaryNew": "{{n}} neue Wörter",
+    "importSummaryConflicts": "{{n}} Wörter existieren bereits",
+    "importSummarySkippedRows": "{{n}} Zeilen übersprungen",
+    "importSummarySkippedConflicts": "{{n}} bestehende Wörter unverändert gelassen",
+    "importConflicts": "Bestehende Wörter",
+    "importSkip": "Überspringen",
+    "importReplace": "Ersetzen",
+    "importSkipAll": "Alle überspringen",
+    "importReplaceAll": "Alle ersetzen",
+    "importConfirm": "{{n}} Wörter importieren",
+    "importSuccess": "{{created}} Wörter hinzugefügt, {{replaced}} aktualisiert.",
+    "importRowError": "Zeile {{row}}: {{message}}",
+    "importErrorEmpty": "Die Datei ist leer.",
+    "importErrorTooFewColumns": "Diese Zeile hat nicht genug Spalten für die Sprachkonfiguration dieses Kurses.",
+    "importErrorBlankTerm": "Wort ist leer, Zeile übersprungen.",
     "partsOfSpeech": {
       "noun": "Nomen",
       "verb": "Verb",
@@ -111,30 +143,15 @@
       "term": "Wort",
       "part_of_speech": "Art",
       "phonetic": "Aussprache",
-      "phonetic_tr": "Türkische Lesung",
-      "meaning_native": "Bedeutung (TR)",
-      "meaning_english": "Englisch",
-      "definition_target": "Definition (Zielsprache)",
-      "example_sentence": "Beispielsatz",
-      "example_translation": "Übersetzung des Beispiels"
+      "example_sentence": "Beispielsatz"
     }
-  },
-  "settings": {
-    "title": "Einstellungen",
-    "uiLanguage": "Sprache der Oberfläche",
-    "english": "Englisch",
-    "turkish": "Türkisch",
-    "italian": "Italienisch",
-    "spanish": "Spanisch",
-    "german": "Deutsch",
-    "french": "Französisch"
   },
   "labels": {
     "addTitle": "Label hinzufügen",
     "namePlaceholder": "Labelname",
     "color": "Farbe",
     "add": "Label hinzufügen",
-    "empty": "Noch keine Labels — füge unten das erste hinzu.",
+    "empty": "Noch keine Labels — füge das erste hinzu.",
     "deleteConfirm": "Dieses Label löschen? Es wird von allen Wörtern entfernt.",
     "addToWord": "Label hinzufügen",
     "noneToAdd": "Keine weiteren Labels — erstelle sie im Tab Labels.",
@@ -145,6 +162,15 @@
     "checking": "Backend wird geprüft…",
     "online": "Backend online",
     "offline": "Backend offline — läuft es auf Port 8010?"
+  },
+  "errors": {
+    "duplicateCourse": "Ein Kurs mit dieser Ziel-/Mutter-/Hilfssprachen-Kombination existiert bereits.",
+    "targetEqualsNative": "Zielsprache und Muttersprache dürfen nicht gleich sein.",
+    "courseNotFound": "Kurs nicht gefunden.",
+    "languageNotFound": "Sprache nicht gefunden.",
+    "importTermEmpty": "Wort ist leer.",
+    "importMissingReplaceId": "Zu ersetzendes Wort fehlt.",
+    "importReplaceWordNotFound": "Zu ersetzendes Wort wurde nicht gefunden."
   },
   "common": {
     "add": "Hinzufügen",
@@ -159,6 +185,7 @@
     "comingSoon": "Demnächst",
     "yes": "Ja",
     "no": "Nein",
+    "close": "Schließen",
     "confirmTitle": "Bist du sicher?"
   }
 }
