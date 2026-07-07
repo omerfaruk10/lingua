@@ -10,7 +10,7 @@ Her **kurs**, bir hedef dil + bir ana dil + 0-3 yardımcı dilden oluşur (örn.
 |---|---|---|
 | Diller | `/languages` | Kursların listesi. Sürükle-bırak ile sıralama desteklenir. |
 | Konular | `/languages/:courseSlug/topics` | Kanban panosu: Başlamadı · Devam Ediyor · Tamamlandı |
-| Kelimeler | `/languages/:courseSlug/words` | Kelime bankası. Her kayıtta okunuş, kursun her dili için ayrı anlam, tanım, örnek cümle, çeviri ve etiketler bulunur. CSV/TXT olarak toplu içe/dışa aktarma desteklenir (sütunlar sabit sırada okunur, başlık satırı içeriğine bakılmaz). |
+| Kelimeler | `/languages/:courseSlug/words` | Kelime bankası. Her kayıtta okunuş, eş/zıt anlam, kelime kökü, tanım, örnek cümle, çeviri ve etiketler bulunur. **Yapay Zeka** ile otomatik kelime doldurma, sesli telaffuz (Text-to-Speech) ve tüm diller için ücretsiz **çeviri sözlüğü** yedek mekanizması içerir. |
 | Tekrar | `/languages/:courseSlug/review` | Zamanlanmış (1·3·7·14·30 gün) aralıklı tekrar akışı. |
 | Etiketler | `/languages/:courseSlug/labels` | Renk kodlu etiketler. Buradaki sıra, kelime kartlarındaki etiket sırasını belirler. |
 | İstatistik | `/languages/:courseSlug/stats` | Günlük/haftalık/aylık ilerleme grafikleri. |
