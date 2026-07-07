@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, NavLink, Outlet, useParams } from 'react-router-dom'
 
 import { useLanguages } from '../hooks/useLanguages'
-import { useDueWords } from '../hooks/useWords'
+import { useDueWords, useWords } from '../hooks/useWords'
 import { findCourseBySlug } from '../lib/courseSlug'
 import { langName } from '../lib/langName'
 import { clearSelectedCourseSlug, getSelectedCourseSlug } from '../lib/selectedLanguage'
@@ -25,6 +25,8 @@ export function WorkspaceLayout() {
   const { data: languages, isLoading } = useLanguages()
   const language = findCourseBySlug(languages ?? [], slug)
   const dueCount = useDueWords(language?.id ?? 0).data?.length ?? 0
+  // Ogrenme kuyrugu rozeti: 'ogreniliyor' durumundaki kelime sayisi.
+  const learningCount = useWords(language?.id ?? 0, { status: 'learning' }).data?.length ?? 0
 
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (!language) {
@@ -35,6 +37,7 @@ export function WorkspaceLayout() {
   const tabs = [
     { to: 'topics', label: t('nav.topics') },
     { to: 'words', label: t('nav.words') },
+    { to: 'learn', label: t('nav.learn'), badge: learningCount },
     { to: 'review', label: t('nav.review'), badge: dueCount },
     { to: 'labels', label: t('nav.labels') },
     { to: 'stats', label: t('nav.stats') },
@@ -63,13 +66,13 @@ export function WorkspaceLayout() {
         </Link>
       </div>
 
-      <nav className="flex gap-1 rounded-xl border border-slate-200/70 bg-white/60 p-1 backdrop-blur-sm">
+      <nav className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200/70 bg-white/60 p-1 backdrop-blur-sm">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-center text-sm font-medium transition ${
+              `flex items-center justify-center gap-1.5 rounded-lg px-5 py-2 text-center text-sm font-medium transition ${
                 isActive
                   ? 'bg-white text-violet-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'

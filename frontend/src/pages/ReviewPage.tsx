@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { orderMeanings, WordCardContent } from '../components/WordCardContent'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useDueWords, useReviewWord } from '../hooks/useWords'
 import type { Word } from '../types'
@@ -32,7 +33,7 @@ export function ReviewPage() {
 
   if (queue.length === 0) {
     return (
-      <div className="card flex flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
+      <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
         <span className="text-4xl">🎉</span>
         <p className="font-medium text-slate-700">{t('review.empty')}</p>
         <p className="max-w-sm text-sm text-slate-400">{t('review.emptyHint')}</p>
@@ -42,7 +43,7 @@ export function ReviewPage() {
 
   if (idx >= queue.length) {
     return (
-      <div className="card flex flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
+      <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
         <span className="text-4xl">✅</span>
         <p className="font-medium text-slate-700">{t('review.finished')}</p>
         <p className="text-sm text-slate-400">{t('review.finishedHint', { n: reviewedCount })}</p>
@@ -53,10 +54,7 @@ export function ReviewPage() {
   const word = queue[idx]
   const total = queue.length
   const remaining = total - idx
-  const meaningById = new Map(word.meanings.map((m) => [m.language_id, m.value]))
-  const orderedMeanings = meaningOrder
-    .map((id) => meaningById.get(id))
-    .filter((v): v is string => !!v && v.trim().length > 0)
+  const orderedMeanings = orderMeanings(word, meaningOrder)
 
   function grade(result: 'known' | 'forgot') {
     review.mutate({ wordId: word.id, result })
@@ -66,7 +64,7 @@ export function ReviewPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       {/* Ilerleme */}
       <div className="flex items-center gap-3">
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/70">
@@ -83,43 +81,12 @@ export function ReviewPage() {
       {/* Kart */}
       <div className="card flex min-h-[18rem] flex-col p-8">
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <div className="flex flex-wrap items-baseline justify-center gap-2">
-            <span className="text-3xl font-semibold text-slate-900">{word.term}</span>
-            {word.part_of_speech && (
-              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
-              </span>
-            )}
-          </div>
-          {(word.phonetic || word.phonetic_native) && (
-            <div className="mt-1.5 text-sm text-slate-400">
-              {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
-            </div>
-          )}
-
-          {revealed && (
-            <div className="mt-5 w-full space-y-2 border-t border-slate-100 pt-5">
-              {orderedMeanings.length > 0 && (
-                <div className="text-lg text-slate-800">
-                  {orderedMeanings[0]}
-                  {orderedMeanings.length > 1 && (
-                    <span className="text-slate-400"> · {orderedMeanings.slice(1).join(' · ')}</span>
-                  )}
-                </div>
-              )}
-              {word.definition_target && (
-                <div className="text-sm italic text-slate-500">{word.definition_target}</div>
-              )}
-              {word.example_sentence && (
-                <div className="mx-auto mt-2 max-w-md border-l-2 border-slate-200 pl-3 text-left text-sm">
-                  <div className="text-slate-700">{word.example_sentence}</div>
-                  {word.example_translation && (
-                    <div className="text-slate-400">{word.example_translation}</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          <WordCardContent
+            word={word}
+            orderedMeanings={orderedMeanings}
+            revealed={revealed}
+            langCode={course?.target_language.code}
+          />
         </div>
 
         {/* Aksiyonlar */}

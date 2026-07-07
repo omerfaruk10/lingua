@@ -8,6 +8,7 @@ import { labelColor } from '../components/labelColors'
 import { useConfirm } from '../components/ConfirmProvider'
 import { ImportWordsModal } from '../components/ImportWordsModal'
 import { Modal } from '../components/Modal'
+import { SpeakButton } from '../components/SpeakButton'
 import { WordForm } from '../components/WordForm'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useLabels } from '../hooks/useLabels'
@@ -71,8 +72,14 @@ export function WordsPage() {
   const list = words ?? []
   const allLabels = labels ?? []
 
-  function create(data: WordInput) {
-    createWord.mutate(data, { onSuccess: () => setAddOpen(false) })
+  function create(data: WordInput, startLearning: boolean) {
+    createWord.mutate(data, {
+      onSuccess: (w) => {
+        setAddOpen(false)
+        // "Ogrenmeye basla" isaretliyse kelime dogrudan ogrenme kuyruguna girer.
+        if (startLearning) setStatus.mutate({ wordId: w.id, status: 'learning' })
+      },
+    })
   }
   function update(data: WordInput) {
     if (!editingWord) return
@@ -181,19 +188,20 @@ export function WordsPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
-        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+        <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">{search.trim() || labelFilter != null ? '🔍' : '📖'}</span>
           <p className="text-slate-400">
             {search.trim() || labelFilter != null ? t('words.noResults') : t('words.empty')}
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="grid items-start gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {list.map((word, index) => (
             <WordCard
               key={word.id}
               word={word}
               index={index + 1}
+              langCode={targetLang?.code}
               meaningLangs={meaningLangs}
               allLabels={allLabels}
               onAddLabel={(labelId) => addLabel.mutate({ wordId: word.id, labelId })}
@@ -210,11 +218,13 @@ export function WordsPage() {
         <Modal title={t('words.addTitle')} onClose={() => setAddOpen(false)} maxWidth="max-w-2xl">
           <WordForm
             bare
+            courseId={languageId}
             nativeLang={nativeLang}
             helperLangs={helperLangs}
             targetLang={targetLang}
             submitLabel={t('words.add')}
             submitting={createWord.isPending}
+            showStartLearning
             onSubmit={create}
             onCancel={() => setAddOpen(false)}
           />
@@ -226,6 +236,7 @@ export function WordsPage() {
           <WordForm
             bare
             initial={editingWord}
+            courseId={languageId}
             nativeLang={nativeLang}
             helperLangs={helperLangs}
             targetLang={targetLang}
@@ -432,6 +443,7 @@ function WordStatusDropdown({
 function WordCard({
   word,
   index,
+  langCode,
   meaningLangs,
   allLabels,
   onAddLabel,
@@ -442,6 +454,7 @@ function WordCard({
 }: {
   word: Word
   index: number
+  langCode?: string
   meaningLangs: LanguageBrief[]
   allLabels: Label[]
   onAddLabel: (labelId: number) => void
@@ -471,17 +484,18 @@ function WordCard({
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-xs font-medium text-slate-400 tabular-nums">#{index}</span>
             <span className="text-lg font-semibold text-slate-900">{word.term}</span>
+            {langCode && <SpeakButton text={word.term} langCode={langCode} className="-my-1" />}
             {word.part_of_speech && (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
                 {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
               </span>
             )}
-            {(word.phonetic || word.phonetic_native) && (
-              <span className="text-sm text-slate-400">
-                {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
-              </span>
-            )}
           </div>
+          {(word.phonetic || word.phonetic_native) && (
+            <div className="mt-0.5 text-sm text-slate-400">
+              {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
+            </div>
+          )}
 
           {orderedMeanings.length > 0 && (
             <div className="mt-1 text-slate-700">
@@ -494,6 +508,32 @@ function WordCard({
 
           {word.definition_target && (
             <div className="mt-1 text-sm italic text-slate-500">{word.definition_target}</div>
+          )}
+
+          {(word.synonyms || word.antonyms) && (
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-left">
+              {word.synonyms && (
+                <div className="flex-1 min-w-[120px]">
+                  <span className="block font-medium text-slate-500 mb-0.5">{t('words.fields.synonyms')}</span>
+                  <span className="text-slate-700">{word.synonyms}</span>
+                </div>
+              )}
+              {word.antonyms && (
+                <div className="flex-1 min-w-[120px]">
+                  <span className="block font-medium text-slate-500 mb-0.5">{t('words.fields.antonyms')}</span>
+                  <span className="text-slate-700">{word.antonyms}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {word.word_family && (
+            <div className="mt-3 border-t border-slate-100 pt-3 text-left text-xs">
+              <span className="block font-medium text-slate-500 mb-1">{t('words.fields.wordFamily')}</span>
+              <div className="text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50 p-2 rounded">
+                {word.word_family}
+              </div>
+            </div>
           )}
 
           {word.example_sentence && (

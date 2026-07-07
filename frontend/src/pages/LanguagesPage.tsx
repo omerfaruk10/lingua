@@ -114,7 +114,7 @@ export function LanguagesPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
-        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+        <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">🌍</span>
           <p className="text-slate-400">{t('languages.empty')}</p>
         </div>
@@ -126,7 +126,7 @@ export function LanguagesPage() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={list.map((l) => l.id)} strategy={rectSortingStrategy}>
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {list.map((lang) => (
                 <SortableLangCard
                   key={lang.id}
@@ -143,7 +143,7 @@ export function LanguagesPage() {
           </DragOverlay>
         </DndContext>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {list.map((lang) => (
             <li
               key={lang.id}

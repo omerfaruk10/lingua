@@ -8,6 +8,7 @@ import { SUPPORTED_LANGS, setUiLang } from './i18n'
 import { getSelectedCourseSlug } from './lib/selectedLanguage'
 import { LabelsPage } from './pages/LabelsPage'
 import { LanguagesPage } from './pages/LanguagesPage'
+import { LearnPage } from './pages/LearnPage'
 import { ReviewPage } from './pages/ReviewPage'
 import { StatsPage } from './pages/StatsPage'
 import { TopicsPage } from './pages/TopicsPage'
@@ -80,7 +81,7 @@ function App() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/60 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-[1700px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
           <Link to="/languages" className="group flex items-center gap-2.5">
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-bold text-white shadow-sm shadow-violet-500/30 transition group-hover:scale-105">
               L
@@ -94,7 +95,7 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto w-full max-w-[1700px] px-4 py-10 sm:px-6 lg:px-10">
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/languages" element={<LanguagesPage />} />
@@ -102,6 +103,7 @@ function App() {
             <Route index element={<Navigate to="topics" replace />} />
             <Route path="topics" element={<TopicsPage />} />
             <Route path="words" element={<WordsPage />} />
+            <Route path="learn" element={<LearnPage />} />
             <Route path="review" element={<ReviewPage />} />
             <Route path="labels" element={<LabelsPage />} />
             <Route path="stats" element={<StatsPage />} />

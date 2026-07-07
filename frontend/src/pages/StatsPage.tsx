@@ -87,7 +87,7 @@ export function StatsPage() {
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5">
       {/* Ozet kartlari */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label={t('stats.totalWords')} value={totalWords} />

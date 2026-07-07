@@ -14,7 +14,7 @@ start "Lingua Frontend" /D "%~dp0frontend" cmd /k npm run dev
 echo Iki pencere acildi (Backend + Frontend).
 echo Tarayici birazdan acilacak: http://localhost:5173
 echo.
-echo Kapatmak icin: acilan iki pencereyi kapat ya da stop-lingua.bat'i calistir.
+echo Kapatmak icin: acilan iki pencereyi kapat.
 
 REM Sunucular ayaga kalksin diye birkac saniye bekle, sonra tarayiciyi ac
 timeout /t 6 /nobreak >nul

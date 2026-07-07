@@ -45,6 +45,10 @@ export function TopicsPage() {
   const [addTitle, setAddTitle] = useState('')
   const [addDesc, setAddDesc] = useState('')
 
+  const [editTopicObj, setEditTopicObj] = useState<Topic | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+
   const list = topics ?? []
   const doneCount = list.filter((x) => x.status === 'done').length
 
@@ -61,6 +65,23 @@ export function TopicsPage() {
         },
       },
     )
+  }
+
+  function submitEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editTitle.trim() || !editTopicObj) return
+    updateTopic.mutate(
+      { topicId: editTopicObj.id, data: { title: editTitle.trim(), description: editDesc.trim() || null } },
+      {
+        onSuccess: () => setEditTopicObj(null),
+      }
+    )
+  }
+
+  function openEdit(topic: Topic) {
+    setEditTitle(topic.title)
+    setEditDesc(topic.description || '')
+    setEditTopicObj(topic)
   }
 
   function setStatus(topicId: number, status: TopicStatus) {
@@ -100,7 +121,7 @@ export function TopicsPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : list.length === 0 ? (
-        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+        <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">📚</span>
           <p className="text-slate-400">{t('topics.empty')}</p>
         </div>
@@ -112,6 +133,7 @@ export function TopicsPage() {
               status={status}
               topics={list.filter((t) => t.status === status)}
               onSetStatus={setStatus}
+              onEdit={openEdit}
               onDelete={remove}
               onReorder={(reordered) => {
                 reordered.forEach((topic, pos) => {
@@ -126,7 +148,7 @@ export function TopicsPage() {
       )}
 
       {addOpen && (
-        <Modal title={t('topics.addTitle')} onClose={() => setAddOpen(false)}>
+        <Modal title={t('topics.addTitle')} onClose={() => setAddOpen(false)} maxWidth="max-w-xl">
           <form onSubmit={submitAdd} className="space-y-3">
             <div>
               <label className="block">
@@ -146,16 +168,54 @@ export function TopicsPage() {
             <div>
               <label className="block">
                 <span className="field-label">{t('topics.descPlaceholder')}</span>
-                <input
+                <textarea
                   value={addDesc}
                   onChange={(e) => setAddDesc(e.target.value)}
                   placeholder={t('topics.descPlaceholder')}
-                  className="input"
+                  className="input resize-none overflow-y-auto"
+                  rows={3}
                 />
               </label>
             </div>
             <button type="submit" disabled={createTopic.isPending} className="btn-primary w-full">
               {t('topics.add')}
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {editTopicObj && (
+        <Modal title={t('common.edit')} onClose={() => setEditTopicObj(null)} maxWidth="max-w-xl">
+          <form onSubmit={submitEdit} className="space-y-3">
+            <div>
+              <label className="block">
+                <span className="field-label">
+                  {t('topics.titlePlaceholder')}
+                  <span className="text-violet-500"> *</span>
+                </span>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder={t('topics.titlePlaceholder')}
+                  className="input"
+                  autoFocus
+                />
+              </label>
+            </div>
+            <div>
+              <label className="block">
+                <span className="field-label">{t('topics.descPlaceholder')}</span>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  placeholder={t('topics.descPlaceholder')}
+                  className="input resize-none overflow-y-auto"
+                  rows={3}
+                />
+              </label>
+            </div>
+            <button type="submit" disabled={updateTopic.isPending} className="btn-primary w-full">
+              {t('common.save')}
             </button>
           </form>
         </Modal>
@@ -168,6 +228,7 @@ function KanbanColumn({
   status,
   topics,
   onSetStatus,
+  onEdit,
   onDelete,
   onReorder,
   t,
@@ -175,6 +236,7 @@ function KanbanColumn({
   status: TopicStatus
   topics: Topic[]
   onSetStatus: (topicId: number, status: TopicStatus) => void
+  onEdit: (topic: Topic) => void
   onDelete: (topicId: number) => void
   onReorder: (reordered: Topic[]) => void
   t: (key: string) => string
@@ -239,6 +301,7 @@ function KanbanColumn({
                 numBg={meta.numBg}
                 numText={meta.numText}
                 onSetStatus={(s) => onSetStatus(topic.id, s)}
+                onEdit={() => onEdit(topic)}
                 onDelete={() => onDelete(topic.id)}
                 t={t}
               />
@@ -345,6 +408,7 @@ function SortableTopicCard({
   numBg,
   numText,
   onSetStatus,
+  onEdit,
   onDelete,
   t,
 }: {
@@ -353,6 +417,7 @@ function SortableTopicCard({
   numBg: string
   numText: string
   onSetStatus: (s: TopicStatus) => void
+  onEdit: () => void
   onDelete: () => void
   t: (key: string) => string
 }) {
@@ -396,13 +461,22 @@ function SortableTopicCard({
           <StatusDropdown topic={topic} onSetStatus={onSetStatus} t={t} />
         </div>
       </div>
-      <button
-        onClick={onDelete}
-        className="btn-icon-danger self-start opacity-0 transition group-hover:opacity-100"
-        title={t('common.delete')}
-      >
-        ✕
-      </button>
+      <div className="flex flex-col gap-1 opacity-0 transition group-hover:opacity-100 self-start">
+        <button
+          onClick={onEdit}
+          className="btn-icon"
+          title={t('common.edit')}
+        >
+          ✎
+        </button>
+        <button
+          onClick={onDelete}
+          className="btn-icon-danger"
+          title={t('common.delete')}
+        >
+          ✕
+        </button>
+      </div>
     </li>
   )
 }

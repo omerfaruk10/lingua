@@ -128,7 +128,7 @@ export function LabelsPage() {
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : localList.length === 0 ? (
-        <div className="card flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+        <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">🏷️</span>
           <p className="text-slate-400">{t('labels.empty')}</p>
         </div>
