@@ -66,6 +66,9 @@ export interface Word {
   definition_target: string | null
   example_sentence: string | null
   example_translation: string | null
+  synonyms: string | null
+  antonyms: string | null
+  word_family: string | null
   meanings: WordMeaning[]
   labels: Label[]
   learning_status: LearningStatus

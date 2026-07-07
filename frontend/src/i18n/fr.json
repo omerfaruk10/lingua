@@ -12,6 +12,7 @@
     "words": "Mots",
     "labels": "Étiquettes",
     "review": "Révision",
+    "learn": "Apprendre",
     "stats": "Stats"
   },
   "learning": {
@@ -31,6 +32,28 @@
     "forgot": "Oublié",
     "finished": "Terminé pour aujourd'hui !",
     "finishedHint": "Vous avez révisé {{n}} mots."
+  },
+  "learn": {
+    "empty": "Aucun mot dans votre file d'apprentissage.",
+    "emptyHint": "Passez un mot en « En cours » dans l'onglet Mots, ou cochez « Commencer à l'apprendre tout de suite » lors de l'ajout.",
+    "progress": "{{done}} / {{total}} mots",
+    "continue": "Continuer",
+    "chooseTitle": "Choisissez le mot qui signifie :",
+    "typeTitle": "Écrivez le mot qui signifie :",
+    "typePlaceholder": "Écrivez le mot…",
+    "check": "Vérifier",
+    "correct": "Correct !",
+    "accentHint": "Presque — attention aux accents :",
+    "wrong": "Bonne réponse :",
+    "next": "Suivant",
+    "summaryTitle": "Session terminée !",
+    "summaryHint": "Laissez cochés les mots dont vous êtes sûr — ils entrent dans le planning de révision dès demain.",
+    "mistakes": "{{n}} erreurs",
+    "markLearned": "Marquer {{n}} comme appris",
+    "doneTitle": "Beau travail !",
+    "doneHint": "{{n}} mots passent en révision — premier rappel demain.",
+    "doneNoneHint": "Tous les mots restent dans votre file d'apprentissage.",
+    "nextBatch": "Prochaine série ({{n}} en attente)"
   },
   "stats": {
     "month": "Mois",
@@ -106,6 +129,14 @@
     "readingIn": "Lecture ({{lang}})",
     "translationIn": "Traduction ({{lang}})",
     "definitionIn": "Définition ({{lang}})",
+    "speak": "Prononcer",
+    "speakSlow": "Prononcer lentement",
+    "suggest": "Remplir depuis le dictionnaire",
+    "suggestDone": "Suggestions remplies — vérifiez avant d'enregistrer",
+    "suggestDoneAi": "Rempli par l'IA — vérifiez avant d'enregistrer",
+    "suggestPickSense": "Quel sens vouliez-vous ?",
+    "suggestSenseUnknownPos": "mot",
+    "suggestNone": "Introuvable dans le dictionnaire",
     "import": "Importer",
     "importTitle": "Importer des mots",
     "importHint": "Choisis un fichier CSV ou TXT. Utilise Exporter pour voir le format exact des colonnes.",
@@ -143,7 +174,11 @@
       "term": "Mot",
       "part_of_speech": "Type",
       "phonetic": "Prononciation",
-      "example_sentence": "Phrase d'exemple"
+      "example_sentence": "Phrase d'exemple",
+      "startLearning": "Commencer à l'apprendre tout de suite",
+      "synonyms": "Synonymes",
+      "antonyms": "Antonymes",
+      "wordFamily": "Famille de mots"
     }
   },
   "labels": {

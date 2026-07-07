@@ -28,6 +28,11 @@ class Word(Base):
 
     # Anlamlar (ana dil + yardimci diller) artik word_meanings tablosunda tutulur.
     definition_target: Mapped[str | None] = mapped_column(Text, default=None)  # hedef dilde tanim
+    
+    synonyms: Mapped[str | None] = mapped_column(Text, default=None) # Es anlamlilar
+    antonyms: Mapped[str | None] = mapped_column(Text, default=None) # Zit anlamlilar
+    word_family: Mapped[str | None] = mapped_column(Text, default=None) # Kok ve baglari
+
 
     example_sentence: Mapped[str | None] = mapped_column(Text, default=None)
     example_translation: Mapped[str | None] = mapped_column(Text, default=None)

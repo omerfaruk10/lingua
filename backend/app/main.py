@@ -1,11 +1,19 @@
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import models  # noqa: F401 -- modelleri Base.metadata'ya kaydeder
-from app.database import Base, engine, ensure_schema
-from app.routers import labels, languages, stats, topics, words
+# Ortam degiskenlerini yukle (GEMINI_API_KEY vb.). Once repo kokundeki .env
+# (backend/ ustunde), sonra backend/.env — ikisi de opsiyonel.
+_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(_ROOT / ".env")
+load_dotenv(_ROOT / "backend" / ".env")
+
+from app import models  # noqa: E402,F401 -- modelleri Base.metadata'ya kaydeder
+from app.database import Base, engine, ensure_schema  # noqa: E402
+from app.routers import labels, languages, stats, topics, words  # noqa: E402
 
 # Iskelet asamasi: tablolari dogrudan olustur.
 # SRS alanlari eklerken sema degisecegi icin ileride Alembic (migration) gelecek.

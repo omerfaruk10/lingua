@@ -12,6 +12,7 @@
     "words": "Words",
     "labels": "Labels",
     "review": "Review",
+    "learn": "Learn",
     "stats": "Stats"
   },
   "learning": {
@@ -31,6 +32,28 @@
     "forgot": "Forgot it",
     "finished": "Done for today!",
     "finishedHint": "You reviewed {{n}} words."
+  },
+  "learn": {
+    "empty": "No words in your learning queue.",
+    "emptyHint": "Set a word to \"Learning\" in the Words tab, or tick \"Start learning right away\" when adding one.",
+    "progress": "{{done}} / {{total}} words",
+    "continue": "Continue",
+    "chooseTitle": "Pick the word that means:",
+    "typeTitle": "Type the word for:",
+    "typePlaceholder": "Type the word…",
+    "check": "Check",
+    "correct": "Correct!",
+    "accentHint": "Almost — mind the accents:",
+    "wrong": "Correct answer:",
+    "next": "Next",
+    "summaryTitle": "Session complete!",
+    "summaryHint": "Keep the words you're confident about checked — they enter the review schedule tomorrow.",
+    "mistakes": "{{n}} mistakes",
+    "markLearned": "Mark {{n}} as learned",
+    "doneTitle": "Nice work!",
+    "doneHint": "{{n}} words move to review — first check-in tomorrow.",
+    "doneNoneHint": "All words stay in your learning queue.",
+    "nextBatch": "Next batch ({{n}} waiting)"
   },
   "stats": {
     "month": "Month",
@@ -106,6 +129,14 @@
     "readingIn": "{{lang}} Reading",
     "translationIn": "{{lang}} Translation",
     "definitionIn": "{{lang}} Definition",
+    "speak": "Pronounce",
+    "speakSlow": "Pronounce slowly",
+    "suggest": "Fill from dictionary",
+    "suggestDone": "Suggestions filled — review before saving",
+    "suggestDoneAi": "Filled by AI — review before saving",
+    "suggestPickSense": "Which meaning did you want?",
+    "suggestSenseUnknownPos": "word",
+    "suggestNone": "AI is temporarily unavailable",
     "import": "Import",
     "importTitle": "Import words",
     "importHint": "Choose a CSV or TXT file. Use Export to see the exact column layout.",
@@ -143,7 +174,11 @@
       "term": "Word",
       "part_of_speech": "Type",
       "phonetic": "Pronunciation",
-      "example_sentence": "Example sentence"
+      "example_sentence": "Example sentence",
+      "startLearning": "Start learning right away",
+      "synonyms": "Synonyms",
+      "antonyms": "Antonyms",
+      "wordFamily": "Word family"
     }
   },
   "labels": {

@@ -14,6 +14,9 @@ export interface WordInput {
   definition_target?: string | null
   example_sentence?: string | null
   example_translation?: string | null
+  synonyms?: string | null
+  antonyms?: string | null
+  word_family?: string | null
   meanings?: WordMeaningInput[]
 }
 
@@ -40,6 +43,34 @@ export interface WordImportResult {
   label: Label | null
 }
 
+export interface WordSense {
+  part_of_speech?: string | null
+  // language_id -> anlam metni
+  meanings?: Record<number, string>
+}
+
+export interface WordSuggestResponse {
+  // Kelimenin en yaygin anlamlari (en fazla 5), kullanicinin secmesi icin.
+  senses: WordSense[]
+}
+
+export interface WordSuggestDetailsRequest {
+  term: string
+  part_of_speech?: string | null
+  meaning: string
+}
+
+export interface WordSuggestDetailsResponse {
+  phonetic?: string | null
+  phonetic_native?: string | null
+  definition_target?: string | null
+  example_sentence?: string | null
+  example_translation?: string | null
+  synonyms?: string | null
+  antonyms?: string | null
+  word_family?: string | null
+}
+
 export interface WordQuery {
   search?: string
   label_id?: number
@@ -62,6 +93,10 @@ export const wordsApi = {
   due: (languageId: number) => api.get<Word[]>(`/languages/${languageId}/words/due`),
   importBatch: (languageId: number, data: WordImportRequest) =>
     api.post<WordImportResult>(`/languages/${languageId}/words/import`, data),
+  suggest: (languageId: number, term: string) =>
+    api.post<WordSuggestResponse>(`/languages/${languageId}/words/suggest`, { term }),
+  suggestDetails: (languageId: number, data: WordSuggestDetailsRequest) =>
+    api.post<WordSuggestDetailsResponse>(`/languages/${languageId}/words/suggest/details`, data),
   create: (languageId: number, data: WordInput) =>
     api.post<Word>(`/languages/${languageId}/words`, data),
   update: (languageId: number, wordId: number, data: Partial<WordInput>) =>

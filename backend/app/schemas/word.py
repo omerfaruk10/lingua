@@ -28,6 +28,9 @@ class WordBase(BaseModel):
     definition_target: str | None = None
     example_sentence: str | None = None
     example_translation: str | None = None
+    synonyms: str | None = None
+    antonyms: str | None = None
+    word_family: str | None = None
 
 
 class WordCreate(WordBase):
@@ -44,6 +47,9 @@ class WordUpdate(BaseModel):
     definition_target: str | None = None
     example_sentence: str | None = None
     example_translation: str | None = None
+    synonyms: str | None = None
+    antonyms: str | None = None
+    word_family: str | None = None
     # meanings gonderilirse mevcut anlamlar tamamen bununla degistirilir.
     meanings: list[WordMeaningIn] | None = None
 
@@ -61,6 +67,38 @@ class WordRead(WordBase):
     learned_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class WordSuggestRequest(BaseModel):
+    term: str
+
+
+class WordSense(BaseModel):
+    part_of_speech: str | None = None
+    # language_id -> anlam metni (frontend dogru anlam kutusuna yazsin diye).
+    meanings: dict[int, str] = {}
+
+
+class WordSuggestResponse(BaseModel):
+    # Kelimenin en yaygin anlamlari (en fazla 5); kullanici hangisini istedigini secer.
+    senses: list[WordSense] = []
+
+
+class WordSuggestDetailsRequest(BaseModel):
+    term: str
+    part_of_speech: str | None = None
+    meaning: str
+
+
+class WordSuggestDetailsResponse(BaseModel):
+    phonetic: str | None = None
+    phonetic_native: str | None = None
+    definition_target: str | None = None
+    example_sentence: str | None = None
+    example_translation: str | None = None
+    synonyms: str | None = None
+    antonyms: str | None = None
+    word_family: str | None = None
 
 
 class WordStatusUpdate(BaseModel):

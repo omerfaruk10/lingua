@@ -11,9 +11,15 @@ from app.schemas.word import (
     WordImportResult,
     WordRead,
     WordReviewRequest,
+    WordSense,
     WordStatusUpdate,
+    WordSuggestDetailsRequest,
+    WordSuggestDetailsResponse,
+    WordSuggestRequest,
+    WordSuggestResponse,
     WordUpdate,
 )
+from app.services import suggest as suggest_service
 
 router = APIRouter(prefix="/languages/{course_id}/words", tags=["words"])
 
@@ -61,6 +67,69 @@ def create_word(course_id: int, data: WordCreate, db: Session = Depends(get_db))
 def import_words(course_id: int, data: WordImportRequest, db: Session = Depends(get_db)):
     _ensure_course(db, course_id)
     return crud.word.import_words(db, course_id, data)
+
+
+@router.post("/suggest", response_model=WordSuggestResponse)
+def suggest_word(course_id: int, data: WordSuggestRequest, db: Session = Depends(get_db)):
+    """AI (Gemini) ile kelime alanlari onerir. Anahtar yapilandirilmamissa 503 —
+    frontend bu durumda ucretsiz sozluk (Wiktionary) yoluna duser."""
+    course = crud.course.get_course(db, course_id)
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+    term = data.term.strip()
+    if not term:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty term")
+
+    # Anlam kodunu language_id'ye eslemek icin: ana dil + yardimci diller.
+    code_to_id = {course.native_language.code: course.native_language.id}
+    for h in course.helper_languages:
+        code_to_id[h.code] = h.id
+
+    try:
+        senses = suggest_service.suggest_word(
+            term,
+            target=(course.target_language.code, course.target_language.name),
+            native=(course.native_language.code, course.native_language.name),
+            helpers=[(h.code, h.name) for h in course.helper_languages],
+        )
+    except suggest_service.SuggestUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+
+    result_senses = []
+    for sense in senses:
+        meanings_by_id = {
+            code_to_id[code]: val
+            for code, val in sense.pop("meanings", {}).items()
+            if code in code_to_id
+        }
+        result_senses.append(WordSense(meanings=meanings_by_id, **sense))
+    return WordSuggestResponse(senses=result_senses)
+
+
+@router.post("/suggest/details", response_model=WordSuggestDetailsResponse)
+def suggest_word_details(
+    course_id: int, data: WordSuggestDetailsRequest, db: Session = Depends(get_db)
+):
+    course = crud.course.get_course(db, course_id)
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+    
+    try:
+        details = suggest_service.suggest_word_details(
+            term=data.term.strip(),
+            part_of_speech=data.part_of_speech,
+            meaning=data.meaning.strip(),
+            target=(course.target_language.code, course.target_language.name),
+            native=(course.native_language.code, course.native_language.name),
+        )
+    except suggest_service.SuggestUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+        
+    return WordSuggestDetailsResponse(**details)
 
 
 @router.get("/due", response_model=list[WordRead])

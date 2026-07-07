@@ -12,6 +12,7 @@
     "words": "Kelimeler",
     "labels": "Etiketler",
     "review": "Tekrar",
+    "learn": "Öğren",
     "stats": "İstatistik"
   },
   "learning": {
@@ -31,6 +32,28 @@
     "forgot": "Unutmuşum",
     "finished": "Bugünlük tamam!",
     "finishedHint": "{{n}} kelimeyi tekrar ettin."
+  },
+  "learn": {
+    "empty": "Öğrenme kuyruğunda kelime yok.",
+    "emptyHint": "Kelimeler sekmesinden bir kelimeyi \"Öğreniliyor\" yap ya da eklerken \"Hemen öğrenmeye başla\"yı işaretle.",
+    "progress": "{{done}} / {{total}} kelime",
+    "continue": "Devam",
+    "chooseTitle": "Anlamı şu olan kelimeyi seç:",
+    "typeTitle": "Şu anlama gelen kelimeyi yaz:",
+    "typePlaceholder": "Kelimeyi yaz…",
+    "check": "Kontrol et",
+    "correct": "Doğru!",
+    "accentHint": "Neredeyse — aksanlara dikkat:",
+    "wrong": "Doğru cevap:",
+    "next": "Sonraki",
+    "summaryTitle": "Oturum tamamlandı!",
+    "summaryHint": "Emin olduğun kelimeleri işaretli bırak — tekrar takvimine girer, yarın karşına çıkar.",
+    "mistakes": "{{n}} hata",
+    "markLearned": "{{n}} kelimeyi öğrenildi yap",
+    "doneTitle": "Harika iş!",
+    "doneHint": "{{n}} kelime tekrara geçti — ilk tekrar yarın.",
+    "doneNoneHint": "Tüm kelimeler öğrenme kuyruğunda kaldı.",
+    "nextBatch": "Sonraki parti ({{n}} bekliyor)"
   },
   "stats": {
     "month": "Ay",
@@ -106,6 +129,14 @@
     "readingIn": "{{lang}} Okunuşu",
     "translationIn": "{{lang}} Çevirisi",
     "definitionIn": "{{lang}} Tanımı",
+    "speak": "Seslendir",
+    "speakSlow": "Yavaş seslendir",
+    "suggest": "Sözlükten doldur",
+    "suggestDone": "Sözlükten dolduruldu (Yapay Zeka meşgul) — kontrol et",
+    "suggestDoneAi": "Yapay zeka doldurdu — kaydetmeden önce kontrol et",
+    "suggestPickSense": "Hangi anlamı istiyordun?",
+    "suggestSenseUnknownPos": "kelime",
+    "suggestNone": "Yapay zeka geçici olarak cevap veremedi",
     "import": "İçe aktar",
     "importTitle": "Kelime içe aktar",
     "importHint": "Bir CSV veya TXT dosyası seç. Tam düzeni görmek için Dışa aktar'ı kullanabilirsin.",
@@ -143,7 +174,11 @@
       "term": "Kelime",
       "part_of_speech": "Tür",
       "phonetic": "Okunuş",
-      "example_sentence": "Örnek cümle"
+      "example_sentence": "Örnek cümle",
+      "startLearning": "Hemen öğrenmeye başla",
+      "synonyms": "Eş anlamlılar",
+      "antonyms": "Zıt anlamlılar",
+      "wordFamily": "Kelime kök ve bağları"
     }
   },
   "labels": {

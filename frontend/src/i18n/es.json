@@ -12,6 +12,7 @@
     "words": "Palabras",
     "labels": "Etiquetas",
     "review": "Repaso",
+    "learn": "Aprender",
     "stats": "Estadísticas"
   },
   "learning": {
@@ -31,6 +32,28 @@
     "forgot": "La olvidé",
     "finished": "¡Listo por hoy!",
     "finishedHint": "Repasaste {{n}} palabras."
+  },
+  "learn": {
+    "empty": "No hay palabras en tu cola de aprendizaje.",
+    "emptyHint": "Pon una palabra en \"Aprendiendo\" en la pestaña Palabras, o marca \"Empezar a aprenderla ya\" al añadirla.",
+    "progress": "{{done}} / {{total}} palabras",
+    "continue": "Continuar",
+    "chooseTitle": "Elige la palabra que significa:",
+    "typeTitle": "Escribe la palabra que significa:",
+    "typePlaceholder": "Escribe la palabra…",
+    "check": "Comprobar",
+    "correct": "¡Correcto!",
+    "accentHint": "Casi — cuidado con las tildes:",
+    "wrong": "Respuesta correcta:",
+    "next": "Siguiente",
+    "summaryTitle": "¡Sesión completada!",
+    "summaryHint": "Deja marcadas las palabras de las que estés seguro — entrarán en el calendario de repaso mañana.",
+    "mistakes": "{{n}} errores",
+    "markLearned": "Marcar {{n}} como aprendidas",
+    "doneTitle": "¡Buen trabajo!",
+    "doneHint": "{{n}} palabras pasan al repaso — primera revisión mañana.",
+    "doneNoneHint": "Todas las palabras siguen en tu cola de aprendizaje.",
+    "nextBatch": "Siguiente tanda ({{n}} en espera)"
   },
   "stats": {
     "month": "Mes",
@@ -106,6 +129,14 @@
     "readingIn": "Lectura ({{lang}})",
     "translationIn": "Traducción ({{lang}})",
     "definitionIn": "Definición ({{lang}})",
+    "speak": "Pronunciar",
+    "speakSlow": "Pronunciar despacio",
+    "suggest": "Rellenar desde el diccionario",
+    "suggestDone": "Sugerencias rellenadas — revisa antes de guardar",
+    "suggestDoneAi": "Rellenado por IA — revisa antes de guardar",
+    "suggestPickSense": "¿Qué significado querías?",
+    "suggestSenseUnknownPos": "palabra",
+    "suggestNone": "No encontrado en el diccionario",
     "import": "Importar",
     "importTitle": "Importar palabras",
     "importHint": "Elige un archivo CSV o TXT. Usa Exportar para ver el formato exacto de columnas.",
@@ -143,7 +174,11 @@
       "term": "Palabra",
       "part_of_speech": "Tipo",
       "phonetic": "Pronunciación",
-      "example_sentence": "Frase de ejemplo"
+      "example_sentence": "Frase de ejemplo",
+      "startLearning": "Empezar a aprenderla ya",
+      "synonyms": "Sinónimos",
+      "antonyms": "Antónimos",
+      "wordFamily": "Familia de palabras"
     }
   },
   "labels": {

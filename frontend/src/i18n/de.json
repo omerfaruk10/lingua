@@ -12,6 +12,7 @@
     "words": "Wörter",
     "labels": "Labels",
     "review": "Wiederholen",
+    "learn": "Lernen",
     "stats": "Statistik"
   },
   "learning": {
@@ -31,6 +32,28 @@
     "forgot": "Vergessen",
     "finished": "Für heute fertig!",
     "finishedHint": "Du hast {{n}} Wörter wiederholt."
+  },
+  "learn": {
+    "empty": "Keine Wörter in deiner Lernliste.",
+    "emptyHint": "Setze ein Wort in der Wörter-Ansicht auf \"Wird gelernt\" oder wähle beim Hinzufügen \"Sofort mit dem Lernen beginnen\".",
+    "progress": "{{done}} / {{total}} Wörter",
+    "continue": "Weiter",
+    "chooseTitle": "Wähle das Wort, das Folgendes bedeutet:",
+    "typeTitle": "Tippe das Wort für:",
+    "typePlaceholder": "Wort eingeben…",
+    "check": "Prüfen",
+    "correct": "Richtig!",
+    "accentHint": "Fast — achte auf die Akzente:",
+    "wrong": "Richtige Antwort:",
+    "next": "Nächstes",
+    "summaryTitle": "Sitzung abgeschlossen!",
+    "summaryHint": "Lass die Wörter angehakt, bei denen du dir sicher bist — sie kommen ab morgen in den Wiederholungsplan.",
+    "mistakes": "{{n}} Fehler",
+    "markLearned": "{{n}} als gelernt markieren",
+    "doneTitle": "Gut gemacht!",
+    "doneHint": "{{n}} Wörter wechseln zur Wiederholung — erster Termin morgen.",
+    "doneNoneHint": "Alle Wörter bleiben in deiner Lernliste.",
+    "nextBatch": "Nächste Runde ({{n}} wartet)"
   },
   "stats": {
     "month": "Monat",
@@ -106,6 +129,14 @@
     "readingIn": "Aussprache ({{lang}})",
     "translationIn": "Übersetzung ({{lang}})",
     "definitionIn": "Definition ({{lang}})",
+    "speak": "Aussprechen",
+    "speakSlow": "Langsam aussprechen",
+    "suggest": "Aus dem Wörterbuch ausfüllen",
+    "suggestDone": "Vorschläge eingetragen — vor dem Speichern prüfen",
+    "suggestDoneAi": "Von KI ausgefüllt — vor dem Speichern prüfen",
+    "suggestPickSense": "Welche Bedeutung meintest du?",
+    "suggestSenseUnknownPos": "Wort",
+    "suggestNone": "Nicht im Wörterbuch gefunden",
     "import": "Importieren",
     "importTitle": "Wörter importieren",
     "importHint": "Wähle eine CSV- oder TXT-Datei. Nutze Exportieren, um das genaue Spaltenformat zu sehen.",
@@ -143,7 +174,11 @@
       "term": "Wort",
       "part_of_speech": "Art",
       "phonetic": "Aussprache",
-      "example_sentence": "Beispielsatz"
+      "example_sentence": "Beispielsatz",
+      "startLearning": "Sofort mit dem Lernen beginnen",
+      "synonyms": "Synonyme",
+      "antonyms": "Antonyme",
+      "wordFamily": "Wortfamilie"
     }
   },
   "labels": {
