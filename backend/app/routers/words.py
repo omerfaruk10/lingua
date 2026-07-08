@@ -71,8 +71,8 @@ def import_words(course_id: int, data: WordImportRequest, db: Session = Depends(
 
 @router.post("/suggest", response_model=WordSuggestResponse)
 def suggest_word(course_id: int, data: WordSuggestRequest, db: Session = Depends(get_db)):
-    """AI (Gemini) ile kelime alanlari onerir. Anahtar yapilandirilmamissa 503 —
-    frontend bu durumda ucretsiz sozluk (Wiktionary) yoluna duser."""
+    """AI (Gemini/cache) ile kelime alanlari onerir. Anahtar ya da saglikli
+    cevap yoksa 503 doner; frontend bu durumda "oneri yok" mesajini gosterir."""
     course = crud.course.get_course(db, course_id)
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
@@ -86,7 +86,7 @@ def suggest_word(course_id: int, data: WordSuggestRequest, db: Session = Depends
         code_to_id[h.code] = h.id
 
     try:
-        senses = suggest_service.suggest_word(
+        senses, model, source = suggest_service.suggest_word(
             term,
             target=(course.target_language.code, course.target_language.name),
             native=(course.native_language.code, course.native_language.name),
@@ -101,11 +101,13 @@ def suggest_word(course_id: int, data: WordSuggestRequest, db: Session = Depends
     for sense in senses:
         meanings_by_id = {
             code_to_id[code]: val
-            for code, val in sense.pop("meanings", {}).items()
+            for code, val in (sense.get("meanings") or {}).items()
             if code in code_to_id
         }
-        result_senses.append(WordSense(meanings=meanings_by_id, **sense))
-    return WordSuggestResponse(senses=result_senses)
+        result_senses.append(
+            WordSense(part_of_speech=sense.get("part_of_speech"), meanings=meanings_by_id)
+        )
+    return WordSuggestResponse(senses=result_senses, model=model, source=source)
 
 
 @router.post("/suggest/details", response_model=WordSuggestDetailsResponse)
@@ -117,19 +119,20 @@ def suggest_word_details(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     
     try:
-        details = suggest_service.suggest_word_details(
+        details, model, source = suggest_service.suggest_word_details(
             term=data.term.strip(),
             part_of_speech=data.part_of_speech,
             meaning=data.meaning.strip(),
             target=(course.target_language.code, course.target_language.name),
             native=(course.native_language.code, course.native_language.name),
+            helpers=[(h.code, h.name) for h in course.helper_languages],
         )
     except suggest_service.SuggestUnavailable as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
         
-    return WordSuggestDetailsResponse(**details)
+    return WordSuggestDetailsResponse(**details, model=model, source=source)
 
 
 @router.get("/due", response_model=list[WordRead])

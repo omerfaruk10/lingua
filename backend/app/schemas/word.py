@@ -82,6 +82,8 @@ class WordSense(BaseModel):
 class WordSuggestResponse(BaseModel):
     # Kelimenin en yaygin anlamlari (en fazla 5); kullanici hangisini istedigini secer.
     senses: list[WordSense] = []
+    model: str | None = None
+    source: str | None = None
 
 
 class WordSuggestDetailsRequest(BaseModel):
@@ -99,6 +101,8 @@ class WordSuggestDetailsResponse(BaseModel):
     synonyms: str | None = None
     antonyms: str | None = None
     word_family: str | None = None
+    model: str | None = None
+    source: str | None = None
 
 
 class WordStatusUpdate(BaseModel):

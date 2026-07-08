@@ -121,6 +121,7 @@ def ensure_schema() -> None:
 
     # Katalogu her acilista tohumla (idempotent).
     _seed_catalog()
+    _ensure_ai_suggestion_cache_table()
 
     word_cols: set[str] = set()
     if "words" in tables:
@@ -158,6 +159,51 @@ def ensure_schema() -> None:
     # olarak kalmis olabilir -- bu durumda yeni INSERT'ler NOT NULL ihlaliyle patlar.
     # Bagimsiz calismasi, gecmiste yarim kalmis bir gocumu de kendiliginden onarir.
     _drop_legacy_language_id_columns()
+
+
+def _ensure_ai_suggestion_cache_table() -> None:
+    """AI form-doldurma onerileri icin lokal cache tablosu.
+
+    Bu tablo kullanici verisinin parcasi degil; Gemini/HF gibi kaynaklara ayni kelime
+    ve anlam icin tekrar gitmemek amaciyla tutulur. Idempotent oldugu icin mevcut DB'ye
+    zarar vermeden her acilista calisir.
+    """
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS ai_suggestion_cache (
+                    id INTEGER PRIMARY KEY,
+                    cache_key TEXT NOT NULL UNIQUE,
+                    kind TEXT NOT NULL,
+                    term TEXT NOT NULL,
+                    target_language_code TEXT NOT NULL,
+                    native_language_code TEXT NOT NULL,
+                    helper_language_codes TEXT,
+                    sense_hint TEXT,
+                    provider TEXT,
+                    model TEXT,
+                    payload_json TEXT NOT NULL,
+                    prompt_version TEXT NOT NULL,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    last_used_at DATETIME,
+                    hit_count INTEGER NOT NULL DEFAULT 0
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_ai_suggestion_cache_kind_term "
+                "ON ai_suggestion_cache (kind, term)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_ai_suggestion_cache_created_at "
+                "ON ai_suggestion_cache (created_at)"
+            )
+        )
 
 
 def _migrate_to_course_table() -> None:
