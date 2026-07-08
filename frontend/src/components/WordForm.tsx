@@ -3,13 +3,12 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { wordsApi, type WordInput } from '../api/words'
-import { fetchSuggestions } from '../lib/dictionary'
 import { langName } from '../lib/langName'
 import type { LanguageBrief } from '../types'
 
-// AI (backend) ve sozluk (Wiktionary) sonuclarinin ortak sekli — kelimenin TEK
-// bir anlami/duyusu. Kelimenin >1 yaygin anlami olabilecegi icin (play=oyun/oynamak)
-// oneri her zaman bu sekilden bir LISTE olarak gelir; kullanici birini secer.
+// AI onerisinin ortak sekli — kelimenin TEK bir anlami/duyusu. Kelimenin >1
+// yaygin anlami olabilecegi icin (play=oyun/oynamak) oneri her zaman bu sekilden
+// bir LISTE olarak gelir; kullanici birini secer.
 interface NormalizedSuggestion {
   phonetic?: string
   phonetic_native?: string
@@ -203,11 +202,11 @@ export function WordForm({
 
   const [startLearning, setStartLearning] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
-  const [suggestNote, setSuggestNote] = useState<'ai' | 'dict' | 'none' | null>(null)
+  const [suggestNote, setSuggestNote] = useState<'ai' | 'none' | null>(null)
+  const [suggestedModel, setSuggestedModel] = useState<string | null>(null)
+  const [suggestedSource, setSuggestedSource] = useState<string | null>(null)
   // Kelimenin >1 yaygin anlami varsa secim paneli icin bekleyen liste.
   const [senseChoices, setSenseChoices] = useState<NormalizedSuggestion[] | null>(null)
-  // senseChoices hangi kaynaktan geldi (ai/dict) — secim yapilinca dogru not gostermek icin.
-  const suggestSourceRef = useRef<'ai' | 'dict'>('ai')
   // Son onerinin doldurdugu degerler: alan hala bu degeri tasiyorsa "kullanici
   // yazmadi" demektir ve yeni kelimenin onerisi uzerine yazabilir (bayat oneri bug'i).
   const lastSuggestedRef = useRef<Partial<Record<string, string>>>({})
@@ -284,7 +283,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
   }
 
   // Bir anlami uygular; eger AI onerisiyse (2. asama) detaylari ceker.
-  async function chooseSense(s: NormalizedSuggestion, note: 'ai' | 'dict') {
+  async function chooseSense(s: NormalizedSuggestion, note: 'ai') {
     setSenseChoices(null)
     
     if (note === 'ai') {
@@ -306,6 +305,8 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           antonyms: details.antonyms ?? undefined,
           word_family: details.word_family ?? undefined,
         }
+        if (details.model) setSuggestedModel(details.model)
+        if (details.source) setSuggestedSource(details.source)
       } catch (e) {
         // Detay cekilemezse bos uygulansin veya hata gosterilsin
         console.error("AI details error:", e)
@@ -326,6 +327,8 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
     if (!term || suggesting) return
     setSuggesting(true)
     setSuggestNote(null)
+    setSuggestedModel(null)
+    setSuggestedSource(null)
     setSenseChoices(null)
 
     try {
@@ -334,10 +337,11 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
         part_of_speech: sense.part_of_speech ?? undefined,
         meaningsById: sense.meanings ?? {},
       }))
+      if (ai.model) setSuggestedModel(ai.model)
+      if (ai.source) setSuggestedSource(ai.source)
       if (senses.length === 1) {
         await chooseSense(senses[0], 'ai')
       } else if (senses.length > 1) {
-        suggestSourceRef.current = 'ai'
         setSenseChoices(senses)
         setSuggesting(false)
       } else {
@@ -345,31 +349,6 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
       }
       return
     } catch (e) {
-      // AI yok/hata: sessizce sozluge dus.
-    }
-
-    // 2) Yedek Sozluk (Google Translate API): meaning_native -> Ana dil kutusuna.
-    const dictSenses = await fetchSuggestions(term, targetLang.code, nativeLang.code)
-    const senses: NormalizedSuggestion[] = dictSenses.map((s) => {
-      const meaningsById: Record<number, string> = {}
-      if (s.meaning_native) meaningsById[nativeLang.id] = s.meaning_native
-      return {
-        phonetic: s.phonetic,
-        part_of_speech: s.part_of_speech,
-        definition_target: s.definition_target,
-        example_sentence: s.example_sentence,
-        synonyms: (s as any).synonyms,
-        antonyms: (s as any).antonyms,
-        meaningsById,
-      }
-    })
-    
-    if (senses.length === 1) {
-      chooseSense(senses[0], 'dict')
-    } else if (senses.length > 1) {
-      suggestSourceRef.current = 'dict'
-      setSenseChoices(senses)
-    } else {
       setSuggestNote('none')
     }
     setSuggesting(false)
@@ -427,6 +406,8 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
               onChange={(e) => {
                 setScalar('term', e.target.value)
                 setSuggestNote(null)
+                setSuggestedModel(null)
+                setSuggestedSource(null)
                 setSenseChoices(null)
               }}
               className="input"
@@ -445,14 +426,14 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           {suggestNote && (
             <span
               className={`mt-1 block text-xs ${
-                suggestNote === 'none' ? 'text-rose-500' : suggestNote === 'dict' ? 'text-orange-500' : 'text-violet-600'
+                suggestNote === 'none' ? 'text-rose-500' : 'text-violet-600'
               }`}
             >
               {suggestNote === 'ai'
-                ? t('words.suggestDoneAi')
-                : suggestNote === 'dict'
-                  ? t('words.suggestDone')
-                  : t('words.suggestNone')}
+                ? t('words.suggestDoneAi') + (
+                  suggestedModel ? ` (${suggestedModel}${suggestedSource === 'cache' ? ' - cache' : ''})` : ''
+                )
+                : t('words.suggestNone')}
             </span>
           )}
         </label>
@@ -583,7 +564,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           senses={senseChoices}
           preview={sensePreview}
           onClose={() => setSenseChoices(null)}
-          onChoose={(s) => chooseSense(s, suggestSourceRef.current)}
+          onChoose={(s) => chooseSense(s, 'ai')}
         />
       )}
     </>

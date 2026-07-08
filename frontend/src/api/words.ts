@@ -52,6 +52,8 @@ export interface WordSense {
 export interface WordSuggestResponse {
   // Kelimenin en yaygin anlamlari (en fazla 5), kullanicinin secmesi icin.
   senses: WordSense[]
+  model?: string | null
+  source?: 'gemini' | 'cache' | string | null
 }
 
 export interface WordSuggestDetailsRequest {
@@ -69,6 +71,8 @@ export interface WordSuggestDetailsResponse {
   synonyms?: string | null
   antonyms?: string | null
   word_family?: string | null
+  model?: string | null
+  source?: 'gemini' | 'cache' | string | null
 }
 
 export interface WordQuery {
