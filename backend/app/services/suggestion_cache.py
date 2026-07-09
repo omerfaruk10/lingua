@@ -14,10 +14,11 @@ from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.database import engine
 
-PROMPT_VERSION = "gemini-word-suggest-v1"
+PROMPT_VERSION = "gemini-word-suggest-v3"
 
 
 @dataclass(frozen=True)
@@ -135,48 +136,54 @@ def set(
     provider: str,
     model: str | None,
     payload: Any,
+    db: Session | None = None,
 ) -> None:
     if not is_enabled():
         return
 
     payload_json = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    params = {
+        "cache_key": cache_key,
+        "kind": kind,
+        "term": _normalize_term(term),
+        "target_code": target_code.strip().lower(),
+        "native_code": native_code.strip().lower(),
+        "helper_codes": helper_codes,
+        "sense_hint": sense_hint,
+        "provider": provider,
+        "model": model,
+        "payload_json": payload_json,
+        "prompt_version": PROMPT_VERSION,
+    }
+    stmt = text(
+        """
+        INSERT INTO ai_suggestion_cache (
+            cache_key, kind, term, target_language_code, native_language_code,
+            helper_language_codes, sense_hint, provider, model, payload_json,
+            prompt_version, created_at, last_used_at, hit_count
+        ) VALUES (
+            :cache_key, :kind, :term, :target_code, :native_code,
+            :helper_codes, :sense_hint, :provider, :model, :payload_json,
+            :prompt_version, CURRENT_TIMESTAMP, NULL, 0
+        )
+        ON CONFLICT(cache_key) DO UPDATE SET
+            provider = excluded.provider,
+            model = excluded.model,
+            payload_json = excluded.payload_json,
+            prompt_version = excluded.prompt_version,
+            created_at = CURRENT_TIMESTAMP
+        """
+    )
     try:
+        if db is not None:
+            db.execute(stmt, params)
+            db.commit()
+            return
         with engine.begin() as conn:
-            conn.execute(
-                text(
-                    """
-                    INSERT INTO ai_suggestion_cache (
-                        cache_key, kind, term, target_language_code, native_language_code,
-                        helper_language_codes, sense_hint, provider, model, payload_json,
-                        prompt_version, created_at, last_used_at, hit_count
-                    ) VALUES (
-                        :cache_key, :kind, :term, :target_code, :native_code,
-                        :helper_codes, :sense_hint, :provider, :model, :payload_json,
-                        :prompt_version, CURRENT_TIMESTAMP, NULL, 0
-                    )
-                    ON CONFLICT(cache_key) DO UPDATE SET
-                        provider = excluded.provider,
-                        model = excluded.model,
-                        payload_json = excluded.payload_json,
-                        prompt_version = excluded.prompt_version,
-                        created_at = CURRENT_TIMESTAMP
-                    """
-                ),
-                {
-                    "cache_key": cache_key,
-                    "kind": kind,
-                    "term": _normalize_term(term),
-                    "target_code": target_code.strip().lower(),
-                    "native_code": native_code.strip().lower(),
-                    "helper_codes": helper_codes,
-                    "sense_hint": sense_hint,
-                    "provider": provider,
-                    "model": model,
-                    "payload_json": payload_json,
-                    "prompt_version": PROMPT_VERSION,
-                },
-            )
+            conn.execute(stmt, params)
     except SQLAlchemyError:
+        if db is not None:
+            db.rollback()
         return
 
 

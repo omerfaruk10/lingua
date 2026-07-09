@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 from app.schemas.label import LabelRead
 
 LearningStatus = Literal["new", "learning", "learned"]
+WordLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
 
 
 class WordMeaningIn(BaseModel):
@@ -24,7 +25,9 @@ class WordBase(BaseModel):
     term: str
     phonetic: str | None = None
     phonetic_native: str | None = None
+    pronunciation_note_native: str | None = None
     part_of_speech: str | None = None
+    level: WordLevel | None = None
     definition_target: str | None = None
     example_sentence: str | None = None
     example_translation: str | None = None
@@ -43,7 +46,9 @@ class WordUpdate(BaseModel):
     term: str | None = None
     phonetic: str | None = None
     phonetic_native: str | None = None
+    pronunciation_note_native: str | None = None
     part_of_speech: str | None = None
+    level: WordLevel | None = None
     definition_target: str | None = None
     example_sentence: str | None = None
     example_translation: str | None = None
@@ -95,6 +100,8 @@ class WordSuggestDetailsRequest(BaseModel):
 class WordSuggestDetailsResponse(BaseModel):
     phonetic: str | None = None
     phonetic_native: str | None = None
+    pronunciation_note_native: str | None = None
+    level: WordLevel | None = None
     definition_target: str | None = None
     example_sentence: str | None = None
     example_translation: str | None = None

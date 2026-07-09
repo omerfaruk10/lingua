@@ -25,6 +25,67 @@ _POS = [
     "preposition", "conjunction", "interjection", "article", "numeral",
 ]
 
+_POS_ALIASES = {
+    "n": "noun",
+    "noun phrase": "noun",
+    "proper noun": "noun",
+    "common noun": "noun",
+    "gerund": "noun",
+    "v": "verb",
+    "phrasal verb": "verb",
+    "verb phrase": "verb",
+    "multi-word verb": "verb",
+    "verb particle construction": "verb",
+    "auxiliary": "verb",
+    "auxiliary verb": "verb",
+    "modal": "verb",
+    "modal verb": "verb",
+    "adj": "adjective",
+    "adjectival phrase": "adjective",
+    "determiner": "article",
+    "adv": "adverb",
+    "adverbial phrase": "adverb",
+    "prep": "preposition",
+    "prepositional phrase": "preposition",
+    "conj": "conjunction",
+    "coordinating conjunction": "conjunction",
+    "subordinating conjunction": "conjunction",
+    "determiner article": "article",
+    "number": "numeral",
+    "cardinal number": "numeral",
+    "ordinal number": "numeral",
+}
+
+_POS_PHRASE_RULES = [
+    ("phrasal verb", "verb"),
+    ("verb phrase", "verb"),
+    ("multi word verb", "verb"),
+    ("particle construction", "verb"),
+    ("auxiliary", "verb"),
+    ("modal", "verb"),
+    ("noun phrase", "noun"),
+    ("proper noun", "noun"),
+    ("common noun", "noun"),
+    ("adjectival", "adjective"),
+    ("adjective", "adjective"),
+    ("adverbial", "adverb"),
+    ("adverb", "adverb"),
+    ("prepositional", "preposition"),
+    ("preposition", "preposition"),
+    ("subordinating conjunction", "conjunction"),
+    ("coordinating conjunction", "conjunction"),
+    ("conjunction", "conjunction"),
+    ("interjection", "interjection"),
+    ("exclamation", "interjection"),
+    ("determiner", "article"),
+    ("article", "article"),
+    ("cardinal", "numeral"),
+    ("ordinal", "numeral"),
+    ("number", "numeral"),
+    ("numeral", "numeral"),
+    ("pronoun", "pronoun"),
+]
+
 _MAX_SENSES = 5
 
 _DEFAULT_MODELS = [
@@ -65,6 +126,19 @@ def _model_names() -> list[str]:
 
 def _clean(val) -> str | None:
     return (val or "").strip() or None
+
+
+def _normalize_pos(val) -> str | None:
+    pos = (val or "").strip().lower().replace("_", " ").replace("-", " ")
+    pos = " ".join(pos.split())
+    if pos in _POS:
+        return pos
+    if pos in _POS_ALIASES:
+        return _POS_ALIASES[pos]
+    for needle, coarse_pos in _POS_PHRASE_RULES:
+        if needle in pos:
+            return coarse_pos
+    return None
 
 
 def _clean_word_family(val) -> str | None:
@@ -140,9 +214,7 @@ def _parse_senses_response(data: dict) -> list[dict]:
     for s in senses[:_MAX_SENSES]:
         if not isinstance(s, dict):
             continue
-        pos = s.get("part_of_speech")
-        if pos not in _POS:
-            pos = None
+        pos = _normalize_pos(s.get("part_of_speech"))
         meanings = {
             code: (val or "").strip()
             for code, val in (s.get("meanings") or {}).items()
@@ -167,6 +239,8 @@ def _parse_details_response(data: dict) -> dict:
     details = {
         "phonetic": _clean(s.get("phonetic")),
         "phonetic_native": _clean(s.get("phonetic_native")),
+        "pronunciation_note_native": _clean(s.get("pronunciation_note_native")),
+        "level": _clean(s.get("level")) if _clean(s.get("level")) in {"A1", "A2", "B1", "B2", "C1", "C2"} else None,
         "definition_target": _clean(s.get("definition_target")),
         "example_sentence": _clean(s.get("example_sentence")),
         "example_translation": _clean(s.get("example_translation")),
@@ -177,6 +251,8 @@ def _parse_details_response(data: dict) -> dict:
     quality_fields = [
         "phonetic",
         "phonetic_native",
+        "pronunciation_note_native",
+        "level",
         "definition_target",
         "example_sentence",
         "example_translation",
@@ -197,10 +273,6 @@ def suggest_word(
 
     Her oge: {part_of_speech, meanings: {lang_code: value}}
     """
-    key = _api_key()
-    if not key:
-        raise SuggestUnavailable("GEMINI_API_KEY yok")
-
     target_code, target_name = target
     native_code, native_name = native
     # Anlam istenecek diller: ana dil + yardimci diller (hedef dil haric).
@@ -209,6 +281,10 @@ def suggest_word(
     cached = suggestion_cache.get(cache_key)
     if cached is not None and isinstance(cached.payload, list):
         return cached.payload, cached.model or "cache", "cache"
+
+    key = _api_key()
+    if not key:
+        raise SuggestUnavailable("GEMINI_API_KEY yok")
 
     meaning_props = {code: {"type": "string"} for code, _ in meaning_langs}
     meaning_desc = ", ".join(f"'{code}' ({name})" for code, name in meaning_langs)
@@ -237,6 +313,7 @@ def suggest_word(
         f'Target language: {target_name} ({target_code}). Word: "{term}".\n'
         f"For each sense:\n"
         f"- part_of_speech: one of {', '.join(_POS)}.\n"
+        f"  Use 'verb' for phrasal verbs and other multi-word verb expressions.\n"
         f"- meanings: an object with keys {meaning_desc}; each value is the short "
         f"meaning of THIS SENSE in that language."
     )
@@ -252,18 +329,6 @@ def suggest_word(
     }
 
     senses, used_model = _call_gemini_api(key, payload, _parse_senses_response)
-    suggestion_cache.set(
-        cache_key=cache_key,
-        kind="senses",
-        term=term,
-        target_code=target_code,
-        native_code=native_code,
-        helper_codes=suggestion_cache.helper_codes(helpers),
-        sense_hint=None,
-        provider="gemini",
-        model=used_model,
-        payload=senses,
-    )
     return senses, used_model, "gemini"
 
 
@@ -276,10 +341,6 @@ def suggest_word_details(
     helpers: list[tuple[str, str]] | None = None,
 ) -> tuple[dict, str, str]:
     """Belirli bir anlam icin detaylari uretir."""
-    key = _api_key()
-    if not key:
-        raise SuggestUnavailable("GEMINI_API_KEY yok")
-
     target_code, target_name = target
     native_code, native_name = native
     helpers = helpers or []
@@ -290,11 +351,17 @@ def suggest_word_details(
     if cached is not None and isinstance(cached.payload, dict):
         return cached.payload, cached.model or "cache", "cache"
 
+    key = _api_key()
+    if not key:
+        raise SuggestUnavailable("GEMINI_API_KEY yok")
+
     schema = {
         "type": "object",
         "properties": {
             "phonetic": {"type": "string"},
             "phonetic_native": {"type": "string"},
+            "pronunciation_note_native": {"type": "string"},
+            "level": {"type": "string", "enum": ["A1", "A2", "B1", "B2", "C1", "C2"]},
             "definition_target": {"type": "string"},
             "example_sentence": {"type": "string"},
             "example_translation": {"type": "string"},
@@ -307,7 +374,9 @@ def suggest_word_details(
     system = (
         "You are a precise bilingual dictionary assistant. Given a word and a specific "
         "sense, provide detailed dictionary fields for that exact sense in JSON format. "
-        "Keep the definition short. Do not invent phonetics you are unsure of."
+        "Keep the definition short. Do not invent phonetics you are unsure of. "
+        "The pronunciation explanation must be practical, consistent, and written for "
+        "a native-language speaker who wants to pronounce the target word."
     )
     
     pos_str = f" as a {part_of_speech}" if part_of_speech else ""
@@ -317,7 +386,17 @@ def suggest_word_details(
         f"Provide the following details for this exact sense:\n"
         f"- phonetic: IPA of the word in {target_name}.\n"
         f"- phonetic_native: an approximate reading using {native_name} spelling "
-        f"conventions, to help a {native_name} speaker pronounce it (not IPA).\n"
+        f"conventions, to help a {native_name} speaker pronounce it (not IPA). "
+        f"Keep it short, like syllables with stress marks; do not include a long explanation here.\n"
+        f"- pronunciation_note_native: write IN {native_name}. Explain how to pronounce the word "
+        f"in 1-3 clear sentences, longer only if the word is genuinely difficult. Do not repeat "
+        f"the IPA. Do not wrap the short reading in parentheses. Mention practical details such "
+        f"as stressed syllable, weak/short sounds, silent letters, linked consonants, lengthened "
+        f"vowels, or sounds that do not map cleanly to {native_name}. Use a consistent coaching "
+        f"style similar to: 'Ilk hece cok kisa. Vurgu ortadaki hecededir. Sondaki ses yumusak "
+        f"tamamlanir.' Adjust the language and examples to {native_name}.\n"
+        f"- level: estimated CEFR vocabulary level, one of A1, A2, B1, B2, C1, C2. "
+        f"This is a helpful estimate, not a strict exam classification.\n"
         f"- definition_target: a short definition written IN {target_name}.\n"
         f"- example_sentence: a natural example sentence IN {target_name} using this sense.\n"
         f"- example_translation: that sentence translated into {native_name}.\n"
@@ -341,16 +420,85 @@ def suggest_word_details(
     }
 
     details, used_model = _call_gemini_api(key, payload, _parse_details_response)
+    return details, used_model, "gemini"
+
+
+def cache_accepted_word(
+    *,
+    term: str,
+    part_of_speech: str | None,
+    meanings_by_code: dict[str, str],
+    details: dict[str, str | None],
+    target: tuple[str, str],
+    native: tuple[str, str],
+    helpers: list[tuple[str, str]] | None = None,
+    db=None,
+) -> None:
+    """Kaydedilen kelimeyi kabul edilmis AI cache'i olarak saklar.
+
+    AI cevabi formda beklerken cache'e yazilmaz. Kullanici kelimeyi kaydedince,
+    yani oneriyi kabul etmis veya duzeltmis olunca, kaydedilen son hal cache'e girer.
+    """
+    term = term.strip()
+    if not term:
+        return
+
+    target_code, _ = target
+    native_code, _ = native
+    helpers = helpers or []
+    clean_meanings = {
+        code.strip().lower(): value.strip()
+        for code, value in meanings_by_code.items()
+        if code.strip() and value and value.strip()
+    }
+    if not clean_meanings:
+        return
+
+    normalized_pos = _normalize_pos(part_of_speech) or _clean(part_of_speech)
+    helper_codes = suggestion_cache.helper_codes(helpers)
+
     suggestion_cache.set(
-        cache_key=cache_key,
+        cache_key=suggestion_cache.senses_key(term, target_code, native_code, helpers),
+        kind="senses",
+        term=term,
+        target_code=target_code,
+        native_code=native_code,
+        helper_codes=helper_codes,
+        sense_hint=None,
+        provider="accepted",
+        model="saved",
+        payload=[{"part_of_speech": normalized_pos, "meanings": clean_meanings}],
+        db=db,
+    )
+
+    primary_meaning = clean_meanings.get(native_code.strip().lower()) or next(iter(clean_meanings.values()))
+    clean_details = {
+        "phonetic": _clean(details.get("phonetic")),
+        "phonetic_native": _clean(details.get("phonetic_native")),
+        "pronunciation_note_native": _clean(details.get("pronunciation_note_native")),
+        "level": _clean(details.get("level")) if _clean(details.get("level")) in {"A1", "A2", "B1", "B2", "C1", "C2"} else None,
+        "definition_target": _clean(details.get("definition_target")),
+        "example_sentence": _clean(details.get("example_sentence")),
+        "example_translation": _clean(details.get("example_translation")),
+        "synonyms": _clean(details.get("synonyms")),
+        "antonyms": _clean(details.get("antonyms")),
+        "word_family": _clean_word_family(details.get("word_family")),
+    }
+    if not any(clean_details.values()):
+        return
+
+    suggestion_cache.set(
+        cache_key=suggestion_cache.details_key(
+            term, target_code, native_code, helpers, normalized_pos, primary_meaning
+        ),
         kind="details",
         term=term,
         target_code=target_code,
         native_code=native_code,
-        helper_codes=suggestion_cache.helper_codes(helpers),
-        sense_hint=f"{part_of_speech or ''}|{meaning}",
-        provider="gemini",
-        model=used_model,
-        payload=details,
+        helper_codes=helper_codes,
+        sense_hint=f"{normalized_pos or ''}|{primary_meaning}",
+        provider="accepted",
+        model="saved",
+        payload=clean_details,
+        db=db,
     )
-    return details, used_model, "gemini"

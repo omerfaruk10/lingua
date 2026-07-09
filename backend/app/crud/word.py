@@ -29,6 +29,8 @@ def get_words(
     search: str | None = None,
     label_id: int | None = None,
     status: LearningStatus | None = None,
+    level: str | None = None,
+    part_of_speech: str | None = None,
 ) -> list[Word]:
     stmt = select(Word).where(Word.course_id == course_id)
     if search:
@@ -43,6 +45,10 @@ def get_words(
         stmt = stmt.where(Word.labels.any(Label.id == label_id))
     if status is not None:
         stmt = stmt.where(Word.learning_status == status)
+    if level is not None:
+        stmt = stmt.where(Word.level == level)
+    if part_of_speech is not None:
+        stmt = stmt.where(Word.part_of_speech == part_of_speech)
     stmt = stmt.order_by(Word.created_at.asc(), Word.id.asc())  # en eski altta, yeni en alta eklenir
     return list(db.scalars(stmt))
 

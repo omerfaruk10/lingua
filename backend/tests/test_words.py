@@ -12,7 +12,9 @@ def _full(language):
         "term": "gatto",
         "phonetic": "gat-to",
         "phonetic_native": "gatto",
+        "pronunciation_note_native": "Turkce gibi sert okunur.",
         "part_of_speech": "isim",
+        "level": "A1",
         "definition_target": "animale domestico",
         "example_sentence": "Il gatto dorme.",
         "example_translation": "Kedi uyuyor.",
@@ -28,7 +30,9 @@ def test_create_full_card(client, language):
     assert r.status_code == 201
     w = r.json()
     assert w["phonetic_native"] == "gatto"
+    assert w["pronunciation_note_native"] == "Turkce gibi sert okunur."
     assert w["part_of_speech"] == "isim"
+    assert w["level"] == "A1"
     assert w["labels"] == []
     values = {m["value"] for m in w["meanings"]}
     assert values == {"kedi", "cat"}
@@ -68,6 +72,21 @@ def test_search(client, language):
     assert len(client.get(f"/languages/{lid}/words", params={"search": "cat"}).json()) == 1
     assert len(client.get(f"/languages/{lid}/words", params={"search": "kopek"}).json()) == 1
     assert len(client.get(f"/languages/{lid}/words", params={"search": "gatto"}).json()) == 1
+
+
+def test_filter_by_level_and_part_of_speech(client, language):
+    lid = language["id"]
+    client.post(f"/languages/{lid}/words", json=_full(language))
+    client.post(
+        f"/languages/{lid}/words",
+        json={"term": "veloce", "part_of_speech": "adjective", "level": "B1"},
+    )
+
+    by_level = client.get(f"/languages/{lid}/words", params={"level": "B1"}).json()
+    assert [w["term"] for w in by_level] == ["veloce"]
+
+    by_pos = client.get(f"/languages/{lid}/words", params={"part_of_speech": "isim"}).json()
+    assert [w["term"] for w in by_pos] == ["gatto"]
 
 
 def test_updated_at_changes(client, language):

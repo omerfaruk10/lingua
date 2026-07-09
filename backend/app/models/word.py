@@ -24,7 +24,9 @@ class Word(Base):
     phonetic: Mapped[str | None] = mapped_column(String(200), default=None)  # gat·to (IPA)
     # Ana dilde yaklasik okunus (eski adi phonetic_tr; artik ana dile gore).
     phonetic_native: Mapped[str | None] = mapped_column(String(200), default=None)
+    pronunciation_note_native: Mapped[str | None] = mapped_column(Text, default=None)
     part_of_speech: Mapped[str | None] = mapped_column(String(50), default=None)  # isim/fiil...
+    level: Mapped[str | None] = mapped_column(String(2), default=None, index=True)  # A1..C2
 
     # Anlamlar (ana dil + yardimci diller) artik word_meanings tablosunda tutulur.
     definition_target: Mapped[str | None] = mapped_column(Text, default=None)  # hedef dilde tanim

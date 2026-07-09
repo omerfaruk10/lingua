@@ -132,6 +132,8 @@ def ensure_schema() -> None:
             "next_review_date": "ALTER TABLE words ADD COLUMN next_review_date DATE",
             "learned_at": "ALTER TABLE words ADD COLUMN learned_at DATETIME",
             "phonetic_native": "ALTER TABLE words ADD COLUMN phonetic_native VARCHAR(200)",
+            "pronunciation_note_native": "ALTER TABLE words ADD COLUMN pronunciation_note_native TEXT",
+            "level": "ALTER TABLE words ADD COLUMN level VARCHAR(2)",
             "synonyms": "ALTER TABLE words ADD COLUMN synonyms TEXT",
             "antonyms": "ALTER TABLE words ADD COLUMN antonyms TEXT",
             "word_family": "ALTER TABLE words ADD COLUMN word_family TEXT",

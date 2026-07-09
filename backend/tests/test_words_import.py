@@ -11,6 +11,8 @@ def test_import_creates_words_with_meanings(client, language):
             "rows": [
                 {
                     "term": "gatto",
+                    "level": "A1",
+                    "pronunciation_note_native": "Kisa ve net okunur.",
                     "meanings": [
                         {"language_id": tr_id, "value": "kedi"},
                         {"language_id": en_id, "value": "cat"},
@@ -33,6 +35,8 @@ def test_import_creates_words_with_meanings(client, language):
     words = client.get(f"/languages/{lid}/words").json()
     assert len(words) == 2
     gatto = next(w for w in words if w["term"] == "gatto")
+    assert gatto["level"] == "A1"
+    assert gatto["pronunciation_note_native"] == "Kisa ve net okunur."
     assert {m["value"] for m in gatto["meanings"]} == {"kedi", "cat"}
     # Partideki tum kelimeler etiketlenir.
     assert all(w["labels"][0]["name"] == "meyveler" for w in words)

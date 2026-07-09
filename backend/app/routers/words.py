@@ -18,6 +18,7 @@ from app.schemas.word import (
     WordSuggestRequest,
     WordSuggestResponse,
     WordUpdate,
+    WordLevel,
 )
 from app.services import suggest as suggest_service
 
@@ -43,24 +44,72 @@ def _get_owned_label(db: Session, course_id: int, label_id: int):
     return label
 
 
+def _cache_accepted_create(db: Session, course, data: WordCreate) -> None:
+    code_by_id = {course.native_language.id: course.native_language.code}
+    for helper in course.helper_languages:
+        code_by_id[helper.id] = helper.code
+
+    meanings_by_code = {
+        code_by_id[item.language_id]: item.value.strip()
+        for item in data.meanings
+        if item.language_id in code_by_id and item.value and item.value.strip()
+    }
+    if not meanings_by_code:
+        return
+
+    suggest_service.cache_accepted_word(
+        term=data.term,
+        part_of_speech=data.part_of_speech,
+        meanings_by_code=meanings_by_code,
+        details={
+            "phonetic": data.phonetic,
+            "phonetic_native": data.phonetic_native,
+            "pronunciation_note_native": data.pronunciation_note_native,
+            "level": data.level,
+            "definition_target": data.definition_target,
+            "example_sentence": data.example_sentence,
+            "example_translation": data.example_translation,
+            "synonyms": data.synonyms,
+            "antonyms": data.antonyms,
+            "word_family": data.word_family,
+        },
+        target=(course.target_language.code, course.target_language.name),
+        native=(course.native_language.code, course.native_language.name),
+        helpers=[(h.code, h.name) for h in course.helper_languages],
+        db=db,
+    )
+
+
 @router.get("", response_model=list[WordRead])
 def list_words(
     course_id: int,
     search: str | None = None,
     label_id: int | None = None,
     status: LearningStatus | None = None,
+    level: WordLevel | None = None,
+    part_of_speech: str | None = None,
     db: Session = Depends(get_db),
 ):
     _ensure_course(db, course_id)
     return crud.word.get_words(
-        db, course_id, search=search, label_id=label_id, status=status
+        db,
+        course_id,
+        search=search,
+        label_id=label_id,
+        status=status,
+        level=level,
+        part_of_speech=part_of_speech,
     )
 
 
 @router.post("", response_model=WordRead, status_code=status.HTTP_201_CREATED)
 def create_word(course_id: int, data: WordCreate, db: Session = Depends(get_db)):
-    _ensure_course(db, course_id)
-    return crud.word.create_word(db, course_id, data)
+    course = crud.course.get_course(db, course_id)
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+    word = crud.word.create_word(db, course_id, data)
+    _cache_accepted_create(db, course, data)
+    return word
 
 
 @router.post("/import", response_model=WordImportResult)
