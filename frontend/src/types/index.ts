@@ -50,6 +50,7 @@ export interface DailyStat {
 }
 
 export type LearningStatus = 'new' | 'learning' | 'learned'
+export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 
 export interface WordMeaning {
   language_id: number
@@ -62,7 +63,9 @@ export interface Word {
   term: string
   phonetic: string | null
   phonetic_native: string | null
+  pronunciation_note_native: string | null
   part_of_speech: string | null
+  level: WordLevel | null
   definition_target: string | null
   example_sentence: string | null
   example_translation: string | null

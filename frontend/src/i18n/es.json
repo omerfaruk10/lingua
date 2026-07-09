@@ -178,7 +178,25 @@
       "startLearning": "Empezar a aprenderla ya",
       "synonyms": "Sinónimos",
       "antonyms": "Antónimos",
-      "wordFamily": "Familia de palabras"
+      "wordFamily": "Familia de palabras",
+      "level": "Nivel",
+      "pronunciationNote": "Cómo se pronuncia",
+      "meaning": "Significado",
+      "definition": "Definición"
+    },
+    "filters": "Filtros",
+    "sort": "Ordenar",
+    "pronunciationNoteIn": "Cómo se pronuncia ({{lang}})",
+    "sortOptions": {
+      "created_desc": "Más recientes primero",
+      "created_asc": "Más antiguas primero",
+      "term_asc": "Alfabético A-Z",
+      "term_desc": "Alfabético Z-A",
+      "level_asc": "Nivel A1-C2",
+      "level_desc": "Nivel C2-A1",
+      "status": "Estado",
+      "part_of_speech": "Tipo",
+      "label": "Etiqueta"
     }
   },
   "labels": {

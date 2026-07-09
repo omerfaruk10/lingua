@@ -27,17 +27,23 @@ export function buildWordCsvSchema(
 
   const headerTerm = f('term')
   const headerPos = f('part_of_speech')
+  const headerLevel = f('level')
   const headerPhonetic = f('phonetic')
   const headerReading = t('words.readingIn', { lang: nativeDisplay })
+  const headerPronunciationNote = t('words.pronunciationNoteIn', { lang: nativeDisplay })
   const headerDefinition = t('words.definitionIn', { lang: targetDisplay })
+  const headerSynonyms = f('synonyms')
+  const headerAntonyms = f('antonyms')
+  const headerWordFamily = f('wordFamily')
   const headerExample = f('example_sentence')
   const headerTranslation = t('words.translationIn', { lang: nativeDisplay })
 
-  // Sabit 8+H sutunlu duzen (bkz. wordCsvImport.ts). Etiket/durum bilerek yazilmaz:
-  // import son 3 sutunu tanim/ornek/ceviri sayar, fazladan sutun bu hizayi bozardi.
+  // Sabit 13+H sutunlu duzen (bkz. wordCsvImport.ts). Etiket/durum bilerek yazilmaz:
+  // import son 6 sutunu tanim/es/zit/kok/ornek/ceviri sayar, fazladan sutun bu hizayi bozardi.
   const headers = [
-    headerTerm, headerPos, headerPhonetic, headerReading,
-    ...meaningHeaders, headerDefinition, headerExample, headerTranslation,
+    headerTerm, headerPos, headerLevel, headerPhonetic, headerReading, headerPronunciationNote,
+    ...meaningHeaders, headerDefinition, headerSynonyms, headerAntonyms, headerWordFamily,
+    headerExample, headerTranslation,
   ]
 
   return { headers, meaningLangs }

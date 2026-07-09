@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { wordsApi, type WordInput } from '../api/words'
 import { langName } from '../lib/langName'
-import type { LanguageBrief } from '../types'
+import type { LanguageBrief, WordLevel } from '../types'
 
 // AI onerisinin ortak sekli — kelimenin TEK bir anlami/duyusu. Kelimenin >1
 // yaygin anlami olabilecegi icin (play=oyun/oynamak) oneri her zaman bu sekilden
@@ -12,7 +12,9 @@ import type { LanguageBrief } from '../types'
 interface NormalizedSuggestion {
   phonetic?: string
   phonetic_native?: string
+  pronunciation_note_native?: string
   part_of_speech?: string
+  level?: WordLevel
   definition_target?: string
   example_sentence?: string
   example_translation?: string
@@ -27,12 +29,16 @@ const PARTS_OF_SPEECH = [
   'preposition', 'conjunction', 'interjection', 'article', 'numeral',
 ] as const
 
+const WORD_LEVELS: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+
 // Anlam disindaki sabit alanlar. Anlam alanlari kursun dillerine gore uretilir.
 type ScalarField =
   | 'term'
   | 'part_of_speech'
+  | 'level'
   | 'phonetic'
   | 'phonetic_native'
+  | 'pronunciation_note_native'
   | 'definition_target'
   | 'example_sentence'
   | 'example_translation'
@@ -139,9 +145,107 @@ function PosCombobox({ value, onChange }: { value: string; onChange: (v: string)
   )
 }
 
+function LevelCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const filtered = WORD_LEVELS.filter((level) =>
+    level.toLowerCase().includes(query.trim().toLowerCase())
+  )
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  function openDropdown() {
+    setOpen(true)
+    setQuery(value)
+    setTimeout(() => {
+      const el = inputRef.current
+      if (el) { el.focus(); el.select() }
+    }, 0)
+  }
+
+  function select(level: WordLevel) {
+    onChange(level)
+    setOpen(false)
+    setQuery('')
+  }
+
+  function clear(e: React.MouseEvent) {
+    e.stopPropagation()
+    onChange('')
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      {open ? (
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder=""
+          className="input"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { setOpen(false); setQuery('') }
+            if (e.key === 'Enter' && filtered.length > 0) {
+              e.preventDefault()
+              select(filtered[0])
+            }
+          }}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={openDropdown}
+          className="input flex min-h-[2.875rem] w-full cursor-text items-center justify-between text-left"
+        >
+          <span className="text-slate-800">{value || '\u00a0'}</span>
+          {value && (
+          <span
+            onClick={clear}
+            className="px-0.5 text-base leading-none text-slate-400 hover:text-slate-600"
+            role="button"
+            aria-label="Temizle"
+          >
+            x
+          </span>
+          )}
+        </button>
+      )}
+
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+          {filtered.map((level) => (
+            <li
+              key={level}
+              onMouseDown={() => select(level)}
+              className={`cursor-pointer px-3 py-2 text-sm transition-colors hover:bg-violet-50 hover:text-violet-700 ${
+                level === value ? 'bg-violet-50 font-medium text-violet-700' : 'text-slate-700'
+              }`}
+            >
+              {level}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function emptyScalars(): ScalarValues {
   return {
-    term: '', part_of_speech: '', phonetic: '', phonetic_native: '',
+    term: '', part_of_speech: '', level: '', phonetic: '', phonetic_native: '',
+    pronunciation_note_native: '',
     definition_target: '', example_sentence: '', example_translation: '',
     synonyms: '', antonyms: '', word_family: '',
   }
@@ -248,7 +352,9 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
       const fields = [
         ['phonetic', s.phonetic],
         ['phonetic_native', s.phonetic_native],
+        ['pronunciation_note_native', formatText(s.pronunciation_note_native, true)],
         ['part_of_speech', s.part_of_speech],
+        ['level', s.level],
         ['definition_target', formatText(s.definition_target, true)],
         ['example_sentence', formatText(s.example_sentence, true)],
         ['example_translation', formatText(s.example_translation, true)],
@@ -298,6 +404,8 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           ...s,
           phonetic: details.phonetic ?? undefined,
           phonetic_native: details.phonetic_native ?? undefined,
+          pronunciation_note_native: details.pronunciation_note_native ?? undefined,
+          level: details.level ?? undefined,
           definition_target: details.definition_target ?? undefined,
           example_sentence: details.example_sentence ?? undefined,
           example_translation: details.example_translation ?? undefined,
@@ -368,12 +476,16 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
     e.preventDefault()
     if (!scalars.term.trim()) return
     const payload: WordInput = { term: scalars.term.trim() }
-    const scalarKeys: Exclude<ScalarField, 'term'>[] = [
+    const scalarKeys: Exclude<ScalarField, 'term' | 'level'>[] = [
       'part_of_speech', 'phonetic', 'phonetic_native',
+      'pronunciation_note_native',
       'definition_target', 'example_sentence', 'example_translation',
       'synonyms', 'antonyms', 'word_family'
     ]
     for (const k of scalarKeys) payload[k] = scalars[k].trim() || null
+    payload.level = WORD_LEVELS.includes(scalars.level as WordLevel)
+      ? scalars.level as WordLevel
+      : null
     payload.meanings = meaningLangs.map((lang) => ({
       language_id: lang.id,
       value: (meanings[lang.id] ?? '').trim() || null,
@@ -393,9 +505,9 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
   const inner = (
     <>
       {title && <h2 className="mb-4 font-semibold text-slate-800">{title}</h2>}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-6">
         {/* Kelime + tur */}
-        <label className="block">
+        <label className="block sm:col-span-3">
           <span className="field-label">
             {t('words.fields.term')}
             <span className="text-violet-500"> *</span>
@@ -416,11 +528,21 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
               type="button"
               onClick={suggest}
               disabled={!scalars.term.trim() || suggesting}
-              className="btn-ghost shrink-0 px-3"
+              className="btn-ghost h-[2.875rem] w-[3.25rem] shrink-0 overflow-hidden px-0"
               title={t('words.suggest')}
               aria-label={t('words.suggest')}
             >
-              {suggesting ? '…' : '✨'}
+              {suggesting ? (
+                <span className="ai-suggest-loader" aria-hidden="true">
+                  <span className="ai-suggest-trail">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                </span>
+              ) : (
+                <span aria-hidden="true">✨</span>
+              )}
             </button>
           </div>
           {suggestNote && (
@@ -437,13 +559,17 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
             </span>
           )}
         </label>
-        <div className="block">
+        <div className="block sm:col-span-2">
           <span className="field-label cursor-default">{t('words.fields.part_of_speech')}</span>
           <PosCombobox value={scalars.part_of_speech} onChange={(v) => setScalar('part_of_speech', v)} />
         </div>
+        <label className="block sm:col-span-1">
+          <span className="field-label">{t('words.fields.level')}</span>
+          <LevelCombobox value={scalars.level} onChange={(v) => setScalar('level', v)} />
+        </label>
 
         {/* Okunuslar */}
-        <label className="block">
+        <label className="block sm:col-span-3">
           <span className="field-label">{t('words.fields.phonetic')}</span>
           <input
             value={scalars.phonetic}
@@ -451,7 +577,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
             className="input"
           />
         </label>
-        <label className="block">
+        <label className="block sm:col-span-3">
           <span className="field-label">{t('words.readingIn', { lang: nativeDisplay })}</span>
           <input
             value={scalars.phonetic_native}
@@ -460,9 +586,19 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           />
         </label>
 
+        <label className="block sm:col-span-6">
+          <span className="field-label">{t('words.fields.pronunciationNote')}</span>
+          <textarea
+            value={scalars.pronunciation_note_native}
+            onChange={(e) => setScalar('pronunciation_note_native', e.target.value)}
+            rows={3}
+            className="input resize-none overflow-y-auto"
+          />
+        </label>
+
         {/* Anlamlar: ana dil + yardimci diller */}
         {meaningLangs.map((lang, i) => (
-          <label key={lang.id} className="block">
+          <label key={lang.id} className="block sm:col-span-3">
             <span className="field-label">{meaningLabel(lang, i === 0)}</span>
             <input
               value={meanings[lang.id] ?? ''}
@@ -473,7 +609,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
         ))}
 
         {/* Tanim + ornek */}
-        <label className="block sm:col-span-2">
+        <label className="block sm:col-span-6">
           <span className="field-label">{t('words.definitionIn', { lang: targetDisplay })}</span>
           <textarea
             value={scalars.definition_target}
@@ -484,7 +620,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
         </label>
         
         {/* Es anlam / Zit anlam */}
-        <label className="block">
+        <label className="block sm:col-span-3">
           <span className="field-label">{t('words.fields.synonyms')}</span>
           <input
             value={scalars.synonyms}
@@ -492,7 +628,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
             className="input"
           />
         </label>
-        <label className="block">
+        <label className="block sm:col-span-3">
           <span className="field-label">{t('words.fields.antonyms')}</span>
           <input
             value={scalars.antonyms}
@@ -501,7 +637,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           />
         </label>
 
-        <label className="block sm:col-span-2">
+        <label className="block sm:col-span-6">
           <span className="field-label">{t('words.fields.wordFamily')}</span>
           <textarea
             value={scalars.word_family}
@@ -511,7 +647,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           />
         </label>
 
-        <label className="block sm:col-span-2">
+        <label className="block sm:col-span-6">
           <span className="field-label">{t('words.fields.example_sentence')}</span>
           <textarea
             value={scalars.example_sentence}
@@ -520,7 +656,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
             className="input resize-none overflow-y-auto"
           />
         </label>
-        <label className="block sm:col-span-2">
+        <label className="block sm:col-span-6">
           <span className="field-label">{t('words.translationIn', { lang: nativeDisplay })}</span>
           <textarea
             value={scalars.example_translation}

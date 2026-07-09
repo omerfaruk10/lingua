@@ -1,4 +1,4 @@
-import type { Label, LearningStatus, Word } from '../types'
+import type { Label, LearningStatus, Word, WordLevel } from '../types'
 import { api } from './client'
 
 export interface WordMeaningInput {
@@ -10,7 +10,9 @@ export interface WordInput {
   term: string
   phonetic?: string | null
   phonetic_native?: string | null
+  pronunciation_note_native?: string | null
   part_of_speech?: string | null
+  level?: WordLevel | null
   definition_target?: string | null
   example_sentence?: string | null
   example_translation?: string | null
@@ -65,6 +67,8 @@ export interface WordSuggestDetailsRequest {
 export interface WordSuggestDetailsResponse {
   phonetic?: string | null
   phonetic_native?: string | null
+  pronunciation_note_native?: string | null
+  level?: WordLevel | null
   definition_target?: string | null
   example_sentence?: string | null
   example_translation?: string | null
@@ -79,6 +83,8 @@ export interface WordQuery {
   search?: string
   label_id?: number
   status?: LearningStatus
+  level?: WordLevel
+  part_of_speech?: string
 }
 
 function buildQuery(q?: WordQuery): string {
@@ -87,6 +93,8 @@ function buildQuery(q?: WordQuery): string {
   if (q.search) params.set('search', q.search)
   if (q.label_id != null) params.set('label_id', String(q.label_id))
   if (q.status) params.set('status', q.status)
+  if (q.level) params.set('level', q.level)
+  if (q.part_of_speech) params.set('part_of_speech', q.part_of_speech)
   const s = params.toString()
   return s ? `?${s}` : ''
 }

@@ -178,7 +178,25 @@
       "startLearning": "Sofort mit dem Lernen beginnen",
       "synonyms": "Synonyme",
       "antonyms": "Antonyme",
-      "wordFamily": "Wortfamilie"
+      "wordFamily": "Wortfamilie",
+      "level": "Niveau",
+      "pronunciationNote": "Wie spricht man es aus?",
+      "meaning": "Bedeutung",
+      "definition": "Definition"
+    },
+    "filters": "Filter",
+    "sort": "Sortieren",
+    "pronunciationNoteIn": "Wie spricht man es aus? ({{lang}})",
+    "sortOptions": {
+      "created_desc": "Neueste zuerst",
+      "created_asc": "Älteste zuerst",
+      "term_asc": "Alphabetisch A-Z",
+      "term_desc": "Alphabetisch Z-A",
+      "level_asc": "Niveau A1-C2",
+      "level_desc": "Niveau C2-A1",
+      "status": "Status",
+      "part_of_speech": "Art",
+      "label": "Label"
     }
   },
   "labels": {

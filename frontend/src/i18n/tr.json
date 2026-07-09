@@ -178,7 +178,25 @@
       "startLearning": "Hemen öğrenmeye başla",
       "synonyms": "Eş anlamlılar",
       "antonyms": "Zıt anlamlılar",
-      "wordFamily": "Kelime kök ve bağları"
+      "wordFamily": "Kelime kök ve bağları",
+      "level": "Seviye",
+      "pronunciationNote": "Nasıl okunur?",
+      "meaning": "Anlamı",
+      "definition": "Tanımı"
+    },
+    "filters": "Filtreler",
+    "sort": "Sırala",
+    "pronunciationNoteIn": "Nasıl okunur? ({{lang}})",
+    "sortOptions": {
+      "created_desc": "En yeni önce",
+      "created_asc": "En eski önce",
+      "term_asc": "Alfabetik A-Z",
+      "term_desc": "Alfabetik Z-A",
+      "level_asc": "Seviye A1-C2",
+      "level_desc": "Seviye C2-A1",
+      "status": "Durum",
+      "part_of_speech": "Tür",
+      "label": "Etiket"
     }
   },
   "labels": {

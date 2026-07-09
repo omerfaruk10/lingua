@@ -4,11 +4,13 @@ import type { WordInput } from '../api/words'
 import { SUPPORTED_LANGS } from '../i18n'
 import { parseCsv } from './csv'
 import type { WordCsvSchema } from './wordCsvSchema'
+import type { WordLevel } from '../types'
 
 const PARTS_OF_SPEECH = [
   'noun', 'verb', 'adjective', 'adverb', 'pronoun',
   'preposition', 'conjunction', 'interjection', 'article', 'numeral',
 ] as const
+const WORD_LEVELS = new Set<WordLevel>(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
 
 // LLM ciktilarindaki suslemeleri temizler: "Verb (Fiil)" -> "Verb", "Preposition / Adverb (...)" -> "Preposition".
 function cleanPosText(raw: string): string {
@@ -29,9 +31,10 @@ export interface ParseWordsCsvResult {
 }
 
 // Sabit sutun duzeni (baslik satiri icerigine bakilmaksizin atlanir):
-// 0: kelime, 1: tur, 2: okunus, 3: anadil okunusu, 4: anadil anlami,
-// 5..5+H-1: yardimci dil anlamlari (kurs sirasiyla), son 3: tanim, ornek cumle, ceviri.
-const FIXED_COLS = 8 // yardimci dil sutunu olmadan minimum sutun sayisi
+// 0: kelime, 1: tur, 2: seviye, 3: okunus, 4: anadil okunusu, 5: nasil okunur,
+// 6: anadil anlami, 7..7+H-1: yardimci dil anlamlari (kurs sirasiyla),
+// son 6: tanim, es anlam, zit anlam, kelime ailesi, ornek cumle, ceviri.
+const FIXED_COLS = 13 // yardimci dil sutunu olmadan minimum sutun sayisi
 
 export function parseWordsCsv(text: string, schema: WordCsvSchema, t: TFunction): ParseWordsCsvResult {
   const table = parseCsv(text)
@@ -81,13 +84,19 @@ export function parseWordsCsv(text: string, schema: WordCsvSchema, t: TFunction)
     const pos = (cells[1] ?? '').trim()
     if (pos) data.part_of_speech = posReverse.get(cleanPosText(pos)) ?? pos
 
-    const phonetic = (cells[2] ?? '').trim()
+    const level = (cells[2] ?? '').trim().toUpperCase()
+    if (WORD_LEVELS.has(level as WordLevel)) data.level = level as WordLevel
+
+    const phonetic = (cells[3] ?? '').trim()
     if (phonetic) data.phonetic = phonetic
 
-    const phoneticNative = (cells[3] ?? '').trim()
+    const phoneticNative = (cells[4] ?? '').trim()
     if (phoneticNative) data.phonetic_native = phoneticNative
 
-    const nativeMeaning = (cells[4] ?? '').trim()
+    const pronunciationNote = (cells[5] ?? '').trim()
+    if (pronunciationNote) data.pronunciation_note_native = pronunciationNote
+
+    const nativeMeaning = (cells[6] ?? '').trim()
     if (nativeMeaning && nativeLang) {
       data.meanings!.push({ language_id: nativeLang.id, value: nativeMeaning })
     }
@@ -97,16 +106,22 @@ export function parseWordsCsv(text: string, schema: WordCsvSchema, t: TFunction)
     const fileHelperCols = cells.length - FIXED_COLS
     const helperColsToRead = Math.min(fileHelperCols, courseHelperLangs.length)
     for (let j = 0; j < helperColsToRead; j++) {
-      const raw = (cells[5 + j] ?? '').trim()
+      const raw = (cells[7 + j] ?? '').trim()
       if (raw) data.meanings!.push({ language_id: courseHelperLangs[j].id, value: raw })
     }
 
-    const tailStart = cells.length - 3
+    const tailStart = cells.length - 6
     const definition = (cells[tailStart] ?? '').trim()
     if (definition) data.definition_target = definition
-    const example = (cells[tailStart + 1] ?? '').trim()
+    const synonyms = (cells[tailStart + 1] ?? '').trim()
+    if (synonyms) data.synonyms = synonyms
+    const antonyms = (cells[tailStart + 2] ?? '').trim()
+    if (antonyms) data.antonyms = antonyms
+    const wordFamily = (cells[tailStart + 3] ?? '').trim()
+    if (wordFamily) data.word_family = wordFamily
+    const example = (cells[tailStart + 4] ?? '').trim()
     if (example) data.example_sentence = example
-    const translation = (cells[tailStart + 2] ?? '').trim()
+    const translation = (cells[tailStart + 5] ?? '').trim()
     if (translation) data.example_translation = translation
 
     rows.push({ row: rowNum, data })
