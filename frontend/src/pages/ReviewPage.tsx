@@ -86,6 +86,8 @@ export function ReviewPage() {
             orderedMeanings={orderedMeanings}
             revealed={revealed}
             langCode={course?.target_language.code}
+            meaningLangs={course ? [course.native_language, ...course.helper_languages] : []}
+            targetLang={course?.target_language}
           />
         </div>
 

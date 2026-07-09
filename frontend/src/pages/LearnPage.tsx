@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { orderMeanings, WordCardContent } from '../components/WordCardContent'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useSetWordStatus, useWords } from '../hooks/useWords'
-import type { Word } from '../types'
+import type { LanguageBrief, Word } from '../types'
 
 // Oturum basina calisilacak kelime sayisi (arastirma onerisi: 5-10).
 const BATCH_SIZE = 5
@@ -308,6 +308,8 @@ export function LearnPage() {
             word={currentWord}
             langCode={targetLocale}
             orderedMeanings={orderMeanings(currentWord, meaningOrder)}
+            meaningLangs={course ? [course.native_language, ...course.helper_languages] : []}
+            targetLang={course?.target_language}
             onContinue={submitIntro}
           />
         )}
@@ -343,18 +345,29 @@ function IntroStep({
   word,
   langCode,
   orderedMeanings,
+  meaningLangs,
+  targetLang,
   onContinue,
 }: {
   word: Word
   langCode: string
   orderedMeanings: string[]
+  meaningLangs: LanguageBrief[]
+  targetLang?: LanguageBrief
   onContinue: () => void
 }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
-        <WordCardContent word={word} orderedMeanings={orderedMeanings} revealed langCode={langCode} />
+        <WordCardContent
+          word={word}
+          orderedMeanings={orderedMeanings}
+          revealed
+          langCode={langCode}
+          meaningLangs={meaningLangs}
+          targetLang={targetLang}
+        />
       </div>
       <button onClick={onContinue} className="btn-primary mt-6 w-full py-3">
         {t('learn.continue')}
