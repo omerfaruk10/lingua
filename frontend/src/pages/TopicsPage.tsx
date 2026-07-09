@@ -32,6 +32,22 @@ const COLUMN_META: Record<TopicStatus, { border: string; dot: string; numBg: str
   done: { border: 'border-emerald-200', dot: 'bg-emerald-400', numBg: 'bg-emerald-100', numText: 'text-emerald-600' },
 }
 
+function topicsMatch(a: Topic[], b: Topic[]) {
+  if (a.length !== b.length) return false
+  return a.every((topic, index) => {
+    const other = b[index]
+    return (
+      other &&
+      topic.id === other.id &&
+      topic.title === other.title &&
+      topic.description === other.description &&
+      topic.status === other.status &&
+      topic.order_index === other.order_index &&
+      topic.completed_at === other.completed_at
+    )
+  })
+}
+
 export function TopicsPage() {
   const { t } = useTranslation()
   const confirm = useConfirm()
@@ -242,18 +258,20 @@ function KanbanColumn({
   t: (key: string) => string
 }) {
   const [activeId, setActiveId] = useState<number | null>(null)
+  const activeIdRef = useRef<number | null>(null)
   const [dragWidth, setDragWidth] = useState<number | undefined>(undefined)
   const [localItems, setLocalItems] = useState<Topic[]>(topics)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const meta = COLUMN_META[status]
 
   useEffect(() => {
-    if (activeId !== null) return
-    const incoming = new Set(topics.map((t) => t.id))
-    const local = new Set(localItems.map((t) => t.id))
-    const changed = topics.length !== localItems.length || topics.some((t) => !local.has(t.id)) || localItems.some((t) => !incoming.has(t.id))
-    if (changed) setLocalItems(topics)
-  }, [topics, activeId])
+    activeIdRef.current = activeId
+  }, [activeId])
+
+  useEffect(() => {
+    if (activeIdRef.current !== null) return
+    setLocalItems((current) => (topicsMatch(current, topics) ? current : topics))
+  }, [topics])
 
   function handleDragStart(event: DragStartEvent) {
     const id = event.active.id as number
