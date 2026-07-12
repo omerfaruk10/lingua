@@ -34,6 +34,7 @@ class WordBase(BaseModel):
     synonyms: str | None = None
     antonyms: str | None = None
     word_family: str | None = None
+    accepted_answers: str | None = None
 
 
 class WordCreate(WordBase):
@@ -55,6 +56,7 @@ class WordUpdate(BaseModel):
     synonyms: str | None = None
     antonyms: str | None = None
     word_family: str | None = None
+    accepted_answers: str | None = None
     # meanings gonderilirse mevcut anlamlar tamamen bununla degistirilir.
     meanings: list[WordMeaningIn] | None = None
 

@@ -122,6 +122,7 @@ def ensure_schema() -> None:
     # Katalogu her acilista tohumla (idempotent).
     _seed_catalog()
     _ensure_ai_suggestion_cache_table()
+    _ensure_learning_session_indexes()
 
     word_cols: set[str] = set()
     if "words" in tables:
@@ -137,6 +138,7 @@ def ensure_schema() -> None:
             "synonyms": "ALTER TABLE words ADD COLUMN synonyms TEXT",
             "antonyms": "ALTER TABLE words ADD COLUMN antonyms TEXT",
             "word_family": "ALTER TABLE words ADD COLUMN word_family TEXT",
+            "accepted_answers": "ALTER TABLE words ADD COLUMN accepted_answers TEXT",
         }
         missing = [sql for col, sql in word_additions.items() if col not in word_cols]
         if missing:
@@ -204,6 +206,19 @@ def _ensure_ai_suggestion_cache_table() -> None:
             text(
                 "CREATE INDEX IF NOT EXISTS ix_ai_suggestion_cache_created_at "
                 "ON ai_suggestion_cache (created_at)"
+            )
+        )
+
+
+def _ensure_learning_session_indexes() -> None:
+    """Kalici ogrenme oturumunun SQLite'a ozel kismi: kurs basina tek aktif session."""
+    if "learning_sessions" not in inspect(engine).get_table_names():
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_learning_sessions_active_course "
+                "ON learning_sessions(course_id) WHERE status = 'active'"
             )
         )
 

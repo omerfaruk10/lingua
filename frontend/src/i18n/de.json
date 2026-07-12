@@ -39,7 +39,7 @@
     "progress": "{{done}} / {{total}} Wörter",
     "continue": "Weiter",
     "chooseTitle": "Wähle das Wort, das Folgendes bedeutet:",
-    "typeTitle": "Tippe das Wort für:",
+    "typeTitle": "Tippe das passende Wort:",
     "typePlaceholder": "Wort eingeben…",
     "check": "Prüfen",
     "correct": "Richtig!",
@@ -53,7 +53,12 @@
     "doneTitle": "Gut gemacht!",
     "doneHint": "{{n}} Wörter wechseln zur Wiederholung — erster Termin morgen.",
     "doneNoneHint": "Alle Wörter bleiben in deiner Lernliste.",
-    "nextBatch": "Nächste Runde ({{n}} wartet)"
+    "nextBatch": "Nächste Runde ({{n}} wartet)",
+    "cancelSession": "Sitzung abbrechen",
+    "cancelConfirm": "Diese Sitzung abbrechen? Die Wörter bleiben in der Lernwarteschlange.",
+    "cancelledTitle": "Sitzung abgebrochen",
+    "cancelledHint": "Die Wörter bleiben in der Lernwarteschlange.",
+    "retry": "Erneut versuchen"
   },
   "stats": {
     "month": "Monat",
@@ -124,7 +129,7 @@
     "editTitle": "Wort bearbeiten",
     "empty": "Noch keine Wörter — füge das erste hinzu.",
     "noResults": "Keine Wörter passen zur Suche.",
-    "deleteConfirm": "Dieses Wort löschen?",
+    "deleteConfirm": "Dieses Wort und seinen Lern-/Wiederholungsverlauf löschen?",
     "meaningIn": "Bedeutung ({{lang}})",
     "readingIn": "Aussprache ({{lang}})",
     "translationIn": "Übersetzung ({{lang}})",
@@ -179,6 +184,8 @@
       "synonyms": "Synonyme",
       "antonyms": "Antonyme",
       "wordFamily": "Wortfamilie",
+      "acceptedAnswers": "Akzeptierte Alternativen",
+      "acceptedAnswersHint": "z. B. color, colour (kommagetrennt)",
       "level": "Niveau",
       "pronunciationNote": "Wie spricht man es aus?",
       "meaning": "Bedeutung",
@@ -223,7 +230,15 @@
     "languageNotFound": "Sprache nicht gefunden.",
     "importTermEmpty": "Wort ist leer.",
     "importMissingReplaceId": "Zu ersetzendes Wort fehlt.",
-    "importReplaceWordNotFound": "Zu ersetzendes Wort wurde nicht gefunden."
+    "importReplaceWordNotFound": "Zu ersetzendes Wort wurde nicht gefunden.",
+    "learningSessionNotFound": "Lernsitzung nicht gefunden.",
+    "learningSessionNotActive": "Diese Lernsitzung ist nicht mehr aktiv.",
+    "learningSessionNotReady": "Schließe zuerst die restlichen Übungen ab.",
+    "learningSessionCompleted": "Diese Sitzung wurde bereits abgeschlossen.",
+    "learningStaleAttempt": "Die Aufgabe wurde in einem anderen Tab geändert. Die aktuelle Aufgabe wurde geladen.",
+    "learningTokenReused": "Diese Antwort wurde bereits mit anderen Daten gesendet.",
+    "learningInvalidOption": "Diese Option ist nicht mehr verfügbar.",
+    "learningWordNotEligible": "Ein ausgewähltes Wort kann nicht mehr als gelernt markiert werden."
   },
   "common": {
     "add": "Hinzufügen",

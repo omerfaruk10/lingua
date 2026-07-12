@@ -19,6 +19,7 @@ export interface WordInput {
   synonyms?: string | null
   antonyms?: string | null
   word_family?: string | null
+  accepted_answers?: string | null
   meanings?: WordMeaningInput[]
 }
 

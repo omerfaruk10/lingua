@@ -21,6 +21,7 @@ interface NormalizedSuggestion {
   synonyms?: string
   antonyms?: string
   word_family?: string
+  accepted_answers?: string
   meaningsById: Record<number, string>
 }
 
@@ -45,6 +46,7 @@ type ScalarField =
   | 'synonyms'
   | 'antonyms'
   | 'word_family'
+  | 'accepted_answers'
 
 type ScalarValues = Record<ScalarField, string>
 
@@ -247,7 +249,7 @@ function emptyScalars(): ScalarValues {
     term: '', part_of_speech: '', level: '', phonetic: '', phonetic_native: '',
     pronunciation_note_native: '',
     definition_target: '', example_sentence: '', example_translation: '',
-    synonyms: '', antonyms: '', word_family: '',
+    synonyms: '', antonyms: '', word_family: '', accepted_answers: '',
   }
 }
 
@@ -456,7 +458,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
         throw new Error('No AI senses')
       }
       return
-    } catch (e) {
+    } catch {
       setSuggestNote('none')
     }
     setSuggesting(false)
@@ -480,7 +482,7 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
       'part_of_speech', 'phonetic', 'phonetic_native',
       'pronunciation_note_native',
       'definition_target', 'example_sentence', 'example_translation',
-      'synonyms', 'antonyms', 'word_family'
+      'synonyms', 'antonyms', 'word_family', 'accepted_answers'
     ]
     for (const k of scalarKeys) payload[k] = scalars[k].trim() || null
     payload.level = WORD_LEVELS.includes(scalars.level as WordLevel)
@@ -644,6 +646,16 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
             onChange={(e) => setScalar('word_family', e.target.value)}
             rows={5}
             className="input resize-none overflow-y-auto"
+          />
+        </label>
+
+        <label className="block sm:col-span-6">
+          <span className="field-label">{t('words.fields.acceptedAnswers')}</span>
+          <input
+            value={scalars.accepted_answers}
+            onChange={(e) => setScalar('accepted_answers', e.target.value)}
+            placeholder={t('words.fields.acceptedAnswersHint')}
+            className="input"
           />
         </label>
 

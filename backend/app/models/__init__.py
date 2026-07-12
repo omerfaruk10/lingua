@@ -3,6 +3,9 @@
 from app.models.course import Course, course_helpers
 from app.models.label import Label, word_labels
 from app.models.language import Language
+from app.models.learning_event import LearningEvent
+from app.models.learning_session import LearningSession
+from app.models.learning_session_item import LearningSessionItem
 from app.models.review_event import ReviewEvent
 from app.models.topic import Topic, TopicStatus
 from app.models.word import Word
@@ -19,4 +22,7 @@ __all__ = [
     "Label",
     "word_labels",
     "ReviewEvent",
+    "LearningSession",
+    "LearningSessionItem",
+    "LearningEvent",
 ]

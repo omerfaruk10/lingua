@@ -39,7 +39,7 @@
     "progress": "{{done}} / {{total}} words",
     "continue": "Continue",
     "chooseTitle": "Pick the word that means:",
-    "typeTitle": "Type the word for:",
+    "typeTitle": "Type the appropriate word:",
     "typePlaceholder": "Type the word…",
     "check": "Check",
     "correct": "Correct!",
@@ -53,7 +53,12 @@
     "doneTitle": "Nice work!",
     "doneHint": "{{n}} words move to review — first check-in tomorrow.",
     "doneNoneHint": "All words stay in your learning queue.",
-    "nextBatch": "Next batch ({{n}} waiting)"
+    "nextBatch": "Next batch ({{n}} waiting)",
+    "cancelSession": "Cancel session",
+    "cancelConfirm": "Cancel this session? The words will stay in your learning queue.",
+    "cancelledTitle": "Session cancelled",
+    "cancelledHint": "Your words remain in the learning queue.",
+    "retry": "Try again"
   },
   "stats": {
     "month": "Month",
@@ -124,7 +129,7 @@
     "editTitle": "Edit word",
     "empty": "No words yet — add your first one.",
     "noResults": "No words match your search.",
-    "deleteConfirm": "Delete this word?",
+    "deleteConfirm": "Delete this word and its learning/review history?",
     "meaningIn": "{{lang}} Meaning",
     "readingIn": "{{lang}} Reading",
     "translationIn": "{{lang}} Translation",
@@ -179,6 +184,8 @@
       "synonyms": "Synonyms",
       "antonyms": "Antonyms",
       "wordFamily": "Word family",
+      "acceptedAnswers": "Accepted alternatives",
+      "acceptedAnswersHint": "e.g. color, colour (comma-separated)",
       "level": "Level",
       "pronunciationNote": "How to pronounce it",
       "meaning": "Meaning",
@@ -223,7 +230,15 @@
     "languageNotFound": "Language not found.",
     "importTermEmpty": "Word is empty.",
     "importMissingReplaceId": "Missing word to replace.",
-    "importReplaceWordNotFound": "Word to replace was not found."
+    "importReplaceWordNotFound": "Word to replace was not found.",
+    "learningSessionNotFound": "Learning session not found.",
+    "learningSessionNotActive": "This learning session is no longer active.",
+    "learningSessionNotReady": "Complete the remaining exercises first.",
+    "learningSessionCompleted": "This session has already been completed.",
+    "learningStaleAttempt": "This task changed in another tab. The current task was restored.",
+    "learningTokenReused": "This answer was already submitted with different data.",
+    "learningInvalidOption": "That option is no longer available.",
+    "learningWordNotEligible": "One of the selected words can no longer be marked as learned."
   },
   "common": {
     "add": "Add",

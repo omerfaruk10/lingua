@@ -3,9 +3,18 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8010'
 
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  code?: string
+  detail?: unknown
+  currentSession?: unknown
+  constructor(status: number, message: string, detail?: unknown) {
     super(message)
     this.status = status
+    this.detail = detail
+    if (detail && typeof detail === 'object') {
+      const value = detail as { code?: string; current_session?: unknown }
+      this.code = value.code
+      this.currentSession = value.current_session
+    }
   }
 }
 
@@ -18,13 +27,19 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   if (!res.ok) {
     let detail = res.statusText
+    let rawDetail: unknown = detail
     try {
       const data = await res.json()
-      if (data?.detail) detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)
+      if (data?.detail) {
+        rawDetail = data.detail
+        detail = typeof data.detail === 'string'
+          ? data.detail
+          : data.detail.message ?? JSON.stringify(data.detail)
+      }
     } catch {
       // govde JSON degil; statusText yeterli
     }
-    throw new ApiError(res.status, detail)
+    throw new ApiError(res.status, detail, rawDetail)
   }
 
   if (res.status === 204) return undefined as T

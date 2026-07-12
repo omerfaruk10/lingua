@@ -72,6 +72,7 @@ export interface Word {
   synonyms: string | null
   antonyms: string | null
   word_family: string | null
+  accepted_answers: string | null
   meanings: WordMeaning[]
   labels: Label[]
   learning_status: LearningStatus
@@ -80,4 +81,49 @@ export interface Word {
   learned_at: string | null
   created_at: string
   updated_at: string
+}
+
+export type LearningQuestionType = 'intro' | 'choice' | 'typing'
+export type LearningAnswerResult = 'completed' | 'correct' | 'minor_typo' | 'incorrect'
+
+export interface LearningOption {
+  word_id: number
+  term: string
+}
+
+export interface LearningTask {
+  attempt_token: string
+  question_type: LearningQuestionType
+  word: Word
+  prompt: string | null
+  options: LearningOption[]
+}
+
+export interface LearningSummaryItem {
+  word: Word
+  mistake_count: number
+}
+
+export interface LearningSession {
+  id: number
+  course_id: number
+  status: 'active' | 'completed' | 'cancelled'
+  phase: 'practice' | 'summary' | 'terminal'
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+  completed_word_ids: number[] | null
+  progress: {
+    completed_count: number
+    cancelled_count: number
+    total_count: number
+  }
+  current_task: LearningTask | null
+  summary_items: LearningSummaryItem[]
+}
+
+export interface LearningAnswerResponse {
+  result: LearningAnswerResult
+  correct_term: string | null
+  session: LearningSession
 }

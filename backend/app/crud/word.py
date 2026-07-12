@@ -73,8 +73,8 @@ def get_due_words(db: Session, course_id: int) -> list[Word]:
     return list(db.scalars(stmt))
 
 
-def set_learning_status(db: Session, word: Word, status: LearningStatus) -> Word:
-    """Durum dropdown'i: durumu degistirir ve tekrar programini tutarli tutar."""
+def apply_learning_status(word: Word, status: LearningStatus) -> None:
+    """Commit etmeden durum/SRS alanlarini birlikte degistirir."""
     word.learning_status = status
     if status == "learned":
         # Ogrenildi -> tekrar programini baslat (zaten programdaysa dokunma).
@@ -86,6 +86,15 @@ def set_learning_status(db: Session, word: Word, status: LearningStatus) -> Word
         word.review_stage = 0
         word.next_review_date = None
         word.learned_at = None
+
+
+def set_learning_status(db: Session, word: Word, status: LearningStatus) -> Word:
+    """Durum dropdown'i: durumu degistirir ve aktif ogrenme oturumunu uzlastirir."""
+    if word.learning_status == "learning" and status != "learning":
+        from app.crud.learning_session import reconcile_word_leaving_learning
+
+        reconcile_word_leaving_learning(db, word)
+    apply_learning_status(word, status)
     db.commit()
     db.refresh(word)
     return word
@@ -180,13 +189,23 @@ def update_word(db: Session, word: Word, data: WordUpdate) -> Word:
         word.meanings = []
         db.flush()
         word.meanings = _meaning_rows(meanings)
+    if any(key in payload for key in {"term", "definition_target"}) or meanings is not None:
+        from app.crud.learning_session import invalidate_word_attempts
+
+        invalidate_word_attempts(db, word)
     db.commit()
     db.refresh(word)
     return word
 
 
 def delete_word(db: Session, word: Word) -> None:
+    from app.crud.learning_session import invalidate_word_attempts, reconcile_after_delete
+
+    course_id = word.course_id
+    invalidate_word_attempts(db, word)
     db.delete(word)
+    db.flush()
+    reconcile_after_delete(db, course_id)
     db.commit()
 
 

@@ -39,7 +39,7 @@
     "progress": "{{done}} / {{total}} kelime",
     "continue": "Devam",
     "chooseTitle": "Anlamı şu olan kelimeyi seç:",
-    "typeTitle": "Şu anlama gelen kelimeyi yaz:",
+    "typeTitle": "Uygun kelimeyi yaz:",
     "typePlaceholder": "Kelimeyi yaz…",
     "check": "Kontrol et",
     "correct": "Doğru!",
@@ -53,7 +53,12 @@
     "doneTitle": "Harika iş!",
     "doneHint": "{{n}} kelime tekrara geçti — ilk tekrar yarın.",
     "doneNoneHint": "Tüm kelimeler öğrenme kuyruğunda kaldı.",
-    "nextBatch": "Sonraki parti ({{n}} bekliyor)"
+    "nextBatch": "Sonraki parti ({{n}} bekliyor)",
+    "cancelSession": "Oturumu iptal et",
+    "cancelConfirm": "Bu oturum iptal edilsin mi? Kelimeler öğrenme kuyruğunda kalacak.",
+    "cancelledTitle": "Oturum iptal edildi",
+    "cancelledHint": "Kelimelerin öğrenme kuyruğunda kaldı.",
+    "retry": "Tekrar dene"
   },
   "stats": {
     "month": "Ay",
@@ -124,7 +129,7 @@
     "editTitle": "Kelimeyi düzenle",
     "empty": "Henüz kelime yok — ilkini ekle.",
     "noResults": "Aramana uyan kelime yok.",
-    "deleteConfirm": "Bu kelime silinsin mi?",
+    "deleteConfirm": "Bu kelime ve öğrenme/tekrar geçmişi silinsin mi?",
     "meaningIn": "{{lang}} Anlamı",
     "readingIn": "{{lang}} Okunuşu",
     "translationIn": "{{lang}} Çevirisi",
@@ -179,6 +184,8 @@
       "synonyms": "Eş anlamlılar",
       "antonyms": "Zıt anlamlılar",
       "wordFamily": "Kelime kök ve bağları",
+      "acceptedAnswers": "Kabul edilen alternatifler",
+      "acceptedAnswersHint": "örn. color, colour (virgülle ayır)",
       "level": "Seviye",
       "pronunciationNote": "Nasıl okunur?",
       "meaning": "Anlamı",
@@ -223,7 +230,15 @@
     "languageNotFound": "Dil bulunamadı.",
     "importTermEmpty": "Kelime boş.",
     "importMissingReplaceId": "Değiştirilecek kelime belirtilmedi.",
-    "importReplaceWordNotFound": "Değiştirilecek kelime bulunamadı."
+    "importReplaceWordNotFound": "Değiştirilecek kelime bulunamadı.",
+    "learningSessionNotFound": "Öğrenme oturumu bulunamadı.",
+    "learningSessionNotActive": "Bu öğrenme oturumu artık aktif değil.",
+    "learningSessionNotReady": "Önce kalan egzersizleri tamamla.",
+    "learningSessionCompleted": "Bu oturum zaten tamamlandı.",
+    "learningStaleAttempt": "Görev başka bir sekmede değişti. Güncel görev geri yüklendi.",
+    "learningTokenReused": "Bu cevap daha önce farklı bilgilerle gönderildi.",
+    "learningInvalidOption": "Bu seçenek artık geçerli değil.",
+    "learningWordNotEligible": "Seçilen kelimelerden biri artık öğrenildi yapılamıyor."
   },
   "common": {
     "add": "Ekle",

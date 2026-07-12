@@ -13,7 +13,7 @@ load_dotenv(_ROOT / "backend" / ".env")
 
 from app import models  # noqa: E402,F401 -- modelleri Base.metadata'ya kaydeder
 from app.database import Base, engine, ensure_schema  # noqa: E402
-from app.routers import labels, languages, stats, topics, words  # noqa: E402
+from app.routers import labels, languages, learning_sessions, stats, topics, words  # noqa: E402
 
 # Iskelet asamasi: tablolari dogrudan olustur.
 # SRS alanlari eklerken sema degisecegi icin ileride Alembic (migration) gelecek.
@@ -38,6 +38,7 @@ app.add_middleware(
 app.include_router(languages.router)
 app.include_router(topics.router)
 app.include_router(words.router)
+app.include_router(learning_sessions.router)
 app.include_router(labels.router)
 app.include_router(stats.router)
 

@@ -34,6 +34,7 @@ class Word(Base):
     synonyms: Mapped[str | None] = mapped_column(Text, default=None) # Es anlamlilar
     antonyms: Mapped[str | None] = mapped_column(Text, default=None) # Zit anlamlilar
     word_family: Mapped[str | None] = mapped_column(Text, default=None) # Kok ve baglari
+    accepted_answers: Mapped[str | None] = mapped_column(Text, default=None)
 
 
     example_sentence: Mapped[str | None] = mapped_column(Text, default=None)

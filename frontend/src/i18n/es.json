@@ -39,7 +39,7 @@
     "progress": "{{done}} / {{total}} palabras",
     "continue": "Continuar",
     "chooseTitle": "Elige la palabra que significa:",
-    "typeTitle": "Escribe la palabra que significa:",
+    "typeTitle": "Escribe la palabra adecuada:",
     "typePlaceholder": "Escribe la palabra…",
     "check": "Comprobar",
     "correct": "¡Correcto!",
@@ -53,7 +53,12 @@
     "doneTitle": "¡Buen trabajo!",
     "doneHint": "{{n}} palabras pasan al repaso — primera revisión mañana.",
     "doneNoneHint": "Todas las palabras siguen en tu cola de aprendizaje.",
-    "nextBatch": "Siguiente tanda ({{n}} en espera)"
+    "nextBatch": "Siguiente tanda ({{n}} en espera)",
+    "cancelSession": "Cancelar sesión",
+    "cancelConfirm": "¿Cancelar esta sesión? Las palabras seguirán en la cola de aprendizaje.",
+    "cancelledTitle": "Sesión cancelada",
+    "cancelledHint": "Las palabras permanecen en la cola de aprendizaje.",
+    "retry": "Intentar de nuevo"
   },
   "stats": {
     "month": "Mes",
@@ -124,7 +129,7 @@
     "editTitle": "Editar palabra",
     "empty": "Aún no hay palabras — añade la primera.",
     "noResults": "Ninguna palabra coincide con la búsqueda.",
-    "deleteConfirm": "¿Eliminar esta palabra?",
+    "deleteConfirm": "¿Eliminar esta palabra y su historial de aprendizaje/repaso?",
     "meaningIn": "Significado ({{lang}})",
     "readingIn": "Lectura ({{lang}})",
     "translationIn": "Traducción ({{lang}})",
@@ -179,6 +184,8 @@
       "synonyms": "Sinónimos",
       "antonyms": "Antónimos",
       "wordFamily": "Familia de palabras",
+      "acceptedAnswers": "Alternativas aceptadas",
+      "acceptedAnswersHint": "p. ej. color, colour (separadas por comas)",
       "level": "Nivel",
       "pronunciationNote": "Cómo se pronuncia",
       "meaning": "Significado",
@@ -223,7 +230,15 @@
     "languageNotFound": "Idioma no encontrado.",
     "importTermEmpty": "La palabra está vacía.",
     "importMissingReplaceId": "Falta la palabra a reemplazar.",
-    "importReplaceWordNotFound": "No se encontró la palabra a reemplazar."
+    "importReplaceWordNotFound": "No se encontró la palabra a reemplazar.",
+    "learningSessionNotFound": "No se encontró la sesión de aprendizaje.",
+    "learningSessionNotActive": "Esta sesión ya no está activa.",
+    "learningSessionNotReady": "Completa primero los ejercicios restantes.",
+    "learningSessionCompleted": "Esta sesión ya se completó.",
+    "learningStaleAttempt": "La tarea cambió en otra pestaña. Se restauró la tarea actual.",
+    "learningTokenReused": "Esta respuesta ya se envió con datos diferentes.",
+    "learningInvalidOption": "Esa opción ya no está disponible.",
+    "learningWordNotEligible": "Una palabra seleccionada ya no puede marcarse como aprendida."
   },
   "common": {
     "add": "Añadir",
