@@ -48,6 +48,7 @@ export interface DailyStat {
   added: number
   reviewed: number
 }
+export interface DailyActivity { day: string; learned_words: Word[]; reviewed_words: Word[] }
 
 export type LearningStatus = 'new' | 'learning' | 'learned'
 export type WordLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
@@ -78,6 +79,7 @@ export interface Word {
   learning_status: LearningStatus
   review_stage: number
   next_review_date: string | null
+  review_retry_anchor_date: string | null
   learned_at: string | null
   created_at: string
   updated_at: string
@@ -120,10 +122,63 @@ export interface LearningSession {
   }
   current_task: LearningTask | null
   summary_items: LearningSummaryItem[]
+  items: { word: Word; item_status: string }[]
 }
 
 export interface LearningAnswerResponse {
   result: LearningAnswerResult
   correct_term: string | null
   session: LearningSession
+}
+
+export type ReviewQuestionType = 'meaning' | 'context' | 'remediation_choice' | 'remediation_typing'
+export type ReviewAnswerResult = 'correct' | 'minor_typo' | 'incorrect' | 'skipped_by_user'
+
+export interface ReviewTask {
+  attempt_token: string
+  question_type: ReviewQuestionType
+  word: Word
+  prompt: string | null
+  options: LearningOption[]
+}
+
+export interface ReviewSessionItem {
+  id: number
+  word: Word
+  item_status: 'pending' | 'initial_failed' | 'remediation' | 'awaiting_decision' | 'completed' | 'cancelled'
+  current_step: string
+  meaning_result: string
+  context_result: string
+  failure_action: string | null
+  scheduled_date: string
+  stage_at_start: number
+  finalized_at: string | null
+}
+
+export interface ReviewSession {
+  id: number
+  course_id: number
+  status: 'active' | 'completed' | 'cancelled'
+  phase: 'testing' | 'results_remediation' | 'terminal_ready' | 'terminal'
+  current_task: ReviewTask | null
+  items: ReviewSessionItem[]
+}
+
+export interface ReviewAnswerResponse {
+  result: ReviewAnswerResult
+  correct_term: string | null
+  session: ReviewSession
+}
+
+export interface ReviewedTodayItem {
+  word: Word
+  result: string
+  reviewed_at: string
+  next_review_date: string | null
+}
+
+export interface ReviewOverview {
+  active_session: ReviewSession | null
+  waiting_due_words: Word[]
+  reviewed_today: ReviewedTodayItem[]
 }

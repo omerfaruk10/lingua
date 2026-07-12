@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useLanguageId } from '../components/WorkspaceLayout'
-import { useDailyStats } from '../hooks/useStats'
+import { Modal } from '../components/Modal'
+import { orderMeanings, WordCardContent } from '../components/WordCardContent'
+import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
+import { useDailyActivity, useDailyStats } from '../hooks/useStats'
 import { useWords } from '../hooks/useWords'
 import type { DailyStat, Word } from '../types'
 
@@ -44,6 +46,7 @@ export function StatsPage() {
   const today = new Date()
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [selectedDay, setSelectedDay] = useState(() => dayKey(today))
+  const { data: activity } = useDailyActivity(languageId, selectedDay)
 
   const byDay = useMemo(() => {
     const m = new Map<string, DailyStat>()
@@ -102,7 +105,7 @@ export function StatsPage() {
           <button
             key={v}
             onClick={() => setView(v)}
-            className={`flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium transition ${
+            className={`flex-1 cursor-pointer rounded-lg px-4 py-2 text-center text-sm font-medium transition ${
               view === v ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -132,6 +135,8 @@ export function StatsPage() {
             words={allWords}
             locale={i18n.language}
             t={t}
+            learnedWords={activity?.learned_words ?? []}
+            reviewedWords={activity?.reviewed_words ?? []}
           />
         )}
       </div>
@@ -296,13 +301,22 @@ function DayView({
   words,
   locale,
   t,
+  learnedWords,
+  reviewedWords,
 }: {
   dayKeyStr: string
   stat: DailyStat | undefined
   words: Word[]
   locale: string
   t: (k: string) => string
+  learnedWords: Word[]
+  reviewedWords: Word[]
 }) {
+  const course = useCurrentCourse()
+  const [detail, setDetail] = useState<Word | null>(null)
+  const meaningOrder = course?.native_language
+    ? [course.native_language.id, ...course.helper_languages.map((language) => language.id)]
+    : []
   const added = stat?.added ?? 0
   const reviewed = stat?.reviewed ?? 0
   const dayWords = words.filter((w) => utcToLocalKey(w.created_at) === dayKeyStr)
@@ -319,27 +333,26 @@ function DayView({
         <span className="font-semibold capitalize text-slate-800">{label}</span>
         <div className="flex gap-4 text-sm">
           <span className="text-violet-600">
-            +{added} <span className="text-slate-400">{t('stats.added')}</span>
+            {added} <span className="text-slate-400">{t('stats.added')}</span>
+          </span>
+          <span className="text-sky-600">
+            {learnedWords.length} <span className="text-slate-400">{t('stats.learned')}</span>
           </span>
           <span className="text-emerald-600">
             {reviewed} <span className="text-slate-400">{t('stats.reviewed')}</span>
           </span>
         </div>
       </div>
-      {dayWords.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-400">{t('stats.dayEmpty')}</p>
-      ) : (
-        <ul className="divide-y divide-slate-100">
-          {dayWords.map((w) => (
-            <li key={w.id} className="flex items-baseline gap-2 py-2">
-              <span className="font-medium text-slate-800">{w.term}</span>
-              {w.meanings[0]?.value && (
-                <span className="text-sm text-slate-400">{w.meanings[0].value}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="grid gap-4 md:grid-cols-3">
+        <ActivityGroup title={t('stats.addedWords')} words={dayWords} onWord={setDetail} />
+        <ActivityGroup title={t('stats.learnedToday')} words={learnedWords} onWord={setDetail} />
+        <ActivityGroup title={t('stats.reviewedToday')} words={reviewedWords} onWord={setDetail} />
+      </div>
+      {detail && <Modal title={detail.term} onClose={() => setDetail(null)}><WordCardContent word={detail} orderedMeanings={orderMeanings(detail, meaningOrder)} revealed langCode={course?.target_language.code} meaningLangs={course ? [course.native_language, ...course.helper_languages] : []} targetLang={course?.target_language} /></Modal>}
     </div>
   )
+}
+
+function ActivityGroup({ title, words, onWord }: { title: string; words: Word[]; onWord: (word: Word) => void }) {
+  return <section className="rounded-xl border border-slate-100 bg-slate-50/60 p-3"><h3 className="mb-3 text-sm font-semibold text-slate-700">{title}</h3>{words.length ? <div className="grid gap-2">{words.map((word) => <button key={word.id} onClick={() => onWord(word)} className="flex cursor-pointer items-baseline gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition hover:border-violet-300 hover:bg-violet-50"><span className="font-medium text-slate-800">{word.term}</span>{word.meanings[0]?.value && <span className="truncate text-xs text-slate-400">{word.meanings[0].value}</span>}</button>)}</div> : <span className="text-sm text-slate-400">—</span>}</section>
 }

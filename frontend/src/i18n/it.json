@@ -24,6 +24,7 @@
     "resetConfirm": "Questo azzererà i progressi di ripasso. Cambiare in \"{{status}}\"?"
   },
   "review": {
+    "todayWords": "Parole di oggi", "nextSessionWords": "Parole della prossima sessione", "reviewedState": "Ripassata", "waitingState": "In attesa",
     "empty": "Nessuna parola da ripassare oggi.",
     "emptyHint": "Segna una parola come \"Imparata\" per aggiungerla al programma di ripasso (1·3·7·14·30 giorni).",
     "remaining": "{{n}} rimaste",
@@ -31,9 +32,12 @@
     "known": "La sapevo",
     "forgot": "Dimenticata",
     "finished": "Fatto per oggi!",
-    "finishedHint": "Hai ripassato {{n}} parole."
+    "finishedHint": "Hai ripassato {{n}} parole.",
+    "duePanel": "Da ripassare", "todayPanel": "Ripassate oggi", "sessionPanel": "Questa sessione", "ready": "{{n}} parole pronte.", "start": "Inizia ripasso", "meaningTitle": "Scrivi la parola adatta", "contextTitle": "Scrivi la parola che completa la frase", "correctAnswer": "Risposta corretta: {{word}}", "remediationChoice": "Scegli la parola corretta", "remediationTyping": "Scrivi di nuovo {{word}}", "skipNow": "Salta per ora", "failedWord": "Correggiamo brevemente {{word}}.", "fixNow": "Inizia correzione", "chooseFailureAction": "Come deve continuare {{word}}?", "keepStage": "Mantieni fase", "restart": "Ricomincia", "complete": "Completa sessione", "cancel": "Annulla sessione", "cancelConfirm": "Le parole completate restano; quelle incomplete rimangono da ripassare."
   },
   "learn": {
+    "todayWords": "Parole di oggi", "nextSessionWords": "Parole della prossima sessione", "learnedState": "Imparata", "waitingState": "In attesa",
+    "queuePanel": "Da imparare", "todayPanel": "Imparate oggi",
     "empty": "Nessuna parola da imparare.",
     "emptyHint": "Imposta una parola su \"In corso\" nella scheda Parole, oppure spunta \"Inizia subito a impararla\" quando la aggiungi.",
     "progress": "{{done}} / {{total}} parole",
@@ -61,6 +65,8 @@
     "retry": "Riprova"
   },
   "stats": {
+    "addedWords": "Parole aggiunte",
+    "learnedToday": "Imparate quel giorno", "reviewedToday": "Ripassate quel giorno",
     "month": "Mese",
     "week": "Settimana",
     "day": "Giorno",

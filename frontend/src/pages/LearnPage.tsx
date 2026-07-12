@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ApiError } from '../api/client'
+import { Modal } from '../components/Modal'
 import { orderMeanings, WordCardContent } from '../components/WordCardContent'
 import { useConfirm } from '../components/ConfirmProvider'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
@@ -32,6 +33,7 @@ export function LearnPage() {
 
   const query = useLearningSession(languageId)
   const { data: learningWords } = useWords(languageId, { status: 'learning' })
+  const { data: allWords } = useWords(languageId)
   const answer = useAnswerLearningSession(languageId)
   const complete = useCompleteLearningSession(languageId)
   const cancel = useCancelLearningSession(languageId)
@@ -54,10 +56,13 @@ export function LearnPage() {
 
   if (!session) {
     return (
-      <div className="card mx-auto flex w-full max-w-2xl flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
+      <div className="mx-auto w-full max-w-2xl space-y-4">
+      <LearnPanels session={session} learningWords={learningWords ?? []} allWords={allWords ?? []} meaningOrder={meaningOrder} course={course} t={t} />
+      <div className="card flex flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
         <span className="text-4xl">📚</span>
         <p className="font-medium text-slate-700">{t('learn.empty')}</p>
         <p className="max-w-sm text-sm text-slate-400">{t('learn.emptyHint')}</p>
+      </div>
       </div>
     )
   }
@@ -145,7 +150,9 @@ export function LearnPage() {
     const learnedCount = session.completed_word_ids?.length ?? 0
     const nextCount = learningWords?.length ?? 0
     return (
-      <div className="card mx-auto flex max-w-2xl flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
+      <div className="mx-auto max-w-2xl space-y-4">
+      <LearnPanels session={session} learningWords={learningWords ?? []} allWords={allWords ?? []} meaningOrder={meaningOrder} course={course} t={t} />
+      <div className="card flex flex-col items-center gap-2 border-dashed bg-white/50 p-12 text-center">
         <span className="text-4xl">{session.status === 'completed' ? '🌱' : '⏹️'}</span>
         <p className="font-medium text-slate-700">
           {t(session.status === 'completed' ? 'learn.doneTitle' : 'learn.cancelledTitle')}
@@ -163,6 +170,7 @@ export function LearnPage() {
           </button>
         )}
       </div>
+      </div>
     )
   }
 
@@ -170,6 +178,7 @@ export function LearnPage() {
     const checkedCount = session.summary_items.filter((item) => checked[item.word.id] ?? true).length
     return (
       <div className="mx-auto max-w-2xl space-y-4">
+        <LearnPanels session={session} learningWords={learningWords ?? []} allWords={allWords ?? []} meaningOrder={meaningOrder} course={course} t={t} />
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-800">{t('learn.summaryTitle')}</h2>
           <p className="mt-1 text-sm text-slate-500">{t('learn.summaryHint')}</p>
@@ -213,6 +222,7 @@ export function LearnPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
+      <LearnPanels session={session} learningWords={learningWords ?? []} allWords={allWords ?? []} meaningOrder={meaningOrder} course={course} t={t} />
       <div className="flex items-center gap-3">
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/70">
           <div
@@ -285,6 +295,29 @@ export function LearnPage() {
       </div>
     </div>
   )
+}
+
+function LearnPanels({ session, learningWords, allWords, meaningOrder, course, t }: any) {
+  const [kind, setKind] = useState<'next' | 'today' | null>(null)
+  const [detail, setDetail] = useState<Word | null>(null)
+  const today = new Date().toLocaleDateString('en-CA')
+  const learnedToday = allWords.filter((word: Word) => word.learned_at && new Date(`${word.learned_at}Z`).toLocaleDateString('en-CA') === today)
+  const nextWords: Word[] = session?.status === 'active'
+    ? session.items.map((item: { word: Word }) => item.word)
+    : learningWords.slice(0, 5)
+  const todayWords: Word[] = [...learnedToday, ...nextWords].filter(
+    (word, index, values) => values.findIndex((value) => value.id === word.id) === index,
+  )
+  const words = kind === 'today' ? todayWords : nextWords
+  const learnedIds = new Set(learnedToday.map((word: Word) => word.id))
+  return <>
+    <div className="flex flex-wrap gap-2">
+      <button className="cursor-pointer rounded-xl border bg-white px-3 py-2 text-sm" onClick={() => setKind('today')}>{t('learn.todayWords')} <b>{todayWords.length}</b></button>
+      <button className="cursor-pointer rounded-xl border bg-white px-3 py-2 text-sm" onClick={() => setKind('next')}>{t('learn.nextSessionWords')} <b>{nextWords.length}</b></button>
+    </div>
+    {kind && <Modal title={t(kind === 'today' ? 'learn.todayWords' : 'learn.nextSessionWords')} onClose={() => setKind(null)}><div className="grid gap-2">{words.map((word: Word) => { const done = learnedIds.has(word.id); return <button key={word.id} className="flex cursor-pointer items-center justify-between rounded-xl border p-3 text-left font-medium" onClick={() => setDetail(word)}><span>{word.term}</span><span className={done ? 'text-emerald-600' : 'text-amber-500'}>{done ? `✓ ${t('learn.learnedState')}` : '⏳'}</span></button> })}</div></Modal>}
+    {detail && <Modal title={detail.term} onClose={() => setDetail(null)}><WordCardContent word={detail} orderedMeanings={orderMeanings(detail, meaningOrder)} revealed langCode={course?.target_language.code} meaningLangs={course ? [course.native_language, ...course.helper_languages] : []} targetLang={course?.target_language} /></Modal>}
+  </>
 }
 
 function IntroStep({

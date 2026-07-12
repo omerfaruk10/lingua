@@ -9,3 +9,11 @@ export function useDailyStats(languageId: number) {
     enabled: languageId > 0,
   })
 }
+
+export function useDailyActivity(languageId: number, day: string) {
+  return useQuery({
+    queryKey: ['languages', languageId, 'stats', 'activity', day],
+    queryFn: () => statsApi.activity(languageId, day),
+    enabled: languageId > 0 && Boolean(day),
+  })
+}

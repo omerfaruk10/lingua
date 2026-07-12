@@ -24,6 +24,7 @@
     "resetConfirm": "Esto reiniciará el progreso de repaso. ¿Cambiar a \"{{status}}\"?"
   },
   "review": {
+    "todayWords": "Palabras de hoy", "nextSessionWords": "Palabras de la próxima sesión", "reviewedState": "Repasada", "waitingState": "Pendiente",
     "empty": "No hay palabras para repasar hoy.",
     "emptyHint": "Marca una palabra como \"Aprendida\" para añadirla al calendario de repaso (1·3·7·14·30 días).",
     "remaining": "{{n}} restantes",
@@ -31,9 +32,12 @@
     "known": "La sabía",
     "forgot": "La olvidé",
     "finished": "¡Listo por hoy!",
-    "finishedHint": "Repasaste {{n}} palabras."
+    "finishedHint": "Repasaste {{n}} palabras.",
+    "duePanel": "Por repasar", "todayPanel": "Repasadas hoy", "sessionPanel": "Esta sesión", "ready": "{{n}} palabras listas.", "start": "Empezar repaso", "meaningTitle": "Escribe la palabra adecuada", "contextTitle": "Escribe la palabra que completa la frase", "correctAnswer": "Respuesta correcta: {{word}}", "remediationChoice": "Elige la palabra correcta", "remediationTyping": "Escribe {{word}} otra vez", "skipNow": "Omitir por ahora", "failedWord": "Corrijamos brevemente {{word}}.", "fixNow": "Empezar corrección", "chooseFailureAction": "¿Cómo debe continuar {{word}}?", "keepStage": "Mantener etapa", "restart": "Reiniciar", "complete": "Completar sesión", "cancel": "Cancelar sesión", "cancelConfirm": "Se conservan las palabras completadas; las pendientes seguirán vencidas."
   },
   "learn": {
+    "todayWords": "Palabras de hoy", "nextSessionWords": "Palabras de la próxima sesión", "learnedState": "Aprendida", "waitingState": "Pendiente",
+    "queuePanel": "Por aprender", "todayPanel": "Aprendidas hoy",
     "empty": "No hay palabras en tu cola de aprendizaje.",
     "emptyHint": "Pon una palabra en \"Aprendiendo\" en la pestaña Palabras, o marca \"Empezar a aprenderla ya\" al añadirla.",
     "progress": "{{done}} / {{total}} palabras",
@@ -61,6 +65,8 @@
     "retry": "Intentar de nuevo"
   },
   "stats": {
+    "addedWords": "Palabras añadidas",
+    "learnedToday": "Aprendidas ese día", "reviewedToday": "Repasadas ese día",
     "month": "Mes",
     "week": "Semana",
     "day": "Día",
