@@ -44,3 +44,15 @@ def get_daily_stats(db: Session, course_id: int) -> list[dict]:
         )
         cur += timedelta(days=1)
     return result
+
+
+def get_daily_activity(db: Session, course_id: int, day: date) -> dict:
+    words = list(db.scalars(select(Word).where(Word.course_id == course_id)))
+    learned = [word for word in words if word.learned_at and _local_day(word.learned_at) == day]
+    events = list(db.scalars(select(ReviewEvent).where(ReviewEvent.course_id == course_id)))
+    reviewed_ids = []
+    for event in events:
+        if event.reviewed_at and _local_day(event.reviewed_at) == day and event.word_id not in reviewed_ids:
+            reviewed_ids.append(event.word_id)
+    by_id = {word.id: word for word in words}
+    return {"day": day, "learned_words": learned, "reviewed_words": [by_id[word_id] for word_id in reviewed_ids if word_id in by_id]}

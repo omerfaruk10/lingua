@@ -139,6 +139,7 @@ def ensure_schema() -> None:
             "antonyms": "ALTER TABLE words ADD COLUMN antonyms TEXT",
             "word_family": "ALTER TABLE words ADD COLUMN word_family TEXT",
             "accepted_answers": "ALTER TABLE words ADD COLUMN accepted_answers TEXT",
+            "review_retry_anchor_date": "ALTER TABLE words ADD COLUMN review_retry_anchor_date DATE",
         }
         missing = [sql for col, sql in word_additions.items() if col not in word_cols]
         if missing:
@@ -163,6 +164,34 @@ def ensure_schema() -> None:
     # olarak kalmis olabilir -- bu durumda yeni INSERT'ler NOT NULL ihlaliyle patlar.
     # Bagimsiz calismasi, gecmiste yarim kalmis bir gocumu de kendiliginden onarir.
     _drop_legacy_language_id_columns()
+    _ensure_review_session_schema()
+
+
+def _ensure_review_session_schema() -> None:
+    """V3 review tablolari/indexi ve legacy review_events nullable kolonlari."""
+    inspector = inspect(engine)
+    tables = set(inspector.get_table_names())
+    if "review_sessions" in tables:
+        with engine.begin() as conn:
+            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_review_sessions_active_course ON review_sessions(course_id) WHERE status = 'active'"))
+    if "review_events" not in tables:
+        return
+    cols = {c["name"] for c in inspector.get_columns("review_events")}
+    additions = {
+        "session_id": "ALTER TABLE review_events ADD COLUMN session_id INTEGER REFERENCES review_sessions(id) ON DELETE CASCADE",
+        "session_item_id": "ALTER TABLE review_events ADD COLUMN session_item_id INTEGER REFERENCES review_session_items(id) ON DELETE CASCADE",
+        "scheduled_date": "ALTER TABLE review_events ADD COLUMN scheduled_date DATE",
+        "completed_stage": "ALTER TABLE review_events ADD COLUMN completed_stage INTEGER",
+        "next_stage": "ALTER TABLE review_events ADD COLUMN next_stage INTEGER",
+        "resulting_review_date": "ALTER TABLE review_events ADD COLUMN resulting_review_date DATE",
+        "meaning_result": "ALTER TABLE review_events ADD COLUMN meaning_result VARCHAR(24)",
+        "context_result": "ALTER TABLE review_events ADD COLUMN context_result VARCHAR(24)",
+        "failure_action": "ALTER TABLE review_events ADD COLUMN failure_action VARCHAR(24)",
+    }
+    with engine.begin() as conn:
+        for name, sql in additions.items():
+            if name not in cols:
+                conn.execute(text(sql))
 
 
 def _ensure_ai_suggestion_cache_table() -> None:

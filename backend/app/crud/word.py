@@ -85,6 +85,7 @@ def apply_learning_status(word: Word, status: LearningStatus) -> None:
     else:  # new / learning: programda degil
         word.review_stage = 0
         word.next_review_date = None
+        word.review_retry_anchor_date = None
         word.learned_at = None
 
 
@@ -94,6 +95,10 @@ def set_learning_status(db: Session, word: Word, status: LearningStatus) -> Word
         from app.crud.learning_session import reconcile_word_leaving_learning
 
         reconcile_word_leaving_learning(db, word)
+    if word.learning_status == "learned" and status != "learned":
+        from app.crud.review_session import reconcile_word_leaving_review
+
+        reconcile_word_leaving_review(db, word)
     apply_learning_status(word, status)
     db.commit()
     db.refresh(word)
@@ -203,6 +208,9 @@ def delete_word(db: Session, word: Word) -> None:
 
     course_id = word.course_id
     invalidate_word_attempts(db, word)
+    from app.crud.review_session import reconcile_word_leaving_review
+
+    reconcile_word_leaving_review(db, word)
     db.delete(word)
     db.flush()
     reconcile_after_delete(db, course_id)

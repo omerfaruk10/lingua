@@ -292,6 +292,11 @@ def session_snapshot(db: Session, session: LearningSession) -> dict:
         },
         "current_task": current_task,
         "summary_items": summary_items,
+        "items": [
+            {"word": word, "item_status": item.item_status}
+            for item in items
+            if (word := db.get(Word, item.word_id)) is not None
+        ],
     }
 
 

@@ -71,6 +71,7 @@ class WordRead(WordBase):
     learning_status: LearningStatus
     review_stage: int
     next_review_date: date | None
+    review_retry_anchor_date: date | None
     learned_at: datetime | None
     created_at: datetime
     updated_at: datetime

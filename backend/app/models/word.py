@@ -45,6 +45,7 @@ class Word(Base):
     learning_status: Mapped[str] = mapped_column(String(20), default="new", index=True)
     review_stage: Mapped[int] = mapped_column(default=0)  # INTERVALS icindeki konum
     next_review_date: Mapped[date | None] = mapped_column(Date, default=None, index=True)
+    review_retry_anchor_date: Mapped[date | None] = mapped_column(Date, default=None)
     learned_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

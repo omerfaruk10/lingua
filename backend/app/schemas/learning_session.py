@@ -33,6 +33,11 @@ class LearningSummaryItemRead(BaseModel):
     mistake_count: int
 
 
+class LearningSessionItemRead(BaseModel):
+    word: WordRead
+    item_status: str
+
+
 class LearningSessionRead(BaseModel):
     id: int
     course_id: int
@@ -45,6 +50,7 @@ class LearningSessionRead(BaseModel):
     progress: LearningProgressRead
     current_task: LearningTaskRead | None = None
     summary_items: list[LearningSummaryItemRead] = []
+    items: list[LearningSessionItemRead] = []
 
 
 class LearningAnswerRequest(BaseModel):
