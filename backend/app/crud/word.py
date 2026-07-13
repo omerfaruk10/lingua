@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import case, func, or_, select
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from app.crud.label import create_label, get_labels
 from app.models.label import Label
@@ -15,6 +15,7 @@ from app.schemas.word import (
     WordImportRequest,
     WordImportResult,
     WordImportRowError,
+    WordSort,
     WordUpdate,
 )
 
@@ -28,6 +29,64 @@ def _utc_now_naive() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _word_conditions(
+    course_id: int,
+    search: str | None = None,
+    label_id: int | None = None,
+    status: LearningStatus | None = None,
+    level: str | None = None,
+    part_of_speech: str | None = None,
+) -> list:
+    conditions = [Word.course_id == course_id]
+    if search:
+        pattern = f"%{search}%"
+        conditions.append(
+            or_(
+                Word.term.ilike(pattern),
+                Word.meanings.any(WordMeaning.value.ilike(pattern)),
+            )
+        )
+    if label_id is not None:
+        conditions.append(Word.labels.any(Label.id == label_id))
+    if status is not None:
+        conditions.append(Word.learning_status == status)
+    if level is not None:
+        conditions.append(Word.level == level)
+    if part_of_speech is not None:
+        conditions.append(Word.part_of_speech == part_of_speech)
+    return conditions
+
+
+def _word_order(sort: WordSort):
+    level_rank = case(
+        (Word.level == "A1", 1),
+        (Word.level == "A2", 2),
+        (Word.level == "B1", 3),
+        (Word.level == "B2", 4),
+        (Word.level == "C1", 5),
+        (Word.level == "C2", 6),
+        else_=999,
+    )
+    level_rank_desc = case(
+        (Word.level == "A1", 1),
+        (Word.level == "A2", 2),
+        (Word.level == "B1", 3),
+        (Word.level == "B2", 4),
+        (Word.level == "C1", 5),
+        (Word.level == "C2", 6),
+        else_=-1,
+    )
+    orders = {
+        "created_desc": (Word.created_at.desc(), Word.id.desc()),
+        "created_asc": (Word.created_at.asc(), Word.id.asc()),
+        "term_asc": (func.lower(Word.term).asc(), Word.id.asc()),
+        "term_desc": (func.lower(Word.term).desc(), Word.id.desc()),
+        "level_asc": (level_rank.asc(), func.lower(Word.term).asc(), Word.id.asc()),
+        "level_desc": (level_rank_desc.desc(), func.lower(Word.term).asc(), Word.id.asc()),
+    }
+    return orders[sort]
+
+
 def get_words(
     db: Session,
     course_id: int,
@@ -37,25 +96,106 @@ def get_words(
     level: str | None = None,
     part_of_speech: str | None = None,
 ) -> list[Word]:
-    stmt = select(Word).where(Word.course_id == course_id)
-    if search:
-        pattern = f"%{search}%"
-        stmt = stmt.where(
-            or_(
-                Word.term.ilike(pattern),
-                Word.meanings.any(WordMeaning.value.ilike(pattern)),
-            )
+    stmt = select(Word).where(
+        *_word_conditions(
+            course_id,
+            search=search,
+            label_id=label_id,
+            status=status,
+            level=level,
+            part_of_speech=part_of_speech,
         )
-    if label_id is not None:
-        stmt = stmt.where(Word.labels.any(Label.id == label_id))
-    if status is not None:
-        stmt = stmt.where(Word.learning_status == status)
-    if level is not None:
-        stmt = stmt.where(Word.level == level)
-    if part_of_speech is not None:
-        stmt = stmt.where(Word.part_of_speech == part_of_speech)
+    )
     stmt = stmt.order_by(Word.created_at.asc(), Word.id.asc())  # en eski altta, yeni en alta eklenir
     return list(db.scalars(stmt))
+
+
+def get_word_page(
+    db: Session,
+    course_id: int,
+    native_language_id: int,
+    page: int,
+    page_size: int,
+    sort: WordSort,
+    search: str | None = None,
+    label_id: int | None = None,
+    status: LearningStatus | None = None,
+    level: str | None = None,
+    part_of_speech: str | None = None,
+) -> dict:
+    """Yonetim listesi icin hafif, sunucu tarafinda siralanmis sayfa."""
+    conditions = _word_conditions(
+        course_id,
+        search=search,
+        label_id=label_id,
+        status=status,
+        level=level,
+        part_of_speech=part_of_speech,
+    )
+    total = db.scalar(select(func.count()).select_from(Word).where(*conditions)) or 0
+    total_pages = (total + page_size - 1) // page_size if total else 0
+
+    stmt = (
+        select(Word)
+        .where(*conditions)
+        .options(
+            load_only(
+                Word.id,
+                Word.term,
+                Word.phonetic,
+                Word.phonetic_native,
+                Word.part_of_speech,
+                Word.level,
+                Word.learning_status,
+                Word.created_at,
+            ),
+            selectinload(Word.labels),
+            selectinload(Word.meanings),
+        )
+        .order_by(*_word_order(sort))
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    words = list(db.scalars(stmt))
+    items = []
+    for word in words:
+        primary = next(
+            (m.value for m in word.meanings if m.language_id == native_language_id),
+            None,
+        )
+        items.append(
+            {
+                "id": word.id,
+                "term": word.term,
+                "primary_meaning": primary,
+                "phonetic": word.phonetic,
+                "phonetic_native": word.phonetic_native,
+                "part_of_speech": word.part_of_speech,
+                "level": word.level,
+                "learning_status": word.learning_status,
+                "labels": sorted(word.labels, key=lambda label: (label.order_index, label.id)),
+            }
+        )
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": total_pages,
+    }
+
+
+def get_word_counts(db: Session, course_id: int) -> dict:
+    rows = db.execute(
+        select(Word.learning_status, func.count(Word.id))
+        .where(Word.course_id == course_id)
+        .group_by(Word.learning_status)
+    ).all()
+    counts = {"new": 0, "learning": 0, "learned": 0}
+    for status, count in rows:
+        if status in counts:
+            counts[status] = count
+    return {"total": sum(counts.values()), **counts}
 
 
 def get_due_words(db: Session, course_id: int) -> list[Word]:

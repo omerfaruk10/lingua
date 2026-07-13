@@ -7,6 +7,14 @@ from app.schemas.label import LabelRead
 
 LearningStatus = Literal["new", "learning", "learned"]
 WordLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
+WordSort = Literal[
+    "created_desc",
+    "created_asc",
+    "term_asc",
+    "term_desc",
+    "level_asc",
+    "level_desc",
+]
 
 
 class WordMeaningIn(BaseModel):
@@ -75,6 +83,35 @@ class WordRead(WordBase):
     learned_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class WordListItem(BaseModel):
+    """Kelime yonetim listesinin sabit yukseklikli satiri icin hafif DTO."""
+
+    id: int
+    term: str
+    primary_meaning: str | None = None
+    phonetic: str | None = None
+    phonetic_native: str | None = None
+    part_of_speech: str | None = None
+    level: WordLevel | None = None
+    learning_status: LearningStatus
+    labels: list[LabelRead] = []
+
+
+class WordPage(BaseModel):
+    items: list[WordListItem]
+    page: int
+    page_size: Literal[5, 10, 25, 50, 100]
+    total: int
+    total_pages: int
+
+
+class WordCounts(BaseModel):
+    total: int
+    new: int
+    learning: int
+    learned: int
 
 
 class WordSuggestRequest(BaseModel):

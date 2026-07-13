@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -7,12 +7,15 @@ from app.models.word import Word
 from app.schemas.word import (
     LearningStatus,
     WordCreate,
+    WordCounts,
     WordImportRequest,
     WordImportResult,
+    WordPage,
     WordRead,
     WordReviewRequest,
     WordSense,
     WordStatusUpdate,
+    WordSort,
     WordSuggestDetailsRequest,
     WordSuggestDetailsResponse,
     WordSuggestRequest,
@@ -85,7 +88,7 @@ def list_words(
     course_id: int,
     search: str | None = None,
     label_id: int | None = None,
-    status: LearningStatus | None = None,
+    learning_status: LearningStatus | None = Query(default=None, alias="status"),
     level: WordLevel | None = None,
     part_of_speech: str | None = None,
     db: Session = Depends(get_db),
@@ -96,10 +99,52 @@ def list_words(
         course_id,
         search=search,
         label_id=label_id,
-        status=status,
+        status=learning_status,
         level=level,
         part_of_speech=part_of_speech,
     )
+
+
+@router.get("/page", response_model=WordPage)
+def list_word_page(
+    course_id: int,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25),
+    sort: WordSort = "created_asc",
+    search: str | None = None,
+    label_id: int | None = None,
+    learning_status: LearningStatus | None = Query(default=None, alias="status"),
+    level: WordLevel | None = None,
+    part_of_speech: str | None = None,
+    db: Session = Depends(get_db),
+):
+    course = crud.course.get_course(db, course_id)
+    if course is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+    if page_size not in {5, 10, 25, 50, 100}:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="page_size must be one of 5, 10, 25, 50, 100",
+        )
+    return crud.word.get_word_page(
+        db,
+        course_id,
+        native_language_id=course.native_language_id,
+        page=page,
+        page_size=page_size,
+        sort=sort,
+        search=search,
+        label_id=label_id,
+        status=learning_status,
+        level=level,
+        part_of_speech=part_of_speech,
+    )
+
+
+@router.get("/counts", response_model=WordCounts)
+def word_counts(course_id: int, db: Session = Depends(get_db)):
+    _ensure_course(db, course_id)
+    return crud.word.get_word_counts(db, course_id)
 
 
 @router.post("", response_model=WordRead, status_code=status.HTTP_201_CREATED)

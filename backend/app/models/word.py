@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -13,6 +13,18 @@ if TYPE_CHECKING:
 
 class Word(Base):
     __tablename__ = "words"
+    __table_args__ = (
+        Index("ix_words_course_created_id", "course_id", "created_at", "id"),
+        Index(
+            "ix_words_course_status_created_id",
+            "course_id",
+            "learning_status",
+            "created_at",
+            "id",
+        ),
+        Index("ix_words_course_level", "course_id", "level"),
+        Index("ix_words_course_part_of_speech", "course_id", "part_of_speech"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     course_id: Mapped[int] = mapped_column(

@@ -89,6 +89,83 @@ def test_filter_by_level_and_part_of_speech(client, language):
     assert [w["term"] for w in by_pos] == ["gatto"]
 
 
+def test_paginated_word_list_is_lightweight_stable_and_filterable(client, language):
+    lid = language["id"]
+    native_id, _ = _ids(language)
+    created = []
+    for i in range(30):
+        payload = {
+            "term": f"word-{i:02d}",
+            "level": "B1" if i % 2 else "A1",
+            "meanings": [{"language_id": native_id, "value": f"anlam-{i:02d}"}],
+        }
+        created.append(client.post(f"/languages/{lid}/words", json=payload).json())
+    label = client.post(f"/languages/{lid}/labels", json={"name": "important"}).json()
+    client.post(f"/languages/{lid}/words/{created[-1]['id']}/labels/{label['id']}")
+
+    first = client.get(f"/languages/{lid}/words/page").json()
+    assert first["page"] == 1
+    assert first["page_size"] == 25
+    assert first["total"] == 30
+    assert first["total_pages"] == 2
+    assert [item["id"] for item in first["items"]] == [w["id"] for w in created[:25]]
+    assert first["items"][0]["primary_meaning"] == "anlam-00"
+    assert "definition_target" not in first["items"][0]
+
+    second_response = client.get(
+        f"/languages/{lid}/words/page", params={"page": 2, "page_size": 25}
+    )
+    assert second_response.status_code == 200, second_response.text
+    second = second_response.json()
+    assert [item["id"] for item in second["items"]] == [w["id"] for w in created[25:]]
+    assert [label["name"] for label in second["items"][-1]["labels"]] == ["important"]
+
+    newest = client.get(
+        f"/languages/{lid}/words/page", params={"sort": "created_desc"}
+    ).json()
+    assert newest["items"][0]["id"] == created[-1]["id"]
+
+    filtered = client.get(
+        f"/languages/{lid}/words/page",
+        params={"search": "word-1", "level": "B1", "sort": "term_asc"},
+    ).json()
+    assert [item["term"] for item in filtered["items"]] == [
+        "word-11",
+        "word-13",
+        "word-15",
+        "word-17",
+        "word-19",
+    ]
+
+
+def test_word_page_size_validation_and_counts(client, language):
+    lid = language["id"]
+    new_word = client.post(f"/languages/{lid}/words", json={"term": "new"}).json()
+    learning_word = client.post(f"/languages/{lid}/words", json={"term": "learning"}).json()
+    learned_word = client.post(f"/languages/{lid}/words", json={"term": "learned"}).json()
+    client.patch(
+        f"/languages/{lid}/words/{learning_word['id']}/status",
+        json={"status": "learning"},
+    )
+    client.patch(
+        f"/languages/{lid}/words/{learned_word['id']}/status",
+        json={"status": "learned"},
+    )
+
+    counts = client.get(f"/languages/{lid}/words/counts").json()
+    assert counts == {"total": 3, "new": 1, "learning": 1, "learned": 1}
+    assert new_word["learning_status"] == "new"
+    for page_size in (5, 10):
+        response = client.get(
+            f"/languages/{lid}/words/page", params={"page_size": page_size}
+        )
+        assert response.status_code == 200
+        assert response.json()["page_size"] == page_size
+    assert client.get(
+        f"/languages/{lid}/words/page", params={"page_size": 15}
+    ).status_code == 422
+
+
 def test_updated_at_changes(client, language):
     lid = language["id"]
     w = client.post(f"/languages/{lid}/words", json=_full(language)).json()

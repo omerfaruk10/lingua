@@ -165,6 +165,7 @@ def ensure_schema() -> None:
     # Bagimsiz calismasi, gecmiste yarim kalmis bir gocumu de kendiliginden onarir.
     _drop_legacy_language_id_columns()
     _ensure_review_session_schema()
+    _ensure_word_list_indexes()
 
 
 def _ensure_review_session_schema() -> None:
@@ -248,6 +249,37 @@ def _ensure_learning_session_indexes() -> None:
             text(
                 "CREATE UNIQUE INDEX IF NOT EXISTS uq_learning_sessions_active_course "
                 "ON learning_sessions(course_id) WHERE status = 'active'"
+            )
+        )
+
+
+def _ensure_word_list_indexes() -> None:
+    """Sayfali kelime listesi filtre ve siralamalari icin birlesik indeksler."""
+    if "words" not in inspect(engine).get_table_names():
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_words_course_created_id "
+                "ON words(course_id, created_at, id)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_words_course_status_created_id "
+                "ON words(course_id, learning_status, created_at, id)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_words_course_level "
+                "ON words(course_id, level)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_words_course_part_of_speech "
+                "ON words(course_id, part_of_speech)"
             )
         )
 
