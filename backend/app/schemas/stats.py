@@ -6,8 +6,8 @@ from app.schemas.word import WordRead
 
 class DailyStat(BaseModel):
     day: date
-    added: int  # o gun eklenen kelime sayisi
-    reviewed: int  # o gun yapilan tekrar sayisi
+    learned: int  # o gun ogrenilen kelime sayisi
+    reviewed: int  # o gun tekrar edilen benzersiz kelime sayisi
 
 
 class DailyActivity(BaseModel):

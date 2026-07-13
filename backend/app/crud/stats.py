@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -18,29 +18,42 @@ def _local_day(ts: datetime) -> date:
 
 
 def get_daily_stats(db: Session, course_id: int) -> list[dict]:
-    """Ilk aktiviteden bugune kadar kesintisiz gunluk seri (eklenen + tekrar).
+    """Ilk aktiviteden bugune kadar kesintisiz gunluk seri (ogrenilen + tekrar).
 
     Sifir gunler de dahil edilir ki takvim/heatmap bosluksuz olsun.
+    Tekrar sayisi olay sayisi degil, o gun tekrar edilen benzersiz kelime sayisidir.
     """
-    created = db.scalars(
-        select(Word.created_at).where(Word.course_id == course_id)
+    learned_ts = db.scalars(
+        select(Word.learned_at).where(
+            Word.course_id == course_id,
+            Word.learned_at.is_not(None),
+        )
     ).all()
-    reviewed_ts = db.scalars(
-        select(ReviewEvent.reviewed_at).where(ReviewEvent.course_id == course_id)
+    review_rows = db.execute(
+        select(ReviewEvent.word_id, ReviewEvent.reviewed_at).where(
+            ReviewEvent.course_id == course_id
+        )
     ).all()
 
-    added: Counter[date] = Counter(_local_day(ts) for ts in created if ts)
-    reviewed: Counter[date] = Counter(_local_day(ts) for ts in reviewed_ts if ts)
+    learned: Counter[date] = Counter(_local_day(ts) for ts in learned_ts if ts)
+    reviewed_words: defaultdict[date, set[int]] = defaultdict(set)
+    for word_id, reviewed_at in review_rows:
+        if reviewed_at:
+            reviewed_words[_local_day(reviewed_at)].add(word_id)
 
     today = datetime.now().date()
-    all_days = list(added.keys()) + list(reviewed.keys())
+    all_days = list(learned.keys()) + list(reviewed_words.keys())
     start = min(all_days) if all_days else today
 
     result: list[dict] = []
     cur = start
     while cur <= today:
         result.append(
-            {"day": cur, "added": added.get(cur, 0), "reviewed": reviewed.get(cur, 0)}
+            {
+                "day": cur,
+                "learned": learned.get(cur, 0),
+                "reviewed": len(reviewed_words.get(cur, set())),
+            }
         )
         cur += timedelta(days=1)
     return result

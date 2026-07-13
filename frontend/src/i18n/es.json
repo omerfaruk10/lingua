@@ -65,19 +65,16 @@
     "retry": "Intentar de nuevo"
   },
   "stats": {
-    "addedWords": "Palabras añadidas",
     "learnedToday": "Aprendidas ese día", "reviewedToday": "Repasadas ese día",
     "month": "Mes",
     "week": "Semana",
     "day": "Día",
     "totalWords": "Palabras totales",
-    "thisWeek": "Esta semana",
+    "learnedThisWeek": "Aprendidas esta semana",
     "learned": "Aprendidas",
     "streak": "Racha",
     "streakDays": "{{n}} días",
-    "added": "añadidas",
-    "reviewed": "repasos",
-    "dayEmpty": "No se añadieron palabras este día."
+    "reviewed": "repasos"
   },
   "languages": {
     "title": "Idiomas",

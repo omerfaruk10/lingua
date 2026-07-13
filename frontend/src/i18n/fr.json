@@ -65,19 +65,16 @@
     "retry": "Réessayer"
   },
   "stats": {
-    "addedWords": "Mots ajoutés",
     "learnedToday": "Appris ce jour-là", "reviewedToday": "Révisés ce jour-là",
     "month": "Mois",
     "week": "Semaine",
     "day": "Jour",
     "totalWords": "Mots au total",
-    "thisWeek": "Cette semaine",
+    "learnedThisWeek": "Appris cette semaine",
     "learned": "Appris",
     "streak": "Série",
     "streakDays": "{{n}} jours",
-    "added": "ajoutés",
-    "reviewed": "révisions",
-    "dayEmpty": "Aucun mot ajouté ce jour."
+    "reviewed": "révisions"
   },
   "languages": {
     "title": "Langues",

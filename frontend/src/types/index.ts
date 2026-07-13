@@ -45,7 +45,7 @@ export interface Label {
 
 export interface DailyStat {
   day: string // YYYY-MM-DD (yerel gun)
-  added: number
+  learned: number
   reviewed: number
 }
 export interface DailyActivity { day: string; learned_words: Word[]; reviewed_words: Word[] }

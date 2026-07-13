@@ -65,19 +65,16 @@
     "retry": "Erneut versuchen"
   },
   "stats": {
-    "addedWords": "Hinzugefügte Wörter",
     "learnedToday": "An diesem Tag gelernt", "reviewedToday": "An diesem Tag wiederholt",
     "month": "Monat",
     "week": "Woche",
     "day": "Tag",
     "totalWords": "Wörter gesamt",
-    "thisWeek": "Diese Woche",
+    "learnedThisWeek": "Diese Woche gelernt",
     "learned": "Gelernt",
     "streak": "Serie",
     "streakDays": "{{n}} Tage",
-    "added": "hinzugefügt",
-    "reviewed": "Wiederholungen",
-    "dayEmpty": "An diesem Tag keine Wörter hinzugefügt."
+    "reviewed": "Wiederholungen"
   },
   "languages": {
     "title": "Sprachen",

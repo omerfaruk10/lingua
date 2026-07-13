@@ -65,19 +65,16 @@
     "retry": "Try again"
   },
   "stats": {
-    "addedWords": "Added words",
     "learnedToday": "Words learned that day", "reviewedToday": "Words reviewed that day",
     "month": "Month",
     "week": "Week",
     "day": "Day",
     "totalWords": "Total words",
-    "thisWeek": "This week",
+    "learnedThisWeek": "Words learned this week",
     "learned": "Learned",
     "streak": "Streak",
     "streakDays": "{{n}} days",
-    "added": "added",
-    "reviewed": "reviews",
-    "dayEmpty": "No words added this day."
+    "reviewed": "reviews"
   },
   "languages": {
     "title": "Languages",

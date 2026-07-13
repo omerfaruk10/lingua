@@ -65,19 +65,16 @@
     "retry": "Tekrar dene"
   },
   "stats": {
-    "addedWords": "Eklenen kelimeler",
     "learnedToday": "O gün öğrenilen kelimeler", "reviewedToday": "O gün tekrar edilen kelimeler",
     "month": "Ay",
     "week": "Hafta",
     "day": "Gün",
     "totalWords": "Toplam kelime",
-    "thisWeek": "Bu hafta",
+    "learnedThisWeek": "Bu hafta öğrenilen",
     "learned": "Öğrenilen",
     "streak": "Seri",
     "streakDays": "{{n}} gün",
-    "added": "eklenen",
-    "reviewed": "tekrar",
-    "dayEmpty": "Bu gün eklenen kelime yok."
+    "reviewed": "tekrar"
   },
   "languages": {
     "title": "Diller",

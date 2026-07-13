@@ -65,19 +65,16 @@
     "retry": "Riprova"
   },
   "stats": {
-    "addedWords": "Parole aggiunte",
     "learnedToday": "Imparate quel giorno", "reviewedToday": "Ripassate quel giorno",
     "month": "Mese",
     "week": "Settimana",
     "day": "Giorno",
     "totalWords": "Parole totali",
-    "thisWeek": "Questa settimana",
+    "learnedThisWeek": "Imparate questa settimana",
     "learned": "Imparate",
     "streak": "Serie",
     "streakDays": "{{n}} giorni",
-    "added": "aggiunte",
-    "reviewed": "ripassi",
-    "dayEmpty": "Nessuna parola aggiunta in questo giorno."
+    "reviewed": "ripassi"
   },
   "languages": {
     "title": "Lingue",

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -21,6 +21,11 @@ from app.schemas.word import (
 # Aralikli tekrar merdiveni (gun). Bir kelime baslatildiginda 1 gun sonra,
 # sonra 3, 7, 14, 30 gun aralarla tekrar edilir; sonuncuyu gecince "ogrenildi".
 INTERVALS = [1, 3, 7, 14, 30]
+
+
+def _utc_now_naive() -> datetime:
+    """SQLite DateTime alanlari icin UTC, timezone bilgisiz zaman damgasi."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def get_words(
@@ -81,7 +86,7 @@ def apply_learning_status(word: Word, status: LearningStatus) -> None:
         if word.next_review_date is None and word.review_stage == 0:
             word.next_review_date = date.today() + timedelta(days=INTERVALS[0])
         if word.learned_at is None:
-            word.learned_at = datetime.now()
+            word.learned_at = _utc_now_naive()
     else:  # new / learning: programda degil
         word.review_stage = 0
         word.next_review_date = None
@@ -127,7 +132,7 @@ def review_word(db: Session, word: Word, result: str) -> Word:
 
     word.learning_status = "learned"
     if word.learned_at is None:
-        word.learned_at = datetime.now()
+        word.learned_at = _utc_now_naive()
 
     db.add(
         ReviewEvent(word_id=word.id, course_id=word.course_id, result=result)
