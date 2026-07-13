@@ -7,6 +7,15 @@ function base(languageId: number) {
   return ['languages', languageId, 'words'] as const
 }
 
+async function refreshStatusDependents(qc: ReturnType<typeof useQueryClient>, languageId: number) {
+  await Promise.all([
+    qc.invalidateQueries({ queryKey: base(languageId) }),
+    qc.invalidateQueries({ queryKey: ['languages', languageId, 'learning-session'] }),
+    qc.invalidateQueries({ queryKey: ['languages', languageId, 'review-overview'] }),
+    qc.invalidateQueries({ queryKey: ['languages', languageId, 'stats'] }),
+  ])
+}
+
 export function useWords(languageId: number, query?: WordQuery) {
   return useQuery({
     queryKey: [...base(languageId), query ?? {}],
@@ -59,7 +68,7 @@ export function useSetWordStatus(languageId: number) {
   return useMutation({
     mutationFn: ({ wordId, status }: { wordId: number; status: LearningStatus }) =>
       wordsApi.setStatus(languageId, wordId, status),
-    onSuccess: () => qc.invalidateQueries({ queryKey: base(languageId) }),
+    onSuccess: () => refreshStatusDependents(qc, languageId),
   })
 }
 

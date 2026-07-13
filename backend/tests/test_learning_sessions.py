@@ -35,6 +35,25 @@ def test_empty_course_does_not_create_session(client, language):
     assert response.status_code == 204
 
 
+def test_word_enters_learning_without_backend_restart_after_empty_result(client, language):
+    assert _current(client, language).status_code == 204
+
+    word = client.post(
+        f"/languages/{language['id']}/words",
+        json={"term": "immediate"},
+    ).json()
+    changed = client.patch(
+        f"/languages/{language['id']}/words/{word['id']}/status",
+        json={"status": "learning"},
+    )
+    assert changed.status_code == 200
+    assert changed.json()["learning_status"] == "learning"
+
+    current = _current(client, language)
+    assert current.status_code == 200
+    assert current.json()["current_task"]["word"]["id"] == word["id"]
+
+
 def test_current_session_is_persistent_and_uses_oldest_five(client, language):
     words = [_word(client, language, f"word-{i}") for i in range(7)]
     first = _current(client, language)
