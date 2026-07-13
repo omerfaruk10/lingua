@@ -101,7 +101,7 @@ export function ReviewPage() {
       ) : session.phase === 'testing' && session.current_task ? (
         <TestingCard task={session.current_task} answer={answer} setAnswer={setAnswer} feedback={feedback} submit={submit} t={t} />
       ) : session.phase === 'results_remediation' ? (
-        <ResultsCard session={session} actions={actions} update={update} answer={answer} setAnswer={setAnswer} submit={submit} t={t} />
+        <ResultsCard session={session} actions={actions} update={update} answer={answer} setAnswer={setAnswer} submit={submit} meaningOrder={meaningOrder} course={course} t={t} />
       ) : session.phase === 'terminal_ready' ? (
         <div className="card space-y-4 p-8 text-center">
           <p className="text-xl font-semibold">{t('review.finished')}</p>
@@ -111,7 +111,7 @@ export function ReviewPage() {
         </div>
       ) : null}
       {session?.status === 'active' && <button className="text-sm text-slate-400 hover:text-rose-600" onClick={cancel}>{t('review.cancel')}</button>}
-      {panel && <WordPanel title={t(panel === 'today' ? 'review.todayWords' : 'review.nextSessionWords')} words={panel === 'today' ? todayWords : nextWords} doneIds={reviewedIds} onClose={() => setPanel(null)} onWord={setDetail} t={t} />}
+      {panel && <WordPanel title={t(panel === 'today' ? 'review.todayWords' : 'review.nextSessionWords')} words={panel === 'today' ? todayWords : nextWords} doneIds={reviewedIds} onClose={() => setPanel(null)} onWord={setDetail} />}
       {detail && <WordDetail word={detail} meaningOrder={meaningOrder} course={course} onClose={() => setDetail(null)} />}
     </div>
   )
@@ -126,18 +126,21 @@ function TestingCard({ task, answer, setAnswer, feedback, submit, t }: any) {
   </div>
 }
 
-function ResultsCard({ session, actions, update, answer, setAnswer, submit, t }: any) {
+function ResultsCard({ session, actions, update, answer, setAnswer, submit, meaningOrder, course, t }: any) {
+  const [reviewingItemId, setReviewingItemId] = useState<number | null>(null)
   const task = session.current_task as ReviewTask | null
   if (task) {
-    if (task.question_type === 'remediation_choice') return <div className="card space-y-4 p-8 text-center"><p className="font-semibold">{t('review.remediationChoice')}</p><div className="grid gap-2">{task.options.map((option) => <button className="rounded-xl border p-3 hover:border-violet-400" key={option.word_id} onClick={() => submit(task, option.word_id)}>{option.term}</button>)}</div></div>
-    return <div className="card space-y-4 p-8 text-center"><p>{t('review.remediationTyping', { word: task.word.term })}</p><input className="input w-full" value={answer} onChange={(e) => setAnswer(e.target.value)} /><div className="flex gap-2"><button className="btn-primary flex-1" onClick={() => submit(task)}>{t('learn.check')}</button><button className="btn-secondary" onClick={() => submit(task, undefined, true)}>{t('review.skipNow')}</button></div></div>
+    if (task.question_type === 'remediation_choice') return <div className="card space-y-4 p-8 text-center"><p className="text-sm text-slate-400">{t('review.remediationChoice')}</p><p className="text-lg font-medium text-slate-700">{task.prompt}</p><div className="grid gap-2">{task.options.map((option) => <button className="cursor-pointer rounded-xl border p-3 hover:border-violet-400" key={option.word_id} onClick={() => submit(task, option.word_id)}>{option.term}</button>)}</div></div>
+    return <div className="card space-y-4 p-8 text-center"><p className="text-sm text-slate-400">{t('review.remediationTyping')}</p>{task.prompt && <p className="text-lg font-medium text-slate-700">{task.prompt}</p>}<input className="input w-full" value={answer} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && answer.trim() && submit(task)} /><div className="flex gap-2"><button className="btn-primary flex-1" disabled={!answer.trim()} onClick={() => submit(task)}>{t('learn.check')}</button><button className="btn-secondary" onClick={() => submit(task, undefined, true)}>{t('review.skipNow')}</button></div></div>
   }
   const failed = session.items.find((item: any) => item.item_status === 'initial_failed')
-  if (failed) return <div className="card space-y-4 p-8 text-center"><p>{t('review.failedWord', { word: failed.word.term })}</p><button className="btn-primary" onClick={() => update(() => actions.open.mutateAsync({ sessionId: session.id, itemId: failed.id }))}>{t('review.fixNow')}</button></div>
+  const reviewing = session.items.find((item: any) => item.id === reviewingItemId && item.item_status === 'initial_failed')
+  if (failed && reviewing) return <div className="card space-y-5 p-8"><WordCardContent word={reviewing.word} orderedMeanings={orderMeanings(reviewing.word, meaningOrder)} revealed langCode={course?.target_language.code} meaningLangs={course ? [course.native_language, ...course.helper_languages] : []} targetLang={course?.target_language} /><button className="btn-primary w-full" onClick={() => update(() => actions.open.mutateAsync({ sessionId: session.id, itemId: reviewing.id }))}>{t('learn.continue')}</button></div>
+  if (failed) return <div className="card space-y-4 p-8 text-center"><p>{t('review.failedWord', { word: failed.word.term })}</p><button className="btn-primary" onClick={() => setReviewingItemId(failed.id)}>{t('review.fixNow')}</button></div>
   const deciding = session.items.find((item: any) => item.item_status === 'awaiting_decision')
   return <div className="card space-y-4 p-8 text-center"><p>{t('review.chooseFailureAction', { word: deciding.word.term })}</p><div className="flex gap-2"><button className="btn-primary flex-1" onClick={() => update(() => actions.decide.mutateAsync({ sessionId: session.id, itemId: deciding.id, action: 'retry_tomorrow' }))}>{t('review.keepStage')}</button><button className="btn-secondary flex-1" onClick={() => update(() => actions.decide.mutateAsync({ sessionId: session.id, itemId: deciding.id, action: 'restart' }))}>{t('review.restart')}</button></div></div>
 }
 
 function PanelButton({ label, count, onClick }: { label: string; count: number; onClick: () => void }) { return <button onClick={onClick} className="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">{label} <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-violet-700">{count}</span></button> }
-function WordPanel({ title, words, doneIds, onClose, onWord, t }: { title: string; words: Word[]; doneIds: Set<number>; onClose: () => void; onWord: (w: Word) => void; t: (key: string) => string }) { return <Modal title={title} onClose={onClose}><div className="grid gap-2">{words.length ? words.map((word) => { const done = doneIds.has(word.id); return <button key={word.id} onClick={() => onWord(word)} className="flex cursor-pointer justify-between rounded-xl border p-3 text-left"><span className="font-medium">{word.term}</span><span className={done ? 'text-emerald-600' : 'text-amber-500'}>{done ? `✓ ${t('review.reviewedState')}` : '⏳'}</span></button> }) : <p className="text-sm text-slate-400">—</p>}</div></Modal> }
+function WordPanel({ title, words, doneIds, onClose, onWord }: { title: string; words: Word[]; doneIds: Set<number>; onClose: () => void; onWord: (w: Word) => void }) { return <Modal title={title} onClose={onClose}><div className="grid gap-2">{words.length ? words.map((word) => { const done = doneIds.has(word.id); return <button key={word.id} onClick={() => onWord(word)} className="flex cursor-pointer justify-between rounded-xl border p-3 text-left"><span className="font-medium">{word.term}</span><span className={done ? 'text-emerald-600' : 'text-amber-500'}>{done ? '✓' : '⏳'}</span></button> }) : <p className="text-sm text-slate-400">—</p>}</div></Modal> }
 function WordDetail({ word, meaningOrder, course, onClose }: any) { return <Modal title={word.term} onClose={onClose}><WordCardContent word={word} orderedMeanings={orderMeanings(word, meaningOrder)} revealed langCode={course?.target_language.code} meaningLangs={course ? [course.native_language, ...course.helper_languages] : []} targetLang={course?.target_language} /></Modal> }

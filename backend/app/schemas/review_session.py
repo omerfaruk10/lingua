@@ -55,7 +55,13 @@ class ReviewAnswerResponse(BaseModel):
 class ReviewDecisionRequest(BaseModel):
     action: Literal["retry_tomorrow", "restart"]
 
+class ReviewedTodayRead(BaseModel):
+    word: WordRead
+    result: str
+    reviewed_at: str
+    next_review_date: str | None
+
 class ReviewOverviewRead(BaseModel):
     active_session: ReviewSessionRead | None
     waiting_due_words: list[WordRead]
-    reviewed_today: list[dict]
+    reviewed_today: list[ReviewedTodayRead]

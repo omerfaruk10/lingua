@@ -1,6 +1,5 @@
 import json
 import random
-import re
 import uuid
 from datetime import date, datetime, time, timedelta
 
@@ -10,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.crud.learning_session import (
     _accepted_answers,
     _distractor_ids,
+    _mask_example_sentence,
     _normalize,
     _prompt_for,
     _strip_marks,
@@ -63,14 +63,25 @@ def _items(db: Session, session_id: int) -> list[ReviewSessionItem]:
 
 
 def _pending_initial(db: Session, session_id: int) -> ReviewSessionItem | None:
-    return db.scalar(
-        select(ReviewSessionItem)
-        .where(
-            ReviewSessionItem.session_id == session_id,
-            ReviewSessionItem.item_status == "pending",
+    items = list(
+        db.scalars(
+            select(ReviewSessionItem)
+            .where(
+                ReviewSessionItem.session_id == session_id,
+                ReviewSessionItem.item_status == "pending",
+            )
+            .order_by(ReviewSessionItem.queue_position, ReviewSessionItem.id)
         )
-        .order_by(ReviewSessionItem.queue_position, ReviewSessionItem.id)
-        .limit(1)
+    )
+    if not items:
+        return None
+    return min(
+        items,
+        key=lambda item: (
+            0 if item.current_step == "meaning" else 1,
+            item.queue_position,
+            item.id,
+        ),
     )
 
 
@@ -95,13 +106,16 @@ def _clear_attempt(item: ReviewSessionItem) -> None:
     item.current_option_word_ids = None
 
 
-def _context_prompt(word: Word) -> str | None:
-    if not word.example_sentence:
-        return None
-    pattern = re.compile(rf"(?<!\w){re.escape(word.term)}(?!\w)", re.IGNORECASE)
-    if not pattern.search(word.example_sentence):
-        return None
-    return pattern.sub("___", word.example_sentence, count=1)
+def _context_prompt(word: Word, course: Course) -> str | None:
+    return _mask_example_sentence(
+        word.term,
+        word.example_sentence or "",
+        course.target_language.code,
+    )
+
+
+def _remediation_prompt(word: Word, course: Course) -> str | None:
+    return _context_prompt(word, course) or _prompt_for(word, course)
 
 
 def _add_missing_data_attempt(
@@ -215,7 +229,7 @@ def _prepare_initial(db: Session, session: ReviewSession) -> None:
             item.current_step = "context"
             db.flush()
             continue
-        if item.current_step == "context" and _context_prompt(word) is None:
+        if item.current_step == "context" and _context_prompt(word, course) is None:
             _add_missing_data_attempt(db, session, item, word, "context")
             item.current_step = "done"
             _finish_initial(db, session, item, word)
@@ -253,7 +267,11 @@ def snapshot(db: Session, session: ReviewSession) -> dict:
         if current.current_step == "meaning":
             prompt = _prompt_for(word, course)
         elif current.current_step == "context":
-            prompt = _context_prompt(word)
+            prompt = _context_prompt(word, course)
+        elif current.current_step == "remediation_choice":
+            prompt = _prompt_for(word, course)
+        elif current.current_step == "remediation_typing":
+            prompt = _remediation_prompt(word, course)
         task = {
             "attempt_token": current.current_attempt_token,
             "question_type": current.current_step,
