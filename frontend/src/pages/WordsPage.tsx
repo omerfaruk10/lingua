@@ -575,7 +575,7 @@ function WordListRow({
 
   return (
     <li
-      className="group cursor-pointer rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-md focus-within:border-violet-300 sm:p-4"
+      className="group relative cursor-pointer rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-md focus-within:z-50 focus-within:border-violet-300 sm:p-4"
       onClick={onPreview}
       onKeyDown={(event) => {
         if (event.key === 'Enter' && event.target === event.currentTarget) onPreview()
@@ -732,13 +732,13 @@ function WordStatusDropdown({
         {t(`learning.${status}`)} <span className="opacity-60">▾</span>
       </button>
       {open && (
-        <div className="absolute right-0 z-30 mt-1 min-w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+        <div className="absolute right-0 z-[60] mt-1 min-w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
           {LEARNING_STATUSES.map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => pick(option)}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium hover:bg-slate-50 ${option === status ? 'text-violet-700' : 'text-slate-600'}`}
+              className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium hover:bg-slate-50 ${option === status ? 'text-violet-700' : 'text-slate-600'}`}
             >
               <span className="w-3">{option === status ? '✓' : ''}</span>
               {t(`learning.${option}`)}
