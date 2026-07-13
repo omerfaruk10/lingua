@@ -126,6 +126,7 @@
   "words": {
     "searchPlaceholder": "Search words…",
     "export": "Export",
+    "exporting": "Exporting…",
     "exportConfirm": "Export {{n}} words as CSV?",
     "add": "Add word",
     "addTitle": "Add a word",
@@ -196,6 +197,16 @@
     },
     "filters": "Filters",
     "sort": "Sort",
+    "preview": "Preview",
+    "previousWord": "Previous word",
+    "nextWord": "Next word",
+    "moreActions": "More actions",
+    "resultCount": "{{n}} words",
+    "resultRange": "{{start}}–{{end}} of {{total}}",
+    "perPage": "Per page",
+    "pagination": "Word pages",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
     "pronunciationNoteIn": "How to pronounce it ({{lang}})",
     "sortOptions": {
       "created_desc": "Newest first",
@@ -219,7 +230,8 @@
     "addToWord": "Add label",
     "noneToAdd": "No more labels — create them in the Labels tab.",
     "all": "All",
-    "filterByLabel": "Filter by label"
+    "filterByLabel": "Filter by label",
+    "noneAssigned": "No labels assigned"
   },
   "backend": {
     "checking": "Checking backend…",
@@ -246,8 +258,11 @@
   "common": {
     "add": "Add",
     "save": "Save",
+    "saving": "Saving…",
+    "adding": "Adding…",
     "cancel": "Cancel",
     "delete": "Delete",
+    "remove": "Remove",
     "edit": "Edit",
     "search": "Search",
     "loading": "Loading…",

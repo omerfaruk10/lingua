@@ -126,6 +126,7 @@
   "words": {
     "searchPlaceholder": "Kelime ara…",
     "export": "Dışa aktar",
+    "exporting": "Dışa aktarılıyor…",
     "exportConfirm": "{{n}} kelime CSV olarak dışa aktarılsın mı?",
     "add": "Kelime ekle",
     "addTitle": "Kelime ekle",
@@ -196,6 +197,16 @@
     },
     "filters": "Filtreler",
     "sort": "Sırala",
+    "preview": "Önizle",
+    "previousWord": "Önceki kelime",
+    "nextWord": "Sonraki kelime",
+    "moreActions": "Diğer işlemler",
+    "resultCount": "{{n}} kelime",
+    "resultRange": "{{total}} kelimeden {{start}}–{{end}} arası",
+    "perPage": "Sayfa başına",
+    "pagination": "Kelime sayfaları",
+    "previousPage": "Önceki sayfa",
+    "nextPage": "Sonraki sayfa",
     "pronunciationNoteIn": "Nasıl okunur? ({{lang}})",
     "sortOptions": {
       "created_desc": "En yeni önce",
@@ -219,7 +230,8 @@
     "addToWord": "Etiket ekle",
     "noneToAdd": "Başka etiket yok — Etiketler sekmesinden oluştur.",
     "all": "Tümü",
-    "filterByLabel": "Etikete göre filtrele"
+    "filterByLabel": "Etikete göre filtrele",
+    "noneAssigned": "Etiket atanmamış"
   },
   "backend": {
     "checking": "Backend kontrol ediliyor…",
@@ -246,8 +258,11 @@
   "common": {
     "add": "Ekle",
     "save": "Kaydet",
+    "saving": "Kaydediliyor…",
+    "adding": "Ekleniyor…",
     "cancel": "İptal",
     "delete": "Sil",
+    "remove": "Kaldır",
     "edit": "Düzenle",
     "search": "Ara",
     "loading": "Yükleniyor…",

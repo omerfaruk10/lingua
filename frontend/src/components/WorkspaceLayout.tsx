@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, NavLink, Outlet, useParams } from 'react-router-dom'
 
 import { useLanguages } from '../hooks/useLanguages'
-import { useDueWords, useWords } from '../hooks/useWords'
+import { LoadingState } from './LoadingBar'
+import { useDueWords, useWordCounts } from '../hooks/useWords'
 import { findCourseBySlug } from '../lib/courseSlug'
 import { langName } from '../lib/langName'
 import { clearSelectedCourseSlug, getSelectedCourseSlug } from '../lib/selectedLanguage'
@@ -26,9 +27,9 @@ export function WorkspaceLayout() {
   const language = findCourseBySlug(languages ?? [], slug)
   const dueCount = useDueWords(language?.id ?? 0).data?.length ?? 0
   // Ogrenme kuyrugu rozeti: 'ogreniliyor' durumundaki kelime sayisi.
-  const learningCount = useWords(language?.id ?? 0, { status: 'learning' }).data?.length ?? 0
+  const learningCount = useWordCounts(language?.id ?? 0).data?.learning ?? 0
 
-  if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
+  if (isLoading) return <LoadingState label={t('common.loading')} />
   if (!language) {
     if (getSelectedCourseSlug() === slug) clearSelectedCourseSlug()
     return <Navigate to="/languages" replace />
@@ -59,20 +60,21 @@ export function WorkspaceLayout() {
         </div>
         <Link
           to="/languages"
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-sm font-medium text-slate-500 shadow-sm transition hover:border-violet-200 hover:text-violet-600"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-2.5 py-1.5 text-sm font-medium text-slate-500 shadow-sm transition hover:border-violet-200 hover:text-violet-600 sm:px-3"
+          title={t('workspace.switchLanguage')}
         >
           <span className="text-base leading-none">⇄</span>
-          {t('workspace.switchLanguage')}
+          <span className="hidden sm:inline">{t('workspace.switchLanguage')}</span>
         </Link>
       </div>
 
-      <nav className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200/70 bg-white/60 p-1 backdrop-blur-sm">
+      <nav className="grid w-full grid-flow-col auto-cols-[minmax(7rem,1fr)] gap-1 overflow-x-auto rounded-xl border border-slate-200/70 bg-white/60 p-1 backdrop-blur-sm">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `flex items-center justify-center gap-1.5 rounded-lg px-5 py-2 text-center text-sm font-medium transition ${
+              `flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-center text-sm font-medium transition ${
                 isActive
                   ? 'bg-white text-violet-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-800'

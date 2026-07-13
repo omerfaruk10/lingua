@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { wordsApi, type WordImportRequest, type WordInput, type WordQuery } from '../api/words'
+import { wordsApi, type WordImportRequest, type WordInput, type WordPageQuery, type WordQuery } from '../api/words'
 import type { LearningStatus } from '../types'
 
 function base(languageId: number) {
@@ -11,6 +11,37 @@ export function useWords(languageId: number, query?: WordQuery) {
   return useQuery({
     queryKey: [...base(languageId), query ?? {}],
     queryFn: () => wordsApi.list(languageId, query),
+    enabled: languageId > 0,
+  })
+}
+
+export function wordPageQueryOptions(languageId: number, query: WordPageQuery) {
+  return queryOptions({
+    queryKey: [...base(languageId), 'page', query],
+    queryFn: () => wordsApi.page(languageId, query),
+    enabled: languageId > 0,
+  })
+}
+
+export function useWordPage(languageId: number, query: WordPageQuery) {
+  return useQuery({
+    ...wordPageQueryOptions(languageId, query),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useWordDetail(languageId: number, wordId: number | null) {
+  return useQuery({
+    queryKey: [...base(languageId), 'detail', wordId],
+    queryFn: () => wordsApi.get(languageId, wordId!),
+    enabled: languageId > 0 && wordId != null,
+  })
+}
+
+export function useWordCounts(languageId: number) {
+  return useQuery({
+    queryKey: [...base(languageId), 'counts'],
+    queryFn: () => wordsApi.counts(languageId),
     enabled: languageId > 0,
   })
 }

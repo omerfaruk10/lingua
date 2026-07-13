@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Modal } from '../components/Modal'
+import { LoadingState } from '../components/LoadingBar'
 import { orderMeanings, WordCardContent } from '../components/WordCardContent'
 import { useConfirm } from '../components/ConfirmProvider'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
@@ -66,7 +67,7 @@ export function ReviewPage() {
     catch (cause) { setError(translateApiError(t, cause)) }
   }
 
-  if (query.isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
+  if (query.isLoading) return <LoadingState label={t('common.loading')} />
   if (query.isError) return <p className="text-rose-600">{translateApiError(t, query.error)}</p>
 
   const overview = query.data

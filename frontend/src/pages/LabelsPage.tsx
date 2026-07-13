@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { useConfirm } from '../components/ConfirmProvider'
 import { LabelBadge } from '../components/LabelBadge'
 import { LABEL_PALETTE } from '../components/labelColors'
+import { LoadingState } from '../components/LoadingBar'
 import { Modal } from '../components/Modal'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useCreateLabel, useDeleteLabel, useLabels, useUpdateLabel } from '../hooks/useLabels'
@@ -126,7 +127,7 @@ export function LabelsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-slate-400">{t('common.loading')}</p>
+        <LoadingState label={t('common.loading')} />
       ) : localList.length === 0 ? (
         <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">🏷️</span>

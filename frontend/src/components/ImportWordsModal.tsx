@@ -147,30 +147,33 @@ export function ImportWordsModal({
               i
             </span>
           </div>
-          <div
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.txt"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleFile(file)
+            }}
+            className="hidden"
+          />
+          <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition ${
+            className={`group flex min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center outline-none transition focus-visible:border-violet-400 focus-visible:ring-4 focus-visible:ring-violet-500/10 ${
               dragOver
-                ? 'border-violet-400 bg-violet-50'
-                : 'border-slate-200 bg-slate-50/50 hover:border-violet-300 hover:bg-violet-50/40'
+                ? 'border-violet-400 bg-violet-50/80 shadow-inner'
+                : 'border-slate-200 bg-slate-50/60 hover:border-violet-300 hover:bg-violet-50/50'
             }`}
           >
-            <span className="text-2xl">⤓</span>
-            <p className="text-sm text-slate-600">{t('words.importDropHint')}</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.txt"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) handleFile(file)
-              }}
-              className="hidden"
-            />
-          </div>
+            <span className="grid h-12 w-12 place-items-center rounded-2xl border border-violet-100 bg-white text-violet-600 shadow-sm shadow-violet-900/5 transition group-hover:-translate-y-0.5 group-hover:border-violet-200 group-hover:shadow-md group-hover:shadow-violet-900/10">
+              <ImportFileIcon />
+            </span>
+            <span className="text-sm leading-6 text-slate-600">{t('words.importDropHint')}</span>
+          </button>
           {fatalError && <p className="text-sm text-red-500">{fatalError}</p>}
         </div>
       ) : (
@@ -268,5 +271,14 @@ export function ImportWordsModal({
         </div>
       )}
     </Modal>
+  )
+}
+
+function ImportFileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-6 w-6" aria-hidden="true">
+      <path d="M12 3v11m0 0 4-4m-4 4-4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3" strokeLinecap="round" />
+    </svg>
   )
 }

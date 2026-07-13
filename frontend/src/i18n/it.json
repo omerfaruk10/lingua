@@ -126,6 +126,7 @@
   "words": {
     "searchPlaceholder": "Cerca parole…",
     "export": "Esporta",
+    "exporting": "Esportazione…",
     "exportConfirm": "Esportare {{n}} parole come CSV?",
     "add": "Aggiungi parola",
     "addTitle": "Aggiungi una parola",
@@ -196,6 +197,16 @@
     },
     "filters": "Filtri",
     "sort": "Ordina",
+    "preview": "Anteprima",
+    "previousWord": "Parola precedente",
+    "nextWord": "Parola successiva",
+    "moreActions": "Altre azioni",
+    "resultCount": "{{n}} parole",
+    "resultRange": "{{start}}–{{end}} di {{total}}",
+    "perPage": "Per pagina",
+    "pagination": "Pagine delle parole",
+    "previousPage": "Pagina precedente",
+    "nextPage": "Pagina successiva",
     "pronunciationNoteIn": "Come si pronuncia? ({{lang}})",
     "sortOptions": {
       "created_desc": "Più recenti prima",
@@ -219,7 +230,8 @@
     "addToWord": "Aggiungi etichetta",
     "noneToAdd": "Nessun'altra etichetta — creale nella scheda Etichette.",
     "all": "Tutte",
-    "filterByLabel": "Filtra per etichetta"
+    "filterByLabel": "Filtra per etichetta",
+    "noneAssigned": "Nessuna etichetta assegnata"
   },
   "backend": {
     "checking": "Controllo del backend…",
@@ -246,8 +258,11 @@
   "common": {
     "add": "Aggiungi",
     "save": "Salva",
+    "saving": "Salvataggio…",
+    "adding": "Aggiunta…",
     "cancel": "Annulla",
     "delete": "Elimina",
+    "remove": "Rimuovi",
     "edit": "Modifica",
     "search": "Cerca",
     "loading": "Caricamento…",

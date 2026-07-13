@@ -12,7 +12,7 @@ export function LabelBadge({ label, onRemove }: { label: Label; onRemove?: () =>
         <button
           type="button"
           onClick={onRemove}
-          className="leading-none text-white/80 hover:text-white"
+          className="cursor-pointer leading-none text-white/80 hover:text-white"
           aria-label="remove"
         >
           ×

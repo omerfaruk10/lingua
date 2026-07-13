@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { LoadingState } from '../components/LoadingBar'
 import { Modal } from '../components/Modal'
 import { orderMeanings, WordCardContent } from '../components/WordCardContent'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useDailyActivity, useDailyStats } from '../hooks/useStats'
-import { useWords } from '../hooks/useWords'
+import { useWordCounts } from '../hooks/useWords'
 import type { DailyStat, Word } from '../types'
 
 type View = 'month' | 'week' | 'day'
@@ -36,7 +37,7 @@ export function StatsPage() {
   const { t, i18n } = useTranslation()
   const languageId = useLanguageId()
   const { data: stats, isLoading } = useDailyStats(languageId)
-  const { data: words } = useWords(languageId)
+  const { data: wordCounts } = useWordCounts(languageId)
 
   const [view, setView] = useState<View>('month')
   const today = new Date()
@@ -50,11 +51,9 @@ export function StatsPage() {
     return m
   }, [stats])
 
-  const allWords = words ?? []
-
   // ---- ozet ----
-  const totalWords = allWords.length
-  const learnedCount = allWords.filter((w) => w.learning_status === 'learned').length
+  const totalWords = wordCounts?.total ?? 0
+  const learnedCount = wordCounts?.learned ?? 0
   const weekLearned = useMemo(() => {
     let sum = 0
     for (let i = 0; i < 7; i++) sum += byDay.get(dayKey(addDays(today, -i)))?.learned ?? 0
@@ -83,7 +82,7 @@ export function StatsPage() {
     setView('day')
   }
 
-  if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
+  if (isLoading) return <LoadingState label={t('common.loading')} />
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -213,7 +212,7 @@ function MonthView({
               onClick={() => onPickDay(key)}
               title={`${d}: ${learned}`}
               aria-current={isToday ? 'date' : undefined}
-              className={`flex aspect-square items-center justify-center rounded-lg text-xs font-medium transition hover:ring-2 hover:ring-violet-300 ${shade(learned)} ${isToday ? 'outline-2 outline-offset-2 outline-violet-500' : ''}`}
+              className={`flex aspect-square cursor-pointer items-center justify-center rounded-lg text-xs font-medium transition hover:scale-[1.03] hover:ring-2 hover:ring-violet-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${shade(learned)} ${isToday ? 'outline-2 outline-offset-2 outline-violet-500' : ''}`}
             >
               {d}
             </button>
@@ -235,6 +234,7 @@ function WeekView({
   onPickDay: (key: string) => void
   t: (k: string) => string
 }) {
+  const [activeDay, setActiveDay] = useState<string | null>(null)
   const today = new Date()
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, -6 + i))
   const data = days.map((d) => {
@@ -253,8 +253,6 @@ function WeekView({
   const y = (v: number) => base - (v / max) * chartH
   const cx = (i: number) => col * i + col / 2
 
-  const linePts = data.map((d, i) => `${cx(i)},${y(d.reviewed)}`).join(' ')
-
   return (
     <div className="card p-4">
       {/* Aciklama */}
@@ -266,28 +264,92 @@ function WeekView({
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> {t('stats.reviewed')}
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
+      <div className="relative">
+      <svg viewBox={`0 0 ${W} ${H}`} className="pointer-events-none w-full" role="img">
+        {data.map((d, i) => d.key === activeDay && (
+          <rect
+            key={`highlight-${d.key}`}
+            x={col * i + 5}
+            y={4}
+            width={col - 10}
+            height={H - 8}
+            rx={14}
+            fill="#f5f3ff"
+          />
+        ))}
         {data.map((d, i) => {
           const h = base - y(d.learned)
+          const active = d.key === activeDay
+          const width = active ? 38 : barW
+          const grow = active && d.learned > 0 ? 3 : 0
           return (
-            <g key={d.key} className="cursor-pointer" onClick={() => onPickDay(d.key)}>
-              <rect x={cx(i) - barW / 2} y={y(d.learned)} width={barW} height={Math.max(0, h)} rx={6} fill="#8b5cf6" />
+            <g key={d.key} className="pointer-events-none">
+              <rect
+                x={cx(i) - width / 2}
+                y={y(d.learned) - grow}
+                width={width}
+                height={Math.max(0, h + grow)}
+                rx={active ? 8 : 6}
+                fill={active ? '#7c3aed' : '#8b5cf6'}
+                className="transition-all duration-200"
+              />
               {d.learned > 0 && (
-                <text x={cx(i)} y={y(d.learned) - 6} textAnchor="middle" fontSize="13" fill="#7c3aed" fontWeight="600">
+                <text x={cx(i)} y={y(d.learned) - 8 - grow} textAnchor="middle" fontSize={active ? 14 : 13} fill="#7c3aed" fontWeight="600" className="transition-all duration-200">
                   {d.learned}
                 </text>
               )}
-              <text x={cx(i)} y={H - 10} textAnchor="middle" fontSize="12" fill="#94a3b8">
+              <text x={cx(i)} y={H - 10} textAnchor="middle" fontSize="12" fill={active ? '#6d28d9' : '#94a3b8'} fontWeight={active ? 600 : 400} className="transition-all duration-200">
                 {weekdayNames[(d.date.getDay() + 6) % 7]}
               </text>
             </g>
           )
         })}
-        <polyline points={linePts} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-        {data.map((d, i) => (
-          <circle key={`c${d.key}`} cx={cx(i)} cy={y(d.reviewed)} r="3.5" fill="#10b981" />
-        ))}
+        {data.slice(0, -1).map((d, i) => {
+          const emphasized = activeDay === d.key || activeDay === data[i + 1].key
+          return (
+            <line
+              key={`line-${d.key}`}
+              x1={cx(i)}
+              y1={y(d.reviewed)}
+              x2={cx(i + 1)}
+              y2={y(data[i + 1].reviewed)}
+              stroke={emphasized ? '#059669' : '#10b981'}
+              strokeWidth={emphasized ? 4 : 2.5}
+              strokeLinecap="round"
+              className="pointer-events-none transition-all duration-200"
+            />
+          )
+        })}
+        {data.map((d, i) => {
+          const active = d.key === activeDay
+          return (
+            <g key={`point-${d.key}`} className="pointer-events-none">
+              {active && <circle cx={cx(i)} cy={y(d.reviewed)} r="10" fill="#10b981" opacity="0.14" />}
+              <circle cx={cx(i)} cy={y(d.reviewed)} r={active ? 6 : 3.5} fill={active ? '#059669' : '#10b981'} className="transition-all duration-200" />
+            </g>
+          )
+        })}
       </svg>
+        <div className="absolute inset-0 grid grid-cols-7">
+          {data.map((d) => {
+            const dayName = weekdayNames[(d.date.getDay() + 6) % 7]
+            const label = `${dayName}: ${d.learned} ${t('stats.learned')}, ${d.reviewed} ${t('stats.reviewed')}`
+            return (
+              <button
+                key={`hit-${d.key}`}
+                type="button"
+                className="cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400"
+                aria-label={label}
+                onMouseEnter={() => setActiveDay(d.key)}
+                onMouseLeave={() => setActiveDay(null)}
+                onFocus={() => setActiveDay(d.key)}
+                onBlur={() => setActiveDay(null)}
+                onClick={() => onPickDay(d.key)}
+              />
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { useConfirm } from '../components/ConfirmProvider'
+import { LoadingState } from '../components/LoadingBar'
 import { Modal } from '../components/Modal'
 import { useLanguageId } from '../components/WorkspaceLayout'
 import { useCreateTopic, useDeleteTopic, useTopics, useUpdateTopic } from '../hooks/useTopics'
@@ -135,7 +136,7 @@ export function TopicsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-slate-400">{t('common.loading')}</p>
+        <LoadingState label={t('common.loading')} />
       ) : list.length === 0 ? (
         <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
           <span className="text-3xl">📚</span>

@@ -263,6 +263,8 @@ export function WordForm({
   submitLabel,
   submitting,
   bare,
+  formId,
+  hideActions,
   showStartLearning,
   onSubmit,
   onCancel,
@@ -277,12 +279,24 @@ export function WordForm({
   submitLabel: string
   submitting?: boolean
   bare?: boolean
+  formId?: string
+  hideActions?: boolean
   // Sadece ekleme akisinda: "ogrenmeye basla" anahtari gosterilir.
   showStartLearning?: boolean
   onSubmit: (data: WordInput, startLearning: boolean) => void
   onCancel?: () => void
 }) {
   const { t } = useTranslation()
+  const [showSubmitting, setShowSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!submitting) {
+      setShowSubmitting(false)
+      return
+    }
+    const timer = window.setTimeout(() => setShowSubmitting(true), 150)
+    return () => window.clearTimeout(timer)
+  }, [submitting])
 
   // Anlam alanlari: once ana dil, sonra yardimci diller.
   const meaningLangs: LanguageBrief[] = [nativeLang, ...helperLangs]
@@ -654,7 +668,6 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
           <input
             value={scalars.accepted_answers}
             onChange={(e) => setScalar('accepted_answers', e.target.value)}
-            placeholder={t('words.fields.acceptedAnswersHint')}
             className="input"
           />
         </label>
@@ -679,33 +692,40 @@ function formatText(text: string | undefined, isSentence: boolean): string | und
         </label>
 
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <button type="submit" disabled={submitting} className="btn-primary">
-          {submitLabel}
+      {showStartLearning && (
+        <label className="mt-4 flex cursor-pointer select-none items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={startLearning}
+            onChange={(e) => setStartLearning(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+          />
+          {t('words.fields.startLearning')}
+        </label>
+      )}
+      {!hideActions && <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <button type="submit" disabled={submitting} className="btn-primary relative overflow-hidden">
+          <span className="transition-opacity">
+            {showSubmitting ? t(initial ? 'common.saving' : 'common.adding') : submitLabel}
+          </span>
+          {showSubmitting && (
+            <span className="button-loading-track" aria-hidden="true">
+              <span className="button-loading-line" />
+            </span>
+          )}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} className="btn-ghost">
             {t('common.cancel')}
           </button>
         )}
-        {showStartLearning && (
-          <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-slate-600">
-            <input
-              type="checkbox"
-              checked={startLearning}
-              onChange={(e) => setStartLearning(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-            />
-            {t('words.fields.startLearning')}
-          </label>
-        )}
-      </div>
+      </div>}
     </>
   )
 
   return (
     <>
-      {bare ? <form onSubmit={submit}>{inner}</form> : <form onSubmit={submit} className="card p-5">{inner}</form>}
+      {bare ? <form id={formId} onSubmit={submit}>{inner}</form> : <form id={formId} onSubmit={submit} className="card p-5">{inner}</form>}
       {senseChoices && (
         <SensePickerOverlay
           term={scalars.term}

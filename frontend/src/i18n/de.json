@@ -126,6 +126,7 @@
   "words": {
     "searchPlaceholder": "Wörter suchen…",
     "export": "Exportieren",
+    "exporting": "Wird exportiert…",
     "exportConfirm": "{{n}} Wörter als CSV exportieren?",
     "add": "Wort hinzufügen",
     "addTitle": "Ein Wort hinzufügen",
@@ -196,6 +197,16 @@
     },
     "filters": "Filter",
     "sort": "Sortieren",
+    "preview": "Vorschau",
+    "previousWord": "Vorheriges Wort",
+    "nextWord": "Nächstes Wort",
+    "moreActions": "Weitere Aktionen",
+    "resultCount": "{{n}} Wörter",
+    "resultRange": "{{start}}–{{end}} von {{total}}",
+    "perPage": "Pro Seite",
+    "pagination": "Wortseiten",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
     "pronunciationNoteIn": "Wie spricht man es aus? ({{lang}})",
     "sortOptions": {
       "created_desc": "Neueste zuerst",
@@ -219,7 +230,8 @@
     "addToWord": "Label hinzufügen",
     "noneToAdd": "Keine weiteren Labels — erstelle sie im Tab Labels.",
     "all": "Alle",
-    "filterByLabel": "Nach Label filtern"
+    "filterByLabel": "Nach Label filtern",
+    "noneAssigned": "Keine Labels zugewiesen"
   },
   "backend": {
     "checking": "Backend wird geprüft…",
@@ -246,8 +258,11 @@
   "common": {
     "add": "Hinzufügen",
     "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "adding": "Wird hinzugefügt…",
     "cancel": "Abbrechen",
     "delete": "Löschen",
+    "remove": "Entfernen",
     "edit": "Bearbeiten",
     "search": "Suchen",
     "loading": "Lädt…",

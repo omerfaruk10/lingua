@@ -1,4 +1,4 @@
-import type { Label, LearningStatus, Word, WordLevel } from '../types'
+import type { Label, LearningStatus, Word, WordCounts, WordLevel, WordPage, WordSort } from '../types'
 import { api } from './client'
 
 export interface WordMeaningInput {
@@ -88,6 +88,12 @@ export interface WordQuery {
   part_of_speech?: string
 }
 
+export interface WordPageQuery extends WordQuery {
+  page: number
+  page_size: 5 | 10 | 25 | 50 | 100
+  sort: WordSort
+}
+
 function buildQuery(q?: WordQuery): string {
   if (!q) return ''
   const params = new URLSearchParams()
@@ -103,6 +109,22 @@ function buildQuery(q?: WordQuery): string {
 export const wordsApi = {
   list: (languageId: number, query?: WordQuery) =>
     api.get<Word[]>(`/languages/${languageId}/words${buildQuery(query)}`),
+  page: (languageId: number, query: WordPageQuery) => {
+    const params = new URLSearchParams()
+    params.set('page', String(query.page))
+    params.set('page_size', String(query.page_size))
+    params.set('sort', query.sort)
+    if (query.search) params.set('search', query.search)
+    if (query.label_id != null) params.set('label_id', String(query.label_id))
+    if (query.status) params.set('status', query.status)
+    if (query.level) params.set('level', query.level)
+    if (query.part_of_speech) params.set('part_of_speech', query.part_of_speech)
+    return api.get<WordPage>(`/languages/${languageId}/words/page?${params.toString()}`)
+  },
+  get: (languageId: number, wordId: number) =>
+    api.get<Word>(`/languages/${languageId}/words/${wordId}`),
+  counts: (languageId: number) =>
+    api.get<WordCounts>(`/languages/${languageId}/words/counts`),
   due: (languageId: number) => api.get<Word[]>(`/languages/${languageId}/words/due`),
   importBatch: (languageId: number, data: WordImportRequest) =>
     api.post<WordImportResult>(`/languages/${languageId}/words/import`, data),

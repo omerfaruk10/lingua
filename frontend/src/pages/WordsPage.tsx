@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 
-import type { WordInput } from '../api/words'
-import { LabelBadge } from '../components/LabelBadge'
-import { labelColor } from '../components/labelColors'
+import { wordsApi, type WordInput, type WordQuery } from '../api/words'
 import { useConfirm } from '../components/ConfirmProvider'
 import { ImportWordsModal } from '../components/ImportWordsModal'
-import { Modal } from '../components/Modal'
+import { labelColor } from '../components/labelColors'
+import { LoadingBar } from '../components/LoadingBar'
 import { SpeakButton } from '../components/SpeakButton'
 import { WordForm } from '../components/WordForm'
+import { WordFormDrawer } from '../components/WordFormDrawer'
+import { WordPreviewDrawer } from '../components/WordPreviewDrawer'
 import { useCurrentCourse, useLanguageId } from '../components/WorkspaceLayout'
 import { useLabels } from '../hooks/useLabels'
-import { downloadCsv, toCsv } from '../lib/csv'
-import { langName } from '../lib/langName'
-import { buildWordCsvSchema } from '../lib/wordCsvSchema'
 import {
   useAddWordLabel,
   useCreateWord,
@@ -22,9 +21,20 @@ import {
   useRemoveWordLabel,
   useSetWordStatus,
   useUpdateWord,
-  useWords,
+  useWordDetail,
+  useWordPage,
+  wordPageQueryOptions,
 } from '../hooks/useWords'
-import type { Label, LanguageBrief, LearningStatus, Word, WordLevel } from '../types'
+import { downloadCsv, toCsv } from '../lib/csv'
+import { buildWordCsvSchema } from '../lib/wordCsvSchema'
+import type {
+  Label,
+  LearningStatus,
+  Word,
+  WordLevel,
+  WordListItem,
+  WordSort,
+} from '../types'
 
 const LEARNING_STATUSES: LearningStatus[] = ['new', 'learning', 'learned']
 const WORD_LEVELS: WordLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -32,43 +42,50 @@ const PARTS_OF_SPEECH = [
   'noun', 'verb', 'adjective', 'adverb', 'pronoun',
   'preposition', 'conjunction', 'interjection', 'article', 'numeral',
 ] as const
-type SortKey =
-  | 'created_desc'
-  | 'created_asc'
-  | 'term_asc'
-  | 'term_desc'
-  | 'level_asc'
-  | 'level_desc'
+const SORT_OPTIONS: WordSort[] = [
+  'created_asc', 'created_desc', 'term_asc', 'term_desc', 'level_asc', 'level_desc',
+]
+const PAGE_SIZES = [5, 10, 25, 50, 100] as const
+type PageSize = (typeof PAGE_SIZES)[number]
+const PAGE_SIZE_KEY = 'lingua.words.pageSize'
 
 const LEARNING_STYLE: Record<LearningStatus, string> = {
-  new: 'bg-slate-100 text-slate-500',
+  new: 'bg-slate-100 text-slate-600',
   learning: 'bg-amber-100 text-amber-700',
   learned: 'bg-emerald-100 text-emerald-700',
 }
 
-const LEVEL_ORDER = new Map(WORD_LEVELS.map((level, i) => [level, i]))
+function readPageSize(): PageSize {
+  const stored = Number(localStorage.getItem(PAGE_SIZE_KEY))
+  return PAGE_SIZES.includes(stored as PageSize) ? stored as PageSize : 10
+}
 
-function sortWords(words: Word[], sortKey: SortKey): Word[] {
+function positiveInt(value: string | null, fallback: number): number {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function validSort(value: string | null): WordSort {
+  return SORT_OPTIONS.includes(value as WordSort) ? value as WordSort : 'created_asc'
+}
+
+const LEVEL_ORDER = new Map(WORD_LEVELS.map((level, index) => [level, index]))
+
+function sortFullWords(words: Word[], sort: WordSort): Word[] {
   const byDate = (a: Word, b: Word) =>
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   const byLevel = (a: Word, b: Word) =>
-    (a.level ? LEVEL_ORDER.get(a.level) ?? 999 : 999) - (b.level ? LEVEL_ORDER.get(b.level) ?? 999 : 999)
-
+    (a.level ? LEVEL_ORDER.get(a.level) ?? 999 : 999) -
+    (b.level ? LEVEL_ORDER.get(b.level) ?? 999 : 999)
   return [...words].sort((a, b) => {
-    switch (sortKey) {
-      case 'created_desc':
-        return byDate(b, a) || a.id - b.id
-      case 'term_asc':
-        return a.term.localeCompare(b.term) || a.id - b.id
-      case 'term_desc':
-        return b.term.localeCompare(a.term) || a.id - b.id
-      case 'level_asc':
-        return byLevel(a, b) || a.term.localeCompare(b.term)
-      case 'level_desc':
-        return byLevel(b, a) || a.term.localeCompare(b.term)
+    switch (sort) {
+      case 'created_desc': return byDate(b, a) || b.id - a.id
+      case 'term_asc': return a.term.localeCompare(b.term) || a.id - b.id
+      case 'term_desc': return b.term.localeCompare(a.term) || b.id - a.id
+      case 'level_asc': return byLevel(a, b) || a.term.localeCompare(b.term) || a.id - b.id
+      case 'level_desc': return byLevel(b, a) || a.term.localeCompare(b.term) || a.id - b.id
       case 'created_asc':
-      default:
-        return byDate(a, b) || a.id - b.id
+      default: return byDate(a, b) || a.id - b.id
     }
   })
 }
@@ -76,32 +93,78 @@ function sortWords(words: Word[], sortKey: SortKey): Word[] {
 export function WordsPage() {
   const { t } = useTranslation()
   const confirm = useConfirm()
+  const queryClient = useQueryClient()
   const languageId = useLanguageId()
   const course = useCurrentCourse()
   const nativeLang = course?.native_language ?? null
   const helperLangs = course?.helper_languages ?? []
   const targetLang = course?.target_language ?? null
-  // Anlamlari etiketlemek/siralamak icin: ana dil once, sonra yardimcilar.
-  const meaningLangs: LanguageBrief[] = nativeLang ? [nativeLang, ...helperLangs] : []
-  const [search, setSearch] = useState('')
-  const [labelFilter, setLabelFilter] = useState<number | null>(null)
-  const [statusFilter, setStatusFilter] = useState<LearningStatus | null>(null)
-  const [levelFilter, setLevelFilter] = useState<WordLevel | null>(null)
-  const [posFilter, setPosFilter] = useState<string | null>(null)
-  const [sortKey, setSortKey] = useState<SortKey>('created_asc')
+  const meaningLangs = nativeLang ? [nativeLang, ...helperLangs] : []
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const query = {
-    ...(search.trim() ? { search: search.trim() } : {}),
-    ...(labelFilter != null ? { label_id: labelFilter } : {}),
-    ...(statusFilter != null ? { status: statusFilter } : {}),
-    ...(levelFilter != null ? { level: levelFilter } : {}),
-    ...(posFilter != null ? { part_of_speech: posFilter } : {}),
+  const search = searchParams.get('search') ?? ''
+  const statusFilter = (searchParams.get('status') as LearningStatus | null)
+  const levelFilter = (searchParams.get('level') as WordLevel | null)
+  const posFilter = searchParams.get('pos')
+  const labelFilter = searchParams.has('label') ? Number(searchParams.get('label')) : null
+  const sortKey = validSort(searchParams.get('sort'))
+  const page = positiveInt(searchParams.get('page'), 1)
+
+  const [searchInput, setSearchInput] = useState(search)
+  const [pageSize, setPageSize] = useState<PageSize>(readPageSize)
+  const [addOpen, setAddOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [detailWordId, setDetailWordId] = useState<number | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [drawerMode, setDrawerMode] = useState<'preview' | 'edit'>('preview')
+  const [previewNavigating, setPreviewNavigating] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [showExporting, setShowExporting] = useState(false)
+
+  useEffect(() => {
+    if (!exporting) {
+      setShowExporting(false)
+      return
+    }
+    const timer = window.setTimeout(() => setShowExporting(true), 150)
+    return () => window.clearTimeout(timer)
+  }, [exporting])
+
+  useEffect(() => setSearchInput(search), [search])
+  useEffect(() => {
+    if (searchInput.trim() === search) return
+    const timer = window.setTimeout(() => {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        const value = searchInput.trim()
+        if (value) next.set('search', value)
+        else next.delete('search')
+        next.set('page', '1')
+        return next
+      }, { replace: true })
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [search, searchInput, setSearchParams])
+
+  const filters: WordQuery = {
+    ...(search ? { search } : {}),
+    ...(labelFilter != null && Number.isFinite(labelFilter) ? { label_id: labelFilter } : {}),
+    ...(statusFilter && LEARNING_STATUSES.includes(statusFilter) ? { status: statusFilter } : {}),
+    ...(levelFilter && WORD_LEVELS.includes(levelFilter) ? { level: levelFilter } : {}),
+    ...(posFilter ? { part_of_speech: posFilter } : {}),
   }
-  const { data: words, isLoading } = useWords(
-    languageId,
-    Object.keys(query).length ? query : undefined,
-  )
+  const currentPageQuery = {
+    ...filters,
+    page,
+    page_size: pageSize,
+    sort: sortKey,
+  } as const
+  const pageQuery = useWordPage(languageId, currentPageQuery)
+  const detailQuery = useWordDetail(languageId, detailWordId)
   const { data: labels } = useLabels(languageId)
+  const allLabels = labels ?? []
+  const data = pageQuery.data
+  const items = data?.items ?? []
 
   const createWord = useCreateWord(languageId)
   const updateWord = useUpdateWord(languageId)
@@ -110,329 +173,726 @@ export function WordsPage() {
   const removeLabel = useRemoveWordLabel(languageId)
   const setStatus = useSetWordStatus(languageId)
 
-  const [addOpen, setAddOpen] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
-  const [editingWord, setEditingWord] = useState<Word | null>(null)
+  useEffect(() => {
+    if (!data) return
+    if (data.total_pages > 0 && page > data.total_pages) setUrlValue('page', String(data.total_pages))
+    if (data.total_pages === 0 && page !== 1) setUrlValue('page', '1')
+  }, [data, page])
 
-  const allLabels = labels ?? []
-  const list = sortWords(words ?? [], sortKey)
-  const activeExtraFilters =
-    (levelFilter ? 1 : 0) + (posFilter ? 1 : 0) + (labelFilter != null ? 1 : 0)
+  function setUrlValue(key: string, value: string | null, resetPage = false) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      if (resetPage) next.set('page', '1')
+      return next
+    })
+  }
 
-  function create(data: WordInput, startLearning: boolean) {
-    createWord.mutate(data, {
-      onSuccess: (w) => {
+  function create(input: WordInput, startLearning: boolean) {
+    createWord.mutate(input, {
+      onSuccess: (word) => {
         setAddOpen(false)
-        // "Ogrenmeye basla" isaretliyse kelime dogrudan ogrenme kuyruguna girer.
-        if (startLearning) setStatus.mutate({ wordId: w.id, status: 'learning' })
+        setUrlValue('page', '1')
+        if (startLearning) setStatus.mutate({ wordId: word.id, status: 'learning' })
       },
     })
   }
-  function update(data: WordInput) {
-    if (!editingWord) return
-    updateWord.mutate({ wordId: editingWord.id, data }, { onSuccess: () => setEditingWord(null) })
+
+  function update(input: WordInput) {
+    if (detailWordId == null) return
+    updateWord.mutate(
+      { wordId: detailWordId, data: input },
+      { onSuccess: () => setDrawerMode('preview') },
+    )
   }
+
   async function remove(wordId: number) {
     const ok = await confirm({
       message: t('words.deleteConfirm'),
       confirmLabel: t('common.delete'),
       danger: true,
     })
-    if (ok) deleteWord.mutate(wordId)
+    if (!ok) return
+    deleteWord.mutate(wordId, {
+      onSuccess: () => {
+        if (detailWordId === wordId) {
+          setPreviewOpen(false)
+          setDetailWordId(null)
+        }
+      },
+    })
+  }
+
+  function openPreview(wordId: number) {
+    setDrawerMode('preview')
+    setDetailWordId(wordId)
+    setPreviewOpen(true)
+  }
+
+  function openEdit(wordId: number) {
+    setDrawerMode('edit')
+    setDetailWordId(wordId)
+    setPreviewOpen(true)
   }
 
   async function exportCsv() {
-    if (list.length === 0) return
+    if (!data?.total || !nativeLang || !targetLang) return
     const ok = await confirm({
-      message: t('words.exportConfirm', { n: list.length }),
+      message: t('words.exportConfirm', { n: data.total }),
       confirmLabel: t('words.export'),
     })
     if (!ok) return
-    // Basliklar import ile ayni kaynaktan (wordCsvSchema) gelir, ikisi senkron kalir.
-    // Etiket/durum yazilmaz ki export tekrar import edilebilsin ve kart akisi degismesin.
-    const schema = buildWordCsvSchema(t, nativeLang, helperLangs, targetLang)
-    const rows = list.map((w) => {
-      const meaningCells = schema.meaningLangs.map(
-        (lang) => w.meanings.find((m) => m.language_id === lang.id)?.value ?? '',
+    setExporting(true)
+    try {
+      const words = sortFullWords(await wordsApi.list(languageId, filters), sortKey)
+      const schema = buildWordCsvSchema(t, nativeLang, helperLangs, targetLang)
+      const rows = words.map((word) => {
+        const meaningCells = schema.meaningLangs.map(
+          (language) => word.meanings.find((meaning) => meaning.language_id === language.id)?.value ?? '',
+        )
+        return [
+          word.term, word.part_of_speech, word.level, word.phonetic, word.phonetic_native,
+          word.pronunciation_note_native, ...meaningCells, word.definition_target,
+          word.synonyms, word.antonyms, word.word_family, word.example_sentence,
+          word.example_translation,
+        ].map((value) => value ?? '')
+      })
+      const date = new Date().toISOString().slice(0, 10)
+      downloadCsv(
+        `lingua-${course?.code ?? 'words'}-words-${date}.csv`,
+        toCsv([schema.headers, ...rows]),
       )
-      return [
-        w.term, w.part_of_speech, w.level, w.phonetic, w.phonetic_native,
-        w.pronunciation_note_native,
-        ...meaningCells, w.definition_target,
-        w.synonyms, w.antonyms, w.word_family, w.example_sentence, w.example_translation,
-      ].map((v) => v ?? '')
-    })
-    const date = new Date().toISOString().slice(0, 10)
-    const code = course?.code ?? 'words'
-    downloadCsv(`lingua-${code}-words-${date}.csv`, toCsv([schema.headers, ...rows]))
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  function changePageSize(nextSize: PageSize) {
+    const firstVisibleIndex = (page - 1) * pageSize
+    const nextPage = Math.floor(firstVisibleIndex / nextSize) + 1
+    setPageSize(nextSize)
+    localStorage.setItem(PAGE_SIZE_KEY, String(nextSize))
+    setUrlValue('page', String(nextPage))
+  }
+
+  const activeExtraFilters =
+    (levelFilter ? 1 : 0) + (posFilter ? 1 : 0) + (labelFilter != null ? 1 : 0)
+  const selectedIndex = items.findIndex((item) => item.id === detailWordId)
+  const hasPreviousPreview = selectedIndex > 0 || page > 1
+  const hasNextPreview = selectedIndex >= 0 && (
+    selectedIndex < items.length - 1 || page < (data?.total_pages ?? 0)
+  )
+
+  useEffect(() => {
+    if (!previewOpen || drawerMode !== 'preview' || !data || pageQuery.isPlaceholderData) return
+    const adjacentPages = [page - 1, page + 1].filter(
+      (candidate) => candidate >= 1 && candidate <= data.total_pages,
+    )
+    for (const adjacentPage of adjacentPages) {
+      queryClient.prefetchQuery(wordPageQueryOptions(languageId, {
+        ...filters,
+        page: adjacentPage,
+        page_size: pageSize,
+        sort: sortKey,
+      }))
+    }
+  }, [
+    data?.total_pages,
+    drawerMode,
+    labelFilter,
+    languageId,
+    levelFilter,
+    page,
+    pageQuery.isPlaceholderData,
+    pageSize,
+    posFilter,
+    previewOpen,
+    queryClient,
+    search,
+    sortKey,
+    statusFilter,
+  ])
+
+  async function navigatePreview(direction: -1 | 1) {
+    if (previewNavigating || selectedIndex < 0 || !data) return
+    const localTarget = items[selectedIndex + direction]
+    if (localTarget) {
+      setDetailWordId(localTarget.id)
+      return
+    }
+
+    const targetPage = page + direction
+    if (targetPage < 1 || targetPage > data.total_pages) return
+    setPreviewNavigating(true)
+    try {
+      const targetData = await queryClient.fetchQuery(wordPageQueryOptions(languageId, {
+        ...filters,
+        page: targetPage,
+        page_size: pageSize,
+        sort: sortKey,
+      }))
+      const targetWord = direction === 1
+        ? targetData.items[0]
+        : targetData.items[targetData.items.length - 1]
+      if (!targetWord) return
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        next.set('page', String(targetPage))
+        return next
+      }, { replace: true })
+      setDetailWordId(targetWord.id)
+    } finally {
+      setPreviewNavigating(false)
+    }
   }
 
   return (
-    <div className="space-y-5">
-      {/* Arama + ekle */}
-      <div className="flex gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 xl:flex-row">
         <div className="relative flex-1">
-          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-            ⌕
-          </span>
+          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
             placeholder={t('words.searchPlaceholder')}
             className="input pl-9"
           />
         </div>
-        <button
-          onClick={exportCsv}
-          disabled={list.length === 0}
-          className="btn-ghost shrink-0"
-          title={t('words.export')}
-        >
-          ⤒ {t('words.export')}
-        </button>
-        <button onClick={() => setImportOpen(true)} className="btn-ghost shrink-0" title={t('words.import')}>
-          ⤓ {t('words.import')}
-        </button>
-        <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0">
-          + {t('words.add')}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={exportCsv}
+            disabled={!data?.total || exporting}
+            aria-busy={exporting}
+            className="btn-ghost relative shrink-0 overflow-hidden"
+          >
+            <span className={showExporting ? 'export-icon-active' : ''}><ExportIcon /></span>
+            <span>{showExporting ? t('words.exporting') : t('words.export')}</span>
+            {showExporting && (
+              <span className="export-loading-track" role="progressbar" aria-label={t('words.exporting')}>
+                <span className="export-loading-line" />
+              </span>
+            )}
+          </button>
+          <button onClick={() => setImportOpen(true)} className="btn-ghost shrink-0">
+            <ImportIcon />
+            {t('words.import')}
+          </button>
+          <button onClick={() => setAddOpen(true)} className="btn-primary shrink-0">
+            + {t('words.add')}
+          </button>
+        </div>
       </div>
 
-      {/* Durum hizli filtreleri + ikincil filtre/siralama */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <FilterChip active={statusFilter == null} onClick={() => setStatusFilter(null)}>
+          <FilterChip active={!statusFilter} onClick={() => setUrlValue('status', null, true)}>
             {t('learning.all')}
           </FilterChip>
-          {LEARNING_STATUSES.map((s) => (
+          {LEARNING_STATUSES.map((status) => (
             <FilterChip
-              key={s}
-              active={statusFilter === s}
-              onClick={() => setStatusFilter((cur) => (cur === s ? null : s))}
+              key={status}
+              active={statusFilter === status}
+              onClick={() => setUrlValue('status', statusFilter === status ? null : status, true)}
             >
-              {t(`learning.${s}`)}
+              {t(`learning.${status}`)}
             </FilterChip>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 sm:justify-start">
           <WordFilterMenu
             labels={allLabels}
             levelFilter={levelFilter}
             posFilter={posFilter}
             labelFilter={labelFilter}
             activeCount={activeExtraFilters}
-            onLevel={setLevelFilter}
-            onPos={setPosFilter}
-            onLabel={setLabelFilter}
+            onLevel={(value) => setUrlValue('level', value, true)}
+            onPos={(value) => setUrlValue('pos', value, true)}
+            onLabel={(value) => setUrlValue('label', value == null ? null : String(value), true)}
           />
-          <WordSortMenu sortKey={sortKey} onSort={setSortKey} />
+          <WordSortMenu sortKey={sortKey} onSort={(value) => setUrlValue('sort', value, true)} />
         </div>
       </div>
 
       {activeExtraFilters > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {levelFilter && (
-            <ActiveFilterChip onClear={() => setLevelFilter(null)}>
+            <ActiveFilterChip onClear={() => setUrlValue('level', null, true)}>
               {t('words.fields.level')}: {levelFilter}
             </ActiveFilterChip>
           )}
           {posFilter && (
-            <ActiveFilterChip onClear={() => setPosFilter(null)}>
+            <ActiveFilterChip onClear={() => setUrlValue('pos', null, true)}>
               {t('words.fields.part_of_speech')}: {t(`words.partsOfSpeech.${posFilter}`, { defaultValue: posFilter })}
             </ActiveFilterChip>
           )}
           {labelFilter != null && (
-            <ActiveFilterChip onClear={() => setLabelFilter(null)}>
+            <ActiveFilterChip onClear={() => setUrlValue('label', null, true)}>
               {t('labels.filterByLabel')}: {allLabels.find((label) => label.id === labelFilter)?.name ?? labelFilter}
             </ActiveFilterChip>
           )}
         </div>
       )}
 
-      {isLoading ? (
-        <p className="text-slate-400">{t('common.loading')}</p>
-      ) : list.length === 0 ? (
-        <div className="card mx-auto w-full max-w-2xl flex flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
-          <span className="text-3xl">{search.trim() || activeExtraFilters > 0 ? '🔍' : '📖'}</span>
-          <p className="text-slate-400">
-            {search.trim() || activeExtraFilters > 0 ? t('words.noResults') : t('words.empty')}
-          </p>
+      <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
+        <span>{t('words.resultCount', { n: data?.total ?? 0 })}</span>
+      </div>
+
+      <LoadingBar active={pageQuery.isFetching} label={t('common.loading')} />
+
+      {pageQuery.isLoading ? (
+        <div className="min-h-48" />
+      ) : pageQuery.isError ? (
+        <div className="card border-rose-100 bg-rose-50/60 p-6 text-center text-sm text-rose-700">
+          {t('common.error')}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="card mx-auto flex w-full max-w-2xl flex-col items-center gap-1 border-dashed bg-white/50 p-10 text-center">
+          <span className="text-3xl">{search || activeExtraFilters ? '⌕' : '▤'}</span>
+          <p className="text-slate-400">{search || activeExtraFilters ? t('words.noResults') : t('words.empty')}</p>
         </div>
       ) : (
-        <ul className="grid items-start gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          {list.map((word, index) => (
-            <WordCard
+        <ul className="space-y-2.5" aria-busy={pageQuery.isFetching}>
+          {items.map((word, index) => (
+            <WordListRow
               key={word.id}
               word={word}
-              index={index + 1}
+              position={(page - 1) * pageSize + index + 1}
               langCode={targetLang?.code}
-              targetLang={targetLang ?? undefined}
-              meaningLangs={meaningLangs}
-              allLabels={allLabels}
-              onAddLabel={(labelId) => addLabel.mutate({ wordId: word.id, labelId })}
-              onRemoveLabel={(labelId) => removeLabel.mutate({ wordId: word.id, labelId })}
-              onSetStatus={(status) => setStatus.mutate({ wordId: word.id, status })}
-              onEdit={() => setEditingWord(word)}
+              onPreview={() => openPreview(word.id)}
+              onEdit={() => openEdit(word.id)}
               onDelete={() => remove(word.id)}
+              onSetStatus={(status) => setStatus.mutate({ wordId: word.id, status })}
             />
           ))}
         </ul>
       )}
 
-      {addOpen && nativeLang && targetLang && (
-        <Modal title={t('words.addTitle')} onClose={() => setAddOpen(false)} maxWidth="max-w-2xl">
-          <WordForm
-            bare
-            courseId={languageId}
-            nativeLang={nativeLang}
-            helperLangs={helperLangs}
-            targetLang={targetLang}
-            submitLabel={t('words.add')}
-            submitting={createWord.isPending}
-            showStartLearning
-            onSubmit={create}
-            onCancel={() => setAddOpen(false)}
-          />
-        </Modal>
+      {data && data.total > 0 && (
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          total={data.total}
+          totalPages={data.total_pages}
+          onPage={(value) => setUrlValue('page', String(value))}
+          onPageSize={changePageSize}
+        />
       )}
 
-      {editingWord && nativeLang && targetLang && (
-        <Modal title={t('words.editTitle')} onClose={() => setEditingWord(null)} maxWidth="max-w-2xl">
+      {addOpen && nativeLang && targetLang && (
+        <WordFormDrawer
+          title={t('words.addTitle')}
+          formId="word-drawer-add-form"
+          submitting={createWord.isPending}
+          submitLabel={t('words.add')}
+          submittingLabel={t('common.adding')}
+          onClose={() => setAddOpen(false)}
+        >
           <WordForm
-            bare
-            initial={editingWord}
-            courseId={languageId}
-            nativeLang={nativeLang}
-            helperLangs={helperLangs}
-            targetLang={targetLang}
-            submitLabel={t('common.save')}
-            submitting={updateWord.isPending}
-            onSubmit={update}
-            onCancel={() => setEditingWord(null)}
+            bare hideActions formId="word-drawer-add-form"
+            courseId={languageId} nativeLang={nativeLang} helperLangs={helperLangs}
+            targetLang={targetLang} submitLabel={t('words.add')} submitting={createWord.isPending}
+            showStartLearning onSubmit={create}
           />
-        </Modal>
+        </WordFormDrawer>
       )}
 
       {importOpen && (
         <ImportWordsModal
-          courseId={languageId}
-          nativeLang={nativeLang}
-          helperLangs={helperLangs}
-          targetLang={targetLang}
-          onClose={() => setImportOpen(false)}
+          courseId={languageId} nativeLang={nativeLang} helperLangs={helperLangs}
+          targetLang={targetLang} onClose={() => setImportOpen(false)}
+        />
+      )}
+
+      {previewOpen && (
+        <WordPreviewDrawer
+          word={detailQuery.data}
+          loading={detailQuery.isLoading}
+          mode={drawerMode}
+          navigating={previewNavigating}
+          editContent={detailQuery.data && nativeLang && targetLang ? (
+            <WordForm
+              bare
+              formId="word-drawer-edit-form"
+              hideActions
+              initial={detailQuery.data}
+              courseId={languageId}
+              nativeLang={nativeLang}
+              helperLangs={helperLangs}
+              targetLang={targetLang}
+              submitLabel={t('common.save')}
+              submitting={updateWord.isPending}
+              onSubmit={update}
+            />
+          ) : undefined}
+          editFormId="word-drawer-edit-form"
+          editSubmitting={updateWord.isPending}
+          langCode={targetLang?.code}
+          meaningLangs={meaningLangs}
+          targetLang={targetLang ?? undefined}
+          allLabels={allLabels}
+          hasPrevious={hasPreviousPreview}
+          hasNext={hasNextPreview}
+          onPrevious={() => navigatePreview(-1)}
+          onNext={() => navigatePreview(1)}
+          onAddLabel={(labelId) => detailWordId != null && addLabel.mutate({ wordId: detailWordId, labelId })}
+          onRemoveLabel={(labelId) => detailWordId != null && removeLabel.mutate({ wordId: detailWordId, labelId })}
+          onEdit={() => setDrawerMode('edit')}
+          onCancelEdit={() => setDrawerMode('preview')}
+          onDelete={() => detailWordId != null && remove(detailWordId)}
+          onClose={() => { setPreviewOpen(false); setDrawerMode('preview') }}
         />
       )}
     </div>
   )
 }
 
-function LabelPicker({ available, onAdd, open, onToggle, t }: {
-  available: Label[]
-  onAdd: (id: number) => void
-  open: boolean
-  onToggle: () => void
-  t: (k: string) => string
+function WordListRow({
+  word,
+  position,
+  langCode,
+  onPreview,
+  onEdit,
+  onDelete,
+  onSetStatus,
+}: {
+  word: WordListItem
+  position: number
+  langCode?: string
+  onPreview: () => void
+  onEdit: () => void
+  onDelete: () => void
+  onSetStatus: (status: LearningStatus) => void
 }) {
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const { t } = useTranslation()
+  const visibleLabels = word.labels.slice(0, 2)
+  const remainingLabels = Math.max(0, word.labels.length - visibleLabels.length)
 
-  useEffect(() => {
-    if (!open) return
-    function handler(e: MouseEvent) {
-      const target = e.target as Node
-      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return
-      onToggle()
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  function handleToggle() {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + 4, left: r.left })
-    }
-    onToggle()
+  function action(event: React.MouseEvent, callback: () => void) {
+    event.stopPropagation()
+    callback()
   }
 
   return (
-    <div>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className="rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-xs text-slate-400 hover:border-violet-400 hover:text-violet-600"
-      >
-        + {t('labels.addToWord')}
-      </button>
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          style={{ top: pos.top, left: pos.left }}
-          className="fixed z-50 max-w-xs rounded-lg border border-slate-200 bg-white p-2 shadow-lg"
-        >
-          {available.length === 0 ? (
-            <p className="px-1 py-0.5 text-xs text-slate-400">{t('labels.noneToAdd')}</p>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {available.map((label) => (
-                <button
-                  key={label.id}
-                  onClick={() => onAdd(label.id)}
-                  style={{ backgroundColor: labelColor(label.color) }}
-                  className="rounded-full px-2 py-0.5 text-xs font-medium text-white hover:opacity-80"
-                >
-                  {label.name}
-                </button>
-              ))}
-            </div>
+    <li
+      className="group cursor-pointer rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-md focus-within:border-violet-300 sm:p-4"
+      onClick={onPreview}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && event.target === event.currentTarget) onPreview()
+      }}
+      tabIndex={0}
+    >
+      <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-x-2 gap-y-2 sm:gap-x-3 lg:grid-cols-[3rem_minmax(12rem,1.45fr)_minmax(11rem,1fr)_minmax(10rem,1fr)_auto_auto] lg:gap-3">
+        <span className="row-span-2 self-start pt-1 text-sm font-semibold tabular-nums text-slate-400 lg:row-auto lg:self-auto lg:pt-0">#{position}</span>
+
+        <div className="min-w-0 lg:col-auto lg:row-auto">
+          <div className="truncate text-base font-semibold text-slate-900 sm:text-lg">{word.term}</div>
+          <div className="truncate text-sm text-slate-500">{word.primary_meaning || '—'}</div>
+        </div>
+
+        <div className="col-start-2 row-start-2 flex min-w-0 items-center gap-2 lg:col-auto lg:row-auto">
+          <div className="min-w-0 flex-1 text-sm">
+            <div className="truncate text-slate-600">{word.phonetic || '—'}</div>
+            <div className="truncate text-xs text-slate-400">{word.phonetic_native || '—'}</div>
+          </div>
+          {langCode && <SpeakButton text={word.term} langCode={langCode} className="shrink-0" />}
+        </div>
+
+        <div className="col-start-2 row-start-3 flex min-w-0 flex-wrap items-center gap-1.5 lg:col-auto lg:row-auto">
+          {word.level && <span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600">{word.level}</span>}
+          {word.part_of_speech && (
+            <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+              {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
+            </span>
           )}
-        </div>,
-        document.body
+          {visibleLabels.map((label) => (
+            <span
+              key={label.id}
+              style={{ backgroundColor: labelColor(label.color) }}
+              className="max-w-24 truncate rounded-full px-2 py-1 text-[11px] font-medium text-white"
+            >
+              {label.name}
+            </span>
+          ))}
+          {remainingLabels > 0 && <span className="text-xs font-medium text-slate-400">+{remainingLabels}</span>}
+        </div>
+
+        <div className="col-start-2 row-start-4 flex min-w-0 items-center justify-between gap-2 lg:contents">
+          <div className="min-w-0 lg:col-auto lg:row-auto" onClick={(event) => event.stopPropagation()}>
+            <WordStatusDropdown status={word.learning_status} onSetStatus={onSetStatus} />
+          </div>
+
+          <div className="flex shrink-0 items-center justify-end gap-1 lg:col-auto lg:row-auto">
+            <button type="button" onClick={(event) => action(event, onPreview)} className="btn-icon" title={t('words.preview')} aria-label={t('words.preview')}>
+              <EyeIcon />
+            </button>
+            <button type="button" onClick={(event) => action(event, onEdit)} className="btn-icon" title={t('common.edit')} aria-label={t('common.edit')}>
+              <PencilIcon />
+            </button>
+            <button
+              type="button"
+              onClick={(event) => action(event, onDelete)}
+              className="btn-icon text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+              title={t('common.delete')}
+              aria-label={t('common.delete')}
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+  )
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path d="m4 20 4.2-1 10.6-10.6a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" />
+      <path d="m13.8 7.4 3 3" />
+    </svg>
+  )
+}
+
+function ExportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path className="export-icon-arrow" d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path className="export-icon-tray" d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ImportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+      <path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" />
+    </svg>
+  )
+}
+
+function WordStatusDropdown({
+  status,
+  onSetStatus,
+}: {
+  status: LearningStatus
+  onSetStatus: (status: LearningStatus) => void
+}) {
+  const { t } = useTranslation()
+  const confirm = useConfirm()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    function close(event: MouseEvent) {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  async function pick(nextStatus: LearningStatus) {
+    setOpen(false)
+    if (nextStatus === status) return
+    const reset = status === 'learned' && nextStatus !== 'learned'
+    const ok = await confirm({
+      message: t(reset ? 'learning.resetConfirm' : 'learning.changeConfirm', {
+        status: t(`learning.${nextStatus}`),
+      }),
+      confirmLabel: t('common.yes'),
+      danger: reset,
+    })
+    if (ok) onSetStatus(nextStatus)
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className={`flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${LEARNING_STYLE[status]}`}
+      >
+        {t(`learning.${status}`)} <span className="opacity-60">▾</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 z-30 mt-1 min-w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+          {LEARNING_STATUSES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => pick(option)}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium hover:bg-slate-50 ${option === status ? 'text-violet-700' : 'text-slate-600'}`}
+            >
+              <span className="w-3">{option === status ? '✓' : ''}</span>
+              {t(`learning.${option}`)}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   )
 }
 
-function FilterChip({
-  active,
-  color,
-  onClick,
-  children,
+function Pagination({
+  page,
+  pageSize,
+  total,
+  totalPages,
+  onPage,
+  onPageSize,
 }: {
-  active: boolean
-  color?: string
-  onClick: () => void
-  children: React.ReactNode
+  page: number
+  pageSize: PageSize
+  total: number
+  totalPages: number
+  onPage: (page: number) => void
+  onPageSize: (size: PageSize) => void
 }) {
+  const { t } = useTranslation()
+  const start = (page - 1) * pageSize + 1
+  const end = Math.min(total, page * pageSize)
+  let first = Math.max(1, page - 2)
+  const last = Math.min(totalPages, first + 4)
+  first = Math.max(1, last - 4)
+  const pages = Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index)
+  return (
+    <div className="card flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-sm text-slate-500">{t('words.resultRange', { start, end, total })}</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span>{t('words.perPage')}</span>
+          <PageSizeSelect value={pageSize} onChange={onPageSize} />
+        </div>
+        <nav className="flex items-center gap-1" aria-label={t('words.pagination')}>
+          <button type="button" className="btn-icon" disabled={page <= 1} onClick={() => onPage(page - 1)} title={t('words.previousPage')}>‹</button>
+          {first > 1 && <><PageButton value={1} current={page} onPage={onPage} /><span className="px-1 text-slate-300">…</span></>}
+          {pages.map((value) => <PageButton key={value} value={value} current={page} onPage={onPage} />)}
+          {last < totalPages && <><span className="px-1 text-slate-300">…</span><PageButton value={totalPages} current={page} onPage={onPage} /></>}
+          <button type="button" className="btn-icon" disabled={page >= totalPages} onClick={() => onPage(page + 1)} title={t('words.nextPage')}>›</button>
+        </nav>
+      </div>
+    </div>
+  )
+}
+
+function PageSizeSelect({ value, onChange }: { value: PageSize; onChange: (size: PageSize) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function close(event: MouseEvent) {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setOpen(false)
+        }}
+        className={`flex min-w-20 cursor-pointer items-center justify-between gap-3 rounded-xl border bg-white/90 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition ${
+          open
+            ? 'border-violet-300 ring-4 ring-violet-500/10'
+            : 'border-slate-200 hover:border-violet-200 hover:bg-white'
+        }`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="tabular-nums">{value}</span>
+        <svg
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          className={`h-4 w-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        >
+          <path d="m6 8 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute bottom-full left-0 z-40 mb-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10"
+        >
+          {PAGE_SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              role="option"
+              aria-selected={size === value}
+              onClick={() => { onChange(size); setOpen(false) }}
+              className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-sm tabular-nums transition ${
+                size === value
+                  ? 'bg-violet-50 font-semibold text-violet-700'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              {size}
+              {size === value && <span className="text-xs text-violet-500">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PageButton({ value, current, onPage }: { value: number; current: number; onPage: (page: number) => void }) {
   return (
     <button
+      type="button"
+      onClick={() => onPage(value)}
+      disabled={value === current}
+      aria-current={value === current ? 'page' : undefined}
+      className={`grid h-8 min-w-8 place-items-center rounded-lg px-2 text-sm font-medium transition ${value === current ? 'cursor-default bg-violet-600 text-white' : 'cursor-pointer text-slate-500 hover:bg-violet-50 hover:text-violet-700'}`}
+    >
+      {value}
+    </button>
+  )
+}
+
+function FilterChip({ active, color, onClick, children }: { active: boolean; color?: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
       onClick={onClick}
       style={active && color ? { backgroundColor: color, borderColor: color, color: '#fff' } : undefined}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-        active
-          ? 'border-violet-600 bg-violet-600 text-white shadow-sm'
-          : 'border-slate-200 bg-white/70 text-slate-500 hover:bg-white hover:text-slate-800'
-      }`}
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition ${active ? 'border-violet-600 bg-violet-600 text-white shadow-sm' : 'border-slate-200 bg-white/70 text-slate-500 hover:bg-white hover:text-slate-800'}`}
     >
       {children}
     </button>
   )
 }
 
-function ActiveFilterChip({
-  onClear,
-  children,
-}: {
-  onClear: () => void
-  children: React.ReactNode
-}) {
+function ActiveFilterChip({ onClear, children }: { onClear: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClear}
-      className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500 transition hover:border-violet-200 hover:text-violet-700"
-    >
-      {children} <span className="ml-1 text-slate-300">x</span>
+    <button type="button" onClick={onClear} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500 hover:border-violet-200 hover:text-violet-700">
+      {children} <span className="ml-1 text-slate-300">×</span>
     </button>
   )
 }
@@ -453,70 +913,44 @@ function WordFilterMenu({
   labelFilter: number | null
   activeCount: number
   onLevel: (level: WordLevel | null) => void
-  onPos: (pos: string | null) => void
+  onPos: (position: string | null) => void
   onLabel: (labelId: number | null) => void
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     if (!open) return
-    function handler(e: MouseEvent) {
-      if (ref.current?.contains(e.target as Node)) return
-      setOpen(false)
+    function close(event: MouseEvent) {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
   }, [open])
-
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="btn-ghost px-3">
+      <button type="button" onClick={() => setOpen((value) => !value)} className="btn-ghost px-3">
         {t('words.filters')}
-        {activeCount > 0 && (
-          <span className="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
-            {activeCount}
-          </span>
-        )}
+        {activeCount > 0 && <span className="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">{activeCount}</span>}
       </button>
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
           <FilterSection title={t('words.fields.level')}>
-            <FilterChip active={levelFilter == null} onClick={() => onLevel(null)}>
-              {t('learning.all')}
-            </FilterChip>
-            {WORD_LEVELS.map((level) => (
-              <FilterChip key={level} active={levelFilter === level} onClick={() => onLevel(level)}>
-                {level}
-              </FilterChip>
-            ))}
+            <FilterChip active={!levelFilter} onClick={() => onLevel(null)}>{t('learning.all')}</FilterChip>
+            {WORD_LEVELS.map((level) => <FilterChip key={level} active={levelFilter === level} onClick={() => onLevel(level)}>{level}</FilterChip>)}
           </FilterSection>
-
           <FilterSection title={t('words.fields.part_of_speech')}>
-            <FilterChip active={posFilter == null} onClick={() => onPos(null)}>
-              {t('learning.all')}
-            </FilterChip>
-            {PARTS_OF_SPEECH.map((pos) => (
-              <FilterChip key={pos} active={posFilter === pos} onClick={() => onPos(pos)}>
-                {t(`words.partsOfSpeech.${pos}`)}
+            <FilterChip active={!posFilter} onClick={() => onPos(null)}>{t('learning.all')}</FilterChip>
+            {PARTS_OF_SPEECH.map((position) => (
+              <FilterChip key={position} active={posFilter === position} onClick={() => onPos(position)}>
+                {t(`words.partsOfSpeech.${position}`)}
               </FilterChip>
             ))}
           </FilterSection>
-
           <FilterSection title={t('labels.filterByLabel')}>
-            <FilterChip active={labelFilter == null} onClick={() => onLabel(null)}>
-              {t('labels.all')}
-            </FilterChip>
-            {labels.length === 0 ? (
-              <span className="text-xs text-slate-400">{t('labels.noneToAdd')}</span>
-            ) : labels.map((label) => (
-              <FilterChip
-                key={label.id}
-                active={labelFilter === label.id}
-                color={labelColor(label.color)}
-                onClick={() => onLabel(label.id)}
-              >
+            <FilterChip active={labelFilter == null} onClick={() => onLabel(null)}>{t('labels.all')}</FilterChip>
+            {labels.map((label) => (
+              <FilterChip key={label.id} active={labelFilter === label.id} color={labelColor(label.color)} onClick={() => onLabel(label.id)}>
                 {label.name}
               </FilterChip>
             ))}
@@ -527,64 +961,33 @@ function WordFilterMenu({
   )
 }
 
-function FilterSection({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="mb-3 last:mb-0">
-      <div className="mb-1.5 text-xs font-semibold text-slate-500">{title}</div>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
-    </div>
-  )
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return <section className="mb-3 last:mb-0"><h3 className="mb-1.5 text-xs font-semibold text-slate-500">{title}</h3><div className="flex flex-wrap gap-1.5">{children}</div></section>
 }
 
-function WordSortMenu({
-  sortKey,
-  onSort,
-}: {
-  sortKey: SortKey
-  onSort: (sort: SortKey) => void
-}) {
+function WordSortMenu({ sortKey, onSort }: { sortKey: WordSort; onSort: (sort: WordSort) => void }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const options: SortKey[] = [
-    'created_asc',
-    'created_desc',
-    'term_asc',
-    'term_desc',
-    'level_asc',
-    'level_desc',
-  ]
-
   useEffect(() => {
     if (!open) return
-    function handler(e: MouseEvent) {
-      if (ref.current?.contains(e.target as Node)) return
-      setOpen(false)
+    function close(event: MouseEvent) {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
   }, [open])
-
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="btn-ghost px-3">
-        {t('words.sort')}
-      </button>
+      <button type="button" onClick={() => setOpen((value) => !value)} className="btn-ghost px-3">{t('words.sort')}</button>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 min-w-56 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          {options.map((option) => (
+        <div className="absolute right-0 z-40 mt-2 min-w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+          {SORT_OPTIONS.map((option) => (
             <button
               key={option}
+              type="button"
               onClick={() => { onSort(option); setOpen(false) }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium transition hover:bg-slate-50 ${
-                sortKey === option ? 'text-violet-700' : 'text-slate-600'
-              }`}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50 ${sortKey === option ? 'text-violet-700' : 'text-slate-600'}`}
             >
               <span className="w-3 text-[10px]">{sortKey === option ? '✓' : ''}</span>
               {t(`words.sortOptions.${option}`)}
@@ -593,423 +996,5 @@ function WordSortMenu({
         </div>
       )}
     </div>
-  )
-}
-
-function WordStatusDropdown({
-  word,
-  onSetStatus,
-}: {
-  word: Word
-  onSetStatus: (s: LearningStatus) => void
-}) {
-  const { t } = useTranslation()
-  const confirm = useConfirm()
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  // Tekrar programi 'learned' durumunda yasar; oradan cikmak programi siler.
-  function losesProgress(target: LearningStatus): boolean {
-    return word.learning_status === 'learned' && target !== 'learned'
-  }
-
-  async function pick(s: LearningStatus) {
-    setOpen(false)
-    if (s === word.learning_status) return
-    const reset = losesProgress(s)
-    const status = t(`learning.${s}`)
-    const ok = await confirm({
-      message: t(reset ? 'learning.resetConfirm' : 'learning.changeConfirm', { status }),
-      confirmLabel: t('common.yes'),
-      danger: reset,
-    })
-    if (!ok) return
-    onSetStatus(s)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    function handler(e: MouseEvent) {
-      const target = e.target as Node
-      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return
-      setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  function handleOpen() {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + 4, left: r.right - 150 })
-    }
-    setOpen((v) => !v)
-  }
-
-  return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleOpen}
-        className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition hover:opacity-80 ${LEARNING_STYLE[word.learning_status]}`}
-      >
-        {t(`learning.${word.learning_status}`)}
-        <span className="opacity-60">▾</span>
-      </button>
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          style={{ top: pos.top, left: pos.left }}
-          className="fixed z-50 min-w-[150px] rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
-        >
-          {LEARNING_STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => pick(s)}
-              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition hover:bg-slate-50 ${word.learning_status === s ? 'text-slate-900' : 'text-slate-600'}`}
-            >
-              {word.learning_status === s ? <span className="text-[10px]">✓</span> : <span className="w-3" />}
-              <span>{t(`learning.${s}`)}</span>
-            </button>
-          ))}
-        </div>,
-        document.body,
-      )}
-    </>
-  )
-}
-
-function WordCardLegacy({
-  word,
-  index,
-  langCode,
-  targetLang: _targetLang,
-  meaningLangs,
-  allLabels,
-  onAddLabel,
-  onRemoveLabel,
-  onSetStatus,
-  onEdit,
-  onDelete,
-}: {
-  word: Word
-  index: number
-  langCode?: string
-  targetLang?: LanguageBrief
-  meaningLangs: LanguageBrief[]
-  allLabels: Label[]
-  onAddLabel: (labelId: number) => void
-  onRemoveLabel: (labelId: number) => void
-  onSetStatus: (s: LearningStatus) => void
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  const { t } = useTranslation()
-  const [picking, setPicking] = useState(false)
-  const available = allLabels.filter((l) => !word.labels.some((wl) => wl.id === l.id))
-  // Kelimenin etiketlerini, Etiketler tab'indaki global sirayla goster (ekleme sirasiyla degil)
-  const order = new Map(allLabels.map((l, i) => [l.id, i]))
-  const sortedLabels = [...word.labels].sort(
-    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
-  )
-  // Anlamlari kurs dil sirasiyla goster (ana dil once); deger girilmemis dilleri atla.
-  const meaningById = new Map(word.meanings.map((m) => [m.language_id, m.value]))
-  const orderedMeanings = meaningLangs
-    .map((lang) => meaningById.get(lang.id))
-    .filter((v): v is string => !!v && v.trim().length > 0)
-
-  return (
-    <li className="card group p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-[0_8px_18px_-12px_rgba(15,23,42,0.25),0_18px_44px_-24px_rgba(15,23,42,0.2)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-xs font-medium text-slate-400 tabular-nums">#{index}</span>
-            <span className="text-lg font-semibold text-slate-900">{word.term}</span>
-            {langCode && <SpeakButton text={word.term} langCode={langCode} className="-my-1" />}
-            {word.part_of_speech && (
-              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
-              </span>
-            )}
-            {word.level && (
-              <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-600">
-                {word.level}
-              </span>
-            )}
-          </div>
-          {(word.phonetic || word.phonetic_native) && (
-            <div className="mt-0.5 text-sm text-slate-400">
-              {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
-            </div>
-          )}
-
-          {word.pronunciation_note_native && (
-            <div className="mt-3 border-t border-slate-100 pt-3">
-              <span className="mb-1 block text-xs font-medium text-slate-500">
-                {t('words.fields.pronunciationNote')}
-              </span>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm leading-relaxed text-slate-600">
-                {word.pronunciation_note_native}
-              </div>
-            </div>
-          )}
-
-          {orderedMeanings.length > 0 && (
-            <div className="mt-1 text-slate-700">
-              {orderedMeanings[0]}
-              {orderedMeanings.length > 1 && (
-                <span className="text-slate-400"> · {orderedMeanings.slice(1).join(' · ')}</span>
-              )}
-            </div>
-          )}
-
-          {word.definition_target && (
-            <div className="mt-1 text-sm italic text-slate-500">{word.definition_target}</div>
-          )}
-
-          {(word.synonyms || word.antonyms) && (
-            <div className="mt-3 grid gap-2 text-xs text-left sm:grid-cols-2">
-              {word.synonyms && (
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-2">
-                  <span className="block font-medium text-slate-500 mb-0.5">{t('words.fields.synonyms')}</span>
-                  <span className="text-slate-700">{word.synonyms}</span>
-                </div>
-              )}
-              {word.antonyms && (
-                <div className="rounded-lg border border-slate-100 bg-slate-50 p-2">
-                  <span className="block font-medium text-slate-500 mb-0.5">{t('words.fields.antonyms')}</span>
-                  <span className="text-slate-700">{word.antonyms}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {word.word_family && (
-            <div className="mt-3 border-t border-slate-100 pt-3 text-left text-xs">
-              <span className="block font-medium text-slate-500 mb-1">{t('words.fields.wordFamily')}</span>
-              <div className="text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50 p-2 rounded">
-                {word.word_family}
-              </div>
-            </div>
-          )}
-
-          {word.example_sentence && (
-            <div className="mt-2 border-l-2 border-slate-200 pl-3 text-sm">
-              <div className="text-slate-700">{word.example_sentence}</div>
-              {word.example_translation && (
-                <div className="text-slate-400">{word.example_translation}</div>
-              )}
-            </div>
-          )}
-
-          {/* Etiketler */}
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {sortedLabels.map((label) => (
-              <LabelBadge key={label.id} label={label} onRemove={() => onRemoveLabel(label.id)} />
-            ))}
-            <LabelPicker
-              available={available}
-              onAdd={(id) => { onAddLabel(id); setPicking(false) }}
-              open={picking}
-              onToggle={() => setPicking((p) => !p)}
-              t={t}
-            />
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <WordStatusDropdown word={word} onSetStatus={onSetStatus} />
-          <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
-            <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
-              ✎
-            </button>
-            <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>
-              ✕
-            </button>
-          </div>
-        </div>
-      </div>
-    </li>
-  )
-}
-
-void WordCardLegacy
-
-function WordCard({
-  word,
-  index,
-  langCode,
-  targetLang,
-  meaningLangs,
-  allLabels,
-  onAddLabel,
-  onRemoveLabel,
-  onSetStatus,
-  onEdit,
-  onDelete,
-}: {
-  word: Word
-  index: number
-  langCode?: string
-  targetLang?: LanguageBrief
-  meaningLangs: LanguageBrief[]
-  allLabels: Label[]
-  onAddLabel: (labelId: number) => void
-  onRemoveLabel: (labelId: number) => void
-  onSetStatus: (s: LearningStatus) => void
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  const { t } = useTranslation()
-  const [picking, setPicking] = useState(false)
-  const available = allLabels.filter((l) => !word.labels.some((wl) => wl.id === l.id))
-  const order = new Map(allLabels.map((l, i) => [l.id, i]))
-  const sortedLabels = [...word.labels].sort(
-    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
-  )
-  const meaningById = new Map(word.meanings.map((m) => [m.language_id, m.value]))
-  const orderedMeanings = meaningLangs
-    .map((lang) => ({ lang, value: meaningById.get(lang.id) }))
-    .filter((item): item is { lang: LanguageBrief; value: string } => !!item.value && item.value.trim().length > 0)
-
-  return (
-    <li className="card group p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-[0_8px_18px_-12px_rgba(15,23,42,0.25),0_18px_44px_-24px_rgba(15,23,42,0.2)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-xs font-medium text-slate-400 tabular-nums">#{index}</span>
-            <span className="text-lg font-semibold text-slate-900">{word.term}</span>
-            {langCode && <SpeakButton text={word.term} langCode={langCode} className="-my-1" />}
-            {word.part_of_speech && (
-              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-                {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
-              </span>
-            )}
-            {word.level && (
-              <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-600">
-                {word.level}
-              </span>
-            )}
-          </div>
-
-          {(word.phonetic || word.phonetic_native) && (
-            <div className="mt-0.5 text-sm text-slate-400">
-              {[word.phonetic, word.phonetic_native].filter(Boolean).join(' · ')}
-            </div>
-          )}
-
-          {word.pronunciation_note_native && (
-            <div className="mt-3 border-t border-slate-100 pt-3">
-              <span className="mb-1 block text-xs font-medium text-slate-500">
-                {t('words.fields.pronunciationNote')}
-              </span>
-              <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm leading-relaxed text-slate-600">
-                {word.pronunciation_note_native}
-              </div>
-            </div>
-          )}
-
-          {(orderedMeanings.length > 0 || word.definition_target) && (
-            <div className="mt-3 border-t border-slate-100 pt-3">
-              <div className="space-y-2">
-                {orderedMeanings.map(({ lang, value }) => (
-                  <div key={lang.id}>
-                    <span className="mb-1 block text-xs font-medium text-slate-500">
-                      {t('words.meaningIn', { lang: langName(t, lang.code, lang.native_name || lang.name) })}
-                    </span>
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                      {value}
-                    </div>
-                  </div>
-                ))}
-                {word.definition_target && targetLang && (
-                  <div>
-                    <span className="mb-1 block text-xs font-medium text-slate-500">
-                      {t('words.definitionIn', { lang: langName(t, targetLang.code, targetLang.native_name || targetLang.name) })}
-                    </span>
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                      {word.definition_target}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {(word.synonyms || word.antonyms) && (
-            <div className="mt-3 border-t border-slate-100 pt-3">
-              <div className="grid gap-2 text-left text-xs sm:grid-cols-2">
-                {word.synonyms && (
-                  <div>
-                    <span className="mb-1 block font-medium text-slate-500">{t('words.fields.synonyms')}</span>
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 p-2 text-slate-700">
-                      {word.synonyms}
-                    </div>
-                  </div>
-                )}
-                {word.antonyms && (
-                  <div>
-                    <span className="mb-1 block font-medium text-slate-500">{t('words.fields.antonyms')}</span>
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 p-2 text-slate-700">
-                      {word.antonyms}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {word.word_family && (
-            <div className="mt-3 border-t border-slate-100 pt-3 text-left text-xs">
-              <span className="mb-1 block font-medium text-slate-500">{t('words.fields.wordFamily')}</span>
-              <div className="whitespace-pre-wrap rounded bg-slate-50 p-2 leading-relaxed text-slate-700">
-                {word.word_family}
-              </div>
-            </div>
-          )}
-
-          {word.example_sentence && (
-            <div className="mt-3 border-t border-slate-100 pt-3">
-              <span className="mb-1 block text-xs font-medium text-slate-500">
-                {t('words.fields.example_sentence')}
-              </span>
-              <div className="border-l-2 border-slate-200 pl-3 text-sm">
-                <div className="text-slate-700">{word.example_sentence}</div>
-                {word.example_translation && (
-                  <div className="text-slate-400">{word.example_translation}</div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {sortedLabels.map((label) => (
-              <LabelBadge key={label.id} label={label} onRemove={() => onRemoveLabel(label.id)} />
-            ))}
-            <LabelPicker
-              available={available}
-              onAdd={(id) => { onAddLabel(id); setPicking(false) }}
-              open={picking}
-              onToggle={() => setPicking((p) => !p)}
-              t={t}
-            />
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <WordStatusDropdown word={word} onSetStatus={onSetStatus} />
-          <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
-            <button onClick={onEdit} className="btn-icon" title={t('common.edit')}>
-              ✎
-            </button>
-            <button onClick={onDelete} className="btn-icon-danger" title={t('common.delete')}>
-              ×
-            </button>
-          </div>
-        </div>
-      </div>
-    </li>
   )
 }

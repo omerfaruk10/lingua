@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ApiError } from '../api/client'
+import { ButtonProgress, LoadingState } from '../components/LoadingBar'
 import { Modal } from '../components/Modal'
 import { orderMeanings, WordCardContent } from '../components/WordCardContent'
 import { useConfirm } from '../components/ConfirmProvider'
@@ -47,7 +48,7 @@ export function LearnPage() {
   const session = sessionOverride ? sessionOverride.value : query.data
 
   if (query.isLoading) {
-    return <p className="text-slate-400">{t('common.loading')}</p>
+    return <LoadingState label={t('common.loading')} />
   }
 
   if (query.isError && !session) {
@@ -207,9 +208,10 @@ export function LearnPage() {
           <button
             onClick={markLearned}
             disabled={complete.isPending}
-            className="btn-primary mt-4 w-full py-3"
+            className="btn-primary relative mt-4 w-full overflow-hidden py-3"
           >
-            {complete.isPending ? t('common.loading') : t('learn.markLearned', { n: checkedCount })}
+            {t('learn.markLearned', { n: checkedCount })}
+            <ButtonProgress active={complete.isPending} label={t('common.loading')} />
           </button>
         </div>
       </div>
@@ -217,7 +219,7 @@ export function LearnPage() {
   }
 
   const task = session.current_task
-  if (!task) return <p className="text-slate-400">{t('common.loading')}</p>
+  if (!task) return <LoadingState label={t('common.loading')} />
   const completed = session.progress.completed_count + session.progress.cancelled_count
 
   return (
@@ -350,8 +352,9 @@ function IntroStep({
           targetLang={targetLang}
         />
       </div>
-      <button disabled={disabled} onClick={onContinue} className="btn-primary mt-6 w-full py-3">
-        {disabled ? t('common.loading') : t('learn.continue')}
+      <button disabled={disabled} onClick={onContinue} className="btn-primary relative mt-6 w-full overflow-hidden py-3">
+        {t('learn.continue')}
+        <ButtonProgress active={disabled} label={t('common.loading')} />
       </button>
     </div>
   )
@@ -416,8 +419,9 @@ function TypingInput({ disabled, onSubmit }: { disabled: boolean; onSubmit: (ans
         spellCheck={false}
         className="input flex-1"
       />
-      <button type="submit" disabled={disabled} className="btn-primary px-5">
-        {disabled ? t('common.loading') : t('learn.check')}
+      <button type="submit" disabled={disabled} className="btn-primary relative overflow-hidden px-5">
+        {t('learn.check')}
+        <ButtonProgress active={disabled} label={t('common.loading')} />
       </button>
     </form>
   )

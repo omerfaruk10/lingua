@@ -32,14 +32,14 @@ function WordCardContentLegacy({
       <div className="flex flex-wrap items-center justify-center gap-2">
         <span className="text-3xl font-semibold text-slate-900">{word.term}</span>
         {langCode && <SpeakButton text={word.term} langCode={langCode} />}
-        {word.part_of_speech && (
-          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-            {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
-          </span>
-        )}
         {word.level && (
           <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-600">
             {word.level}
+          </span>
+        )}
+        {word.part_of_speech && (
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+            {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
           </span>
         )}
       </div>
@@ -142,14 +142,14 @@ export function WordCardContent({
       <div className="flex flex-wrap items-center justify-center gap-2">
         <span className="text-3xl font-semibold text-slate-900">{word.term}</span>
         {langCode && <SpeakButton text={word.term} langCode={langCode} />}
-        {word.part_of_speech && (
-          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
-            {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
-          </span>
-        )}
         {word.level && (
           <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-600">
             {word.level}
+          </span>
+        )}
+        {word.part_of_speech && (
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+            {t(`words.partsOfSpeech.${word.part_of_speech}`, { defaultValue: word.part_of_speech })}
           </span>
         )}
       </div>

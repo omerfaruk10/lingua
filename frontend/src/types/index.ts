@@ -85,6 +85,41 @@ export interface Word {
   updated_at: string
 }
 
+export type WordSort =
+  | 'created_desc'
+  | 'created_asc'
+  | 'term_asc'
+  | 'term_desc'
+  | 'level_asc'
+  | 'level_desc'
+
+export interface WordListItem {
+  id: number
+  term: string
+  primary_meaning: string | null
+  phonetic: string | null
+  phonetic_native: string | null
+  part_of_speech: string | null
+  level: WordLevel | null
+  learning_status: LearningStatus
+  labels: Label[]
+}
+
+export interface WordPage {
+  items: WordListItem[]
+  page: number
+  page_size: 5 | 10 | 25 | 50 | 100
+  total: number
+  total_pages: number
+}
+
+export interface WordCounts {
+  total: number
+  new: number
+  learning: number
+  learned: number
+}
+
 export type LearningQuestionType = 'intro' | 'choice' | 'typing'
 export type LearningAnswerResult = 'completed' | 'correct' | 'minor_typo' | 'incorrect'
 
