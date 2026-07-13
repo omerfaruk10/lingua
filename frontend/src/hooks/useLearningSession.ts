@@ -33,6 +33,8 @@ export function useCompleteLearningSession(courseId: number) {
     onSuccess: (session) => {
       qc.setQueryData<LearningSession>(key(courseId), session)
       qc.invalidateQueries({ queryKey: ['languages', courseId, 'words'] })
+      qc.invalidateQueries({ queryKey: ['languages', courseId, 'review-overview'] })
+      qc.invalidateQueries({ queryKey: ['languages', courseId, 'stats'] })
     },
   })
 }

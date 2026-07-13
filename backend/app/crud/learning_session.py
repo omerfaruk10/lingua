@@ -99,14 +99,48 @@ def _prompt_for(word: Word, course: Course) -> str | None:
     return (word.definition_target or "").strip() or None
 
 
+def _english_inflected_forms(term: str) -> set[str]:
+    """Tek kelimelik İngilizce terimin yaygın çekimlerini üretir."""
+    base = term.strip().casefold()
+    if not re.fullmatch(r"[a-z]+", base):
+        return {base}
+
+    forms = {base, f"{base}s", f"{base}es", f"{base}ed", f"{base}ing"}
+    if base.endswith("e"):
+        forms.update({f"{base}d", f"{base[:-1]}ing"})
+    if len(base) > 1 and base.endswith("y") and base[-2] not in "aeiou":
+        forms.update({f"{base[:-1]}ies", f"{base[:-1]}ied"})
+    if (
+        len(base) > 2
+        and base[-1] not in "aeiouwxy"
+        and base[-2] in "aeiou"
+        and base[-3] not in "aeiou"
+    ):
+        forms.update({f"{base}{base[-1]}ed", f"{base}{base[-1]}ing"})
+    return forms
+
+
+def _mask_example_sentence(term: str, sentence: str, target_code: str) -> str | None:
+    # Unicode kelime sınırı: "art," eşleşir ama "started" içindeki "art" eşleşmez.
+    forms = {term.strip()}
+    if target_code.casefold().startswith("en") and len(term.split()) == 1:
+        forms.update(_english_inflected_forms(term))
+    alternatives = "|".join(
+        re.escape(form) for form in sorted(forms, key=len, reverse=True) if form
+    )
+    if not alternatives:
+        return None
+    pattern = re.compile(rf"(?<!\w)(?:{alternatives})(?!\w)", re.IGNORECASE)
+    if not pattern.search(sentence):
+        return None
+    return pattern.sub("___", sentence, count=1)
+
+
 def _task_prompt(word: Word, course: Course, step: str) -> str | None:
     if step == "typing" and word.example_sentence:
-        # Bosluk yerine Unicode kelime siniri kullan: "art," eslessin ama
-        # "started" icindeki "art" yanlislikla gizlenmesin. Cok kelimeli
-        # ifadelerde de yalniz ifadenin dis sinirlari denetlenir.
-        pattern = re.compile(rf"(?<!\w){re.escape(word.term)}(?!\w)", re.IGNORECASE)
-        if pattern.search(word.example_sentence):
-            return pattern.sub("___", word.example_sentence, count=1)
+        masked = _mask_example_sentence(word.term, word.example_sentence, course.code)
+        if masked:
+            return masked
     return _prompt_for(word, course)
 
 
@@ -227,6 +261,54 @@ def _reconcile(db: Session, session: LearningSession) -> None:
     _prepare_attempt(db, session)
 
 
+def _top_up_unstarted_session(db: Session, session: LearningSession) -> None:
+    """Henüz cevaplanmamış küçük bir partiyi en fazla beş kelimeye tamamlar."""
+    items = _items(db, session.id)
+    if len(items) >= BATCH_SIZE or any(item.item_status != "pending" for item in items):
+        return
+    event_count = db.scalar(
+        select(func.count(LearningEvent.id)).where(LearningEvent.session_id == session.id)
+    )
+    if event_count:
+        return
+
+    existing_ids = {item.word_id for item in items}
+    mistake_count = (
+        select(func.count(LearningEvent.id))
+        .where(
+            LearningEvent.word_id == Word.id,
+            LearningEvent.result == "incorrect",
+        )
+        .correlate(Word)
+        .scalar_subquery()
+    )
+    candidates = list(
+        db.scalars(
+            select(Word)
+            .where(
+                Word.course_id == session.course_id,
+                Word.learning_status == "learning",
+                Word.id.notin_(existing_ids),
+            )
+            .order_by(mistake_count.desc(), Word.created_at, Word.id)
+            .limit(BATCH_SIZE - len(items))
+        )
+    )
+    next_position = max((item.queue_position for item in items), default=-1) + 1
+    for offset, word in enumerate(candidates):
+        db.add(
+            LearningSessionItem(
+                session_id=session.id,
+                word_id=word.id,
+                current_step="intro",
+                item_status="pending",
+                queue_position=next_position + offset,
+            )
+        )
+    if candidates:
+        db.flush()
+
+
 def _word_dict(word: Word) -> Word:
     return word
 
@@ -344,6 +426,7 @@ def ensure_current(db: Session, course_id: int) -> dict | None:
                 )
             db.flush()
     _reconcile(db, session)
+    _top_up_unstarted_session(db, session)
     session.updated_at = datetime.now()
     db.commit()
     db.refresh(session)

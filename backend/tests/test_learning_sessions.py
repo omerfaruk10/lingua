@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 
+from app.crud.learning_session import _mask_example_sentence
+
 
 def _word(client, course, term, meaning=None):
     payload = {"term": term}
@@ -65,6 +67,28 @@ def test_current_session_is_persistent_and_uses_oldest_five(client, language):
     repeated = _current(client, language).json()
     assert repeated["id"] == body["id"]
     assert repeated["current_task"]["attempt_token"] == body["current_task"]["attempt_token"]
+
+
+def test_unstarted_session_is_topped_up_to_five_without_changing_current_attempt(client, language):
+    first_words = [_word(client, language, f"initial-{i}") for i in range(2)]
+    initial = _current(client, language).json()
+    initial_token = initial["current_task"]["attempt_token"]
+    assert initial["progress"]["total_count"] == 2
+
+    later_words = [_word(client, language, f"later-{i}") for i in range(7)]
+    resumed = _current(client, language).json()
+
+    assert resumed["id"] == initial["id"]
+    assert resumed["progress"]["total_count"] == 5
+    assert resumed["current_task"]["word"]["id"] == first_words[0]["id"]
+    assert resumed["current_task"]["attempt_token"] == initial_token
+    assert [item["word"]["id"] for item in resumed["items"]] == [
+        first_words[0]["id"],
+        first_words[1]["id"],
+        later_words[0]["id"],
+        later_words[1]["id"],
+        later_words[2]["id"],
+    ]
 
 
 def test_single_word_resumes_and_completes_with_srs(client, language):
@@ -269,3 +293,22 @@ def test_sentence_context_respects_word_boundaries_and_punctuation(client, langu
     second = _current(client, language).json()
     typing = _answer(client, language, second, second["current_task"]).json()["session"]
     assert typing["current_task"]["prompt"] == "sanat"
+
+
+def test_sentence_context_masks_common_english_inflections():
+    assert _mask_example_sentence("occur", "The accident occurred yesterday.", "en") == (
+        "The accident ___ yesterday."
+    )
+    assert _mask_example_sentence("involve", "The job involves working with data.", "en") == (
+        "The job ___ working with data."
+    )
+    assert _mask_example_sentence("allow", "This allows users to continue.", "en") == (
+        "This ___ users to continue."
+    )
+    assert _mask_example_sentence("manufacture", "They manufacture batteries.", "en") == (
+        "They ___ batteries."
+    )
+    assert _mask_example_sentence("cover", "The course covers the basics.", "en") == (
+        "The course ___ the basics."
+    )
+    assert _mask_example_sentence("art", "The project started yesterday.", "en") is None
